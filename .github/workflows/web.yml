@@ -1,0 +1,64 @@
+# Baut Rustwall als Web-Spiel und stellt es auf GitHub Pages bereit.
+# Danach läuft es im Browser – auch in Safari auf dem iPhone (Teilen → „Zum Home-Bildschirm“).
+# Einmalig im Repository einstellen: Settings → Pages → Source: „GitHub Actions“.
+name: Web-Version bauen
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+env:
+  GODOT_VERSION: 4.6.3
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Godot und Export-Vorlagen laden
+        run: |
+          set -e
+          base=https://github.com/godotengine/godot-builds/releases/download/${GODOT_VERSION}-stable
+          wget -q $base/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip
+          unzip -q Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip
+          mv Godot_v${GODOT_VERSION}-stable_linux.x86_64 godot
+          wget -q $base/Godot_v${GODOT_VERSION}-stable_export_templates.tpz
+          dir=$HOME/.local/share/godot/export_templates/${GODOT_VERSION}.stable
+          mkdir -p $dir
+          unzip -q -j Godot_v${GODOT_VERSION}-stable_export_templates.tpz \
+            'templates/web_nothreads_release.zip' 'templates/web_nothreads_debug.zip' 'templates/version.txt' -d $dir
+          rm Godot_v${GODOT_VERSION}-stable_export_templates.tpz
+
+      - name: Importieren und exportieren
+        run: |
+          set -e
+          ./godot --headless --import || true
+          mkdir -p build/web
+          ./godot --headless --export-release "Web" build/web/index.html
+          ls -la build/web
+          test -f build/web/index.pck
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: build/web
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
