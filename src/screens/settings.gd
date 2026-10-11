@@ -42,10 +42,11 @@ func build() -> Control:
 	a.add_child(_slider("Geräusche", "sfx", 0.8, "ui_alarm"))
 	a.add_child(_slider("Musik", "music", 0.6, "ui_play"))
 	var qrow := UI.hbox(10, [_name("Grafik")])
-	var q := clampi(int(st.get("quality", 1)), 0, 2)
+	var q := G.quality()
 	for i in 3:
 		var qb: Button = S.choice(String(QUALITY[i]), i == q, S.act(func():
 			st["quality"] = i
+			st["quality_user"] = true
 			G.apply_quality()
 			P.mark()), 24)
 		qb.custom_minimum_size = Vector2(150, 68)

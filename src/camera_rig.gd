@@ -58,7 +58,7 @@ func shake(amount: float) -> void:
 
 
 func zoom(delta: float) -> void:
-	dist = clampf(dist + delta, 24.0, 62.0)
+	dist = clampf(dist + delta, 16.0, 66.0)
 
 
 func snap() -> void:

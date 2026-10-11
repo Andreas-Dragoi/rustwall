@@ -100,7 +100,9 @@ func show_menu() -> void:
 		_confirm_slot = -1
 		_show_cities(), "", "ui_map"))
 	_menu.add_child(_big("Intro ansehen", func(): start_intro(), "dark", "ui_play"))
-	_menu.add_child(_big("Optionen", func(): G.main.screens.open("settings"), "dark", "ui_gear"))
+	_menu.add_child(_big("Optionen", func():
+		visible = false                      # Menü ausblenden, sonst liegt es über den Optionen
+		G.main.screens.open("settings"), "dark", "ui_gear"))
 	if not OS.has_feature("mobile") and not OS.has_feature("web"):
 		_menu.add_child(_big("Beenden", func():
 			P.save()

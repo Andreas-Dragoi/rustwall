@@ -162,7 +162,14 @@ func vibrate(ms: int) -> void:
 
 
 func quality() -> int:
+	# Handy-Browser: wenig Speicher – „Niedrig“, solange der Spieler nichts anderes gewählt hat
+	if web_mobile() and not P.d.settings.get("quality_user", false):
+		return 0
 	return clampi(int(P.d.settings.get("quality", 1)), 0, 2)
+
+
+func web_mobile() -> bool:
+	return OS.has_feature("web_ios") or OS.has_feature("web_android")
 
 
 func max_alive() -> int:
@@ -175,6 +182,6 @@ func apply_quality() -> void:
 	var q := quality()
 	vp.scaling_3d_scale = [0.7, 0.85, 1.0][q]
 	vp.msaa_3d = [Viewport.MSAA_DISABLED, Viewport.MSAA_DISABLED, Viewport.MSAA_2X][q]
-	Engine.max_fps = 60 if P.d.settings.get("fps60", true) else 30
+	Engine.max_fps = 60 if P.d.settings.get("fps60", not web_mobile()) else 30
 	if autotest != "":
 		Engine.max_fps = 0

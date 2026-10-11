@@ -61,6 +61,19 @@ func _ready() -> void:
 		_tests.begin()
 	elif G.arg("menu") != "0":
 		menu.show_menu()
+	if G.arg("memdbg") != "":
+		_memdbg()
+
+
+## Testhilfe: Speicherverbrauch ausgeben (--memdbg=1)
+func _memdbg() -> void:
+	for i in 6:
+		await get_tree().create_timer(5.0).timeout
+		print("MEM peak=%.0fMB static=%.0fMB vid=%.0fMB tex=%.0fMB buf=%.0fMB objs=%d res=%d" % [OS.get_static_memory_peak_usage() / 1048576.0, OS.get_static_memory_usage() / 1048576.0,
+			Performance.get_monitor(Performance.RENDER_VIDEO_MEM_USED) / 1048576.0, Performance.get_monitor(Performance.RENDER_TEXTURE_MEM_USED) / 1048576.0,
+			Performance.get_monitor(Performance.RENDER_BUFFER_MEM_USED) / 1048576.0, Performance.get_monitor(Performance.OBJECT_COUNT), Performance.get_monitor(Performance.OBJECT_RESOURCE_COUNT)])
+	if G.arg("memdbg") == "quit":
+		get_tree().quit()
 
 
 ## Zurück ins Hauptmenü (aus den Optionen). Eine laufende Expedition oder Flut wird vorher beendet.
@@ -98,6 +111,9 @@ func _hit(c: Control, p: Vector2) -> bool:
 
 
 func _on_screen_closed() -> void:
+	if menu != null and bool(get_meta("menu_open", false)) and not menu.visible:
+		menu.visible = true                  # aus dem Hauptmenü geöffnet: zurück ins Menü
+		return
 	# Einstellungen aus dem Pausenmenü: danach weiterspielen
 	if get_tree().paused and not hud.modal_open():
 		get_tree().paused = false

@@ -92,6 +92,14 @@ func _input(event: InputEvent) -> void:
 				if p.distance_to(b.c) < b.r * 1.15:
 					_press(b.slot)
 					return
+			# zweiter Finger kurz nach dem ersten, Stick kaum bewegt: Zwei-Finger-Zoom statt Laufen
+			if _joy_idx != -1 and _free.is_empty() and _joy_pos.distance_to(_joy_origin) < 24.0:
+				_free[_joy_idx] = _joy_pos
+				_joy_idx = -1
+				G.touch_move = Vector2.ZERO
+				_free[event.index] = p
+				_pinch_d = 0.0
+				return
 			if p.x < _sz().x * 0.45 and p.y > 200.0 and _joy_idx == -1 and not G.main.touch_on_ui(p):
 				_joy_idx = event.index
 				_joy_origin = p
@@ -121,7 +129,7 @@ func _input(event: InputEvent) -> void:
 				var k := _free.keys()
 				var dist: float = _free[k[0]].distance_to(_free[k[1]])
 				if _pinch_d > 0.0 and G.cam:
-					G.cam.zoom((_pinch_d - dist) * 0.03)
+					G.cam.zoom((_pinch_d - dist) * 0.06)
 				_pinch_d = dist
 
 

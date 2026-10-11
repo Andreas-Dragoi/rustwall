@@ -106,6 +106,7 @@ func _ready() -> void:
 	P.level_up.connect(_level_banner)
 	P.changed.connect(func(): _sel_sig = "")
 	G.pause_pressed.connect(_on_pause)
+	_make_zoom()
 
 
 func modal_open() -> bool:
@@ -1504,6 +1505,8 @@ func _leave_result(screen: String) -> void:
 
 func _process(dt: float) -> void:
 	_t += dt
+	if _zoom_box != null:
+		_zoom_box.visible = G.is_touch and world != null and not modal_open() and not (G.main != null and G.main.ui_blocked())
 	if _flash_a > 0.0:
 		_flash_a = maxf(0.0, _flash_a - dt * 0.8)
 		_flash.color.a = _flash_a
@@ -1622,3 +1625,31 @@ class EdgeArrow extends Control:
 		draw_colored_polygon(pts, Color(0.03, 0.08, 0.16, 0.8))
 		var pts2 := PackedVector2Array([p + d * 20.0, p - d * 10.0 + o * 14.0, p - d * 10.0 - o * 14.0])
 		draw_colored_polygon(pts2, col)
+
+
+
+# ================================================================= Zoom-Knöpfe (Handy)
+var _zoom_box: HBoxContainer
+
+
+## Zwei Knöpfe oben in der Mitte unter der Rohstoffleiste: rein- und rauszoomen (zusätzlich zur Zwei-Finger-Geste).
+func _make_zoom() -> void:
+	_zoom_box = UI.hbox(10)
+	_zoom_box.anchor_left = 0.5
+	_zoom_box.anchor_right = 0.5
+	_zoom_box.offset_left = -80
+	_zoom_box.offset_right = 80
+	_zoom_box.offset_top = 96
+	_zoom_box.offset_bottom = 168
+	for d in [[-5.0, "+"], [5.0, "−"]]:
+		var b := UI.button(String(d[1]), _zoom_by.bind(float(d[0])), "dark", 44)
+		b.custom_minimum_size = Vector2(72, 72)
+		b.modulate.a = 0.8
+		_zoom_box.add_child(b)
+	_zoom_box.visible = false
+	root.add_child(_zoom_box)
+
+
+func _zoom_by(d: float) -> void:
+	if G.cam:
+		G.cam.zoom(d)
