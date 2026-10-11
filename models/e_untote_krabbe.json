@@ -1,0 +1,73 @@
+{
+ "key": "untote_krabbe",
+ "kind": "vat",
+ "role": "special",
+ "verts": 1283,
+ "tris": 1579,
+ "width": 1024,
+ "rows": 92,
+ "rpf": 2,
+ "fps": 10,
+ "bounds_min": [
+  -0.9371694708649607,
+  -0.577420502190856,
+  -1.4925359108482417
+ ],
+ "bounds_size": [
+  2.115209747444035,
+  2.3612840591582054,
+  3.3137149808740642
+ ],
+ "height": 1.3000000715255737,
+ "radius": 1.415792527704242,
+ "clips": {
+  "idle": {
+   "row": 0,
+   "n": 12,
+   "dur": 1.2,
+   "loop": true,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "walk": {
+   "row": 12,
+   "n": 6,
+   "dur": 0.6,
+   "loop": true,
+   "stride": 1.1,
+   "hit": -1.0
+  },
+  "attack": {
+   "row": 18,
+   "n": 6,
+   "dur": 0.5,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.23333333333333334
+  },
+  "hit": {
+   "row": 24,
+   "n": 4,
+   "dur": 0.3,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "death": {
+   "row": 28,
+   "n": 13,
+   "dur": 1.2,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "hide": {
+   "row": 41,
+   "n": 5,
+   "dur": 0.4,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  }
+ }
+}

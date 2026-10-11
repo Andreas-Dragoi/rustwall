@@ -1,0 +1,73 @@
+{
+ "key": "mutanten_rohrspucker",
+ "kind": "vat",
+ "role": "ranged",
+ "verts": 594,
+ "tris": 840,
+ "width": 594,
+ "rows": 58,
+ "rpf": 1,
+ "fps": 10,
+ "bounds_min": [
+  -0.9749523504710145,
+  -1.6136000288963308,
+  -0.6083375765270784
+ ],
+ "bounds_size": [
+  1.9443043400349078,
+  4.324237126505604,
+  3.121770898364228
+ ],
+ "height": 2.3323716589283663,
+ "radius": 0.5525451187084236,
+ "clips": {
+  "idle": {
+   "row": 0,
+   "n": 12,
+   "dur": 1.2,
+   "loop": true,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "walk": {
+   "row": 12,
+   "n": 8,
+   "dur": 0.8,
+   "loop": true,
+   "stride": 1.4,
+   "hit": -1.0
+  },
+  "attack": {
+   "row": 20,
+   "n": 13,
+   "dur": 1.2,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.7333333333333333
+  },
+  "hit": {
+   "row": 33,
+   "n": 4,
+   "dur": 0.3,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "death": {
+   "row": 37,
+   "n": 12,
+   "dur": 1.1,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "spawn": {
+   "row": 49,
+   "n": 9,
+   "dur": 0.8,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  }
+ }
+}

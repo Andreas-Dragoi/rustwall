@@ -1,0 +1,73 @@
+{
+ "key": "wald_irrlicht",
+ "kind": "vat",
+ "role": "air",
+ "verts": 318,
+ "tris": 294,
+ "width": 318,
+ "rows": 43,
+ "rpf": 1,
+ "fps": 10,
+ "bounds_min": [
+  -0.7943985674440646,
+  0.07999997735023513,
+  -0.7733557551790062
+ ],
+ "bounds_size": [
+  1.690263410661569,
+  1.9159999778270707,
+  1.6783510398072203
+ ],
+ "height": 1.4800000190734863,
+ "radius": 0.5536655187606812,
+ "clips": {
+  "idle": {
+   "row": 0,
+   "n": 10,
+   "dur": 1.0,
+   "loop": true,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "walk": {
+   "row": 10,
+   "n": 8,
+   "dur": 0.8,
+   "loop": true,
+   "stride": 2.4,
+   "hit": -1.0
+  },
+  "attack": {
+   "row": 18,
+   "n": 7,
+   "dur": 0.6,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.3
+  },
+  "hit": {
+   "row": 25,
+   "n": 4,
+   "dur": 0.3,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "death": {
+   "row": 29,
+   "n": 9,
+   "dur": 0.8,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "blink": {
+   "row": 38,
+   "n": 5,
+   "dur": 0.4,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  }
+ }
+}

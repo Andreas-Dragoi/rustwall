@@ -1,0 +1,73 @@
+{
+ "key": "untote_matrose",
+ "kind": "vat",
+ "role": "mass",
+ "verts": 780,
+ "tris": 988,
+ "width": 780,
+ "rows": 65,
+ "rpf": 1,
+ "fps": 10,
+ "bounds_min": [
+  -1.067647321525059,
+  -0.1430892207516441,
+  -2.730419070730657
+ ],
+ "bounds_size": [
+  1.8481114282324527,
+  2.5427406090222657,
+  3.925481137391065
+ ],
+ "height": 2.1285695110058143,
+ "radius": 0.6885354083401014,
+ "clips": {
+  "idle": {
+   "row": 0,
+   "n": 14,
+   "dur": 1.4,
+   "loop": true,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "walk": {
+   "row": 14,
+   "n": 10,
+   "dur": 1.0,
+   "loop": true,
+   "stride": 1.25,
+   "hit": -1.0
+  },
+  "attack": {
+   "row": 24,
+   "n": 9,
+   "dur": 0.8,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.43333333333333335
+  },
+  "hit": {
+   "row": 33,
+   "n": 4,
+   "dur": 0.3,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "death": {
+   "row": 37,
+   "n": 12,
+   "dur": 1.1,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "revive": {
+   "row": 49,
+   "n": 16,
+   "dur": 1.5,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  }
+ }
+}

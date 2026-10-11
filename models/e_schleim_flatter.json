@@ -1,0 +1,73 @@
+{
+ "key": "schleim_flatter",
+ "kind": "vat",
+ "role": "air",
+ "verts": 728,
+ "tris": 1128,
+ "width": 728,
+ "rows": 42,
+ "rpf": 1,
+ "fps": 10,
+ "bounds_min": [
+  -1.4008538200325324,
+  -0.15097189090648677,
+  -1.219883007788175
+ ],
+ "bounds_size": [
+  2.801707640065065,
+  1.9373307500487216,
+  2.4838283833818022
+ ],
+ "height": 1.3432500478029255,
+ "radius": 1.1444365498897702,
+ "clips": {
+  "idle": {
+   "row": 0,
+   "n": 12,
+   "dur": 1.2,
+   "loop": true,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "walk": {
+   "row": 12,
+   "n": 4,
+   "dur": 0.4,
+   "loop": true,
+   "stride": 1.2800000000000002,
+   "hit": -1.0
+  },
+  "attack": {
+   "row": 16,
+   "n": 6,
+   "dur": 0.5,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.26666666666666666
+  },
+  "hit": {
+   "row": 22,
+   "n": 4,
+   "dur": 0.3,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "death": {
+   "row": 26,
+   "n": 10,
+   "dur": 0.9,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "spawn": {
+   "row": 36,
+   "n": 6,
+   "dur": 0.5,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  }
+ }
+}

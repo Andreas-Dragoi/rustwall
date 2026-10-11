@@ -1,0 +1,73 @@
+{
+ "key": "mutanten_giftkroete",
+ "kind": "vat",
+ "role": "mass",
+ "verts": 474,
+ "tris": 712,
+ "width": 474,
+ "rows": 49,
+ "rpf": 1,
+ "fps": 10,
+ "bounds_min": [
+  -1.0573787426620262,
+  -1.0111999500274662,
+  -0.8735325222344363
+ ],
+ "bounds_size": [
+  2.1147574853240525,
+  2.621539013304609,
+  1.9736708928022932
+ ],
+ "height": 0.9900000095367432,
+ "radius": 0.722415297512537,
+ "clips": {
+  "idle": {
+   "row": 0,
+   "n": 12,
+   "dur": 1.2,
+   "loop": true,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "walk": {
+   "row": 12,
+   "n": 7,
+   "dur": 0.7,
+   "loop": true,
+   "stride": 1.8,
+   "hit": -1.0
+  },
+  "attack": {
+   "row": 19,
+   "n": 7,
+   "dur": 0.6,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.3
+  },
+  "hit": {
+   "row": 26,
+   "n": 4,
+   "dur": 0.3,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "death": {
+   "row": 30,
+   "n": 10,
+   "dur": 0.9,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "spawn": {
+   "row": 40,
+   "n": 9,
+   "dur": 0.8,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  }
+ }
+}

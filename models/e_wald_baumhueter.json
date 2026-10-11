@@ -1,0 +1,73 @@
+{
+ "key": "wald_baumhueter",
+ "kind": "vat",
+ "role": "tank",
+ "verts": 1729,
+ "tris": 1736,
+ "width": 1024,
+ "rows": 152,
+ "rpf": 2,
+ "fps": 10,
+ "bounds_min": [
+  -1.6252957483815031,
+  -0.7729089871011652,
+  -1.3763663722596198
+ ],
+ "bounds_size": [
+  3.2505914967630063,
+  6.799040777901502,
+  6.726444212623836
+ ],
+ "height": 3.3299999237060547,
+ "radius": 1.3498113134179015,
+ "clips": {
+  "idle": {
+   "row": 0,
+   "n": 16,
+   "dur": 1.6,
+   "loop": true,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "walk": {
+   "row": 16,
+   "n": 14,
+   "dur": 1.4,
+   "loop": true,
+   "stride": 1.7,
+   "hit": -1.0
+  },
+  "attack": {
+   "row": 30,
+   "n": 14,
+   "dur": 1.3,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.7333333333333333
+  },
+  "hit": {
+   "row": 44,
+   "n": 4,
+   "dur": 0.3,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "death": {
+   "row": 48,
+   "n": 16,
+   "dur": 1.5,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "root": {
+   "row": 64,
+   "n": 12,
+   "dur": 1.2,
+   "loop": true,
+   "stride": 0.0,
+   "hit": -1.0
+  }
+ }
+}

@@ -1,0 +1,89 @@
+{
+ "key": "wueste_sandwurm",
+ "kind": "vat",
+ "role": "special",
+ "verts": 1329,
+ "tris": 1426,
+ "width": 1024,
+ "rows": 118,
+ "rpf": 2,
+ "fps": 10,
+ "bounds_min": [
+  -1.060405471582836,
+  -1.3039121969908598,
+  -1.396571100065734
+ ],
+ "bounds_size": [
+  2.120810943165672,
+  3.5338464552417257,
+  3.0560269556134347
+ ],
+ "height": 2.069999873638153,
+ "radius": 1.3668333292007446,
+ "clips": {
+  "idle": {
+   "row": 0,
+   "n": 12,
+   "dur": 1.2,
+   "loop": true,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "walk": {
+   "row": 12,
+   "n": 6,
+   "dur": 0.6,
+   "loop": true,
+   "stride": 1.8,
+   "hit": -1.0
+  },
+  "attack": {
+   "row": 18,
+   "n": 7,
+   "dur": 0.6,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.3333333333333333
+  },
+  "hit": {
+   "row": 25,
+   "n": 4,
+   "dur": 0.3,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "death": {
+   "row": 29,
+   "n": 12,
+   "dur": 1.1,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "dig": {
+   "row": 41,
+   "n": 8,
+   "dur": 0.7,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "under": {
+   "row": 49,
+   "n": 4,
+   "dur": 0.4,
+   "loop": true,
+   "stride": 1.8,
+   "hit": -1.0
+  },
+  "rise": {
+   "row": 53,
+   "n": 6,
+   "dur": 0.5,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  }
+ }
+}

@@ -1,0 +1,73 @@
+{
+ "key": "untote_deckratte",
+ "kind": "vat",
+ "role": "fast",
+ "verts": 755,
+ "tris": 952,
+ "width": 755,
+ "rows": 38,
+ "rpf": 1,
+ "fps": 10,
+ "bounds_min": [
+  -0.6207215643260002,
+  -0.8709650884259521,
+  -1.5434785847044534
+ ],
+ "bounds_size": [
+  1.3752842869587623,
+  2.3143953589719666,
+  2.980201968635267
+ ],
+ "height": 0.9169999409914027,
+ "radius": 1.4290124339226573,
+ "clips": {
+  "idle": {
+   "row": 0,
+   "n": 10,
+   "dur": 1.0,
+   "loop": true,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "walk": {
+   "row": 10,
+   "n": 4,
+   "dur": 0.4,
+   "loop": true,
+   "stride": 1.1,
+   "hit": -1.0
+  },
+  "attack": {
+   "row": 14,
+   "n": 6,
+   "dur": 0.5,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.23333333333333334
+  },
+  "hit": {
+   "row": 20,
+   "n": 4,
+   "dur": 0.3,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "death": {
+   "row": 24,
+   "n": 10,
+   "dur": 0.9,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "busy": {
+   "row": 34,
+   "n": 4,
+   "dur": 0.4,
+   "loop": true,
+   "stride": 0.0,
+   "hit": -1.0
+  }
+ }
+}

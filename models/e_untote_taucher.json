@@ -1,0 +1,73 @@
+{
+ "key": "untote_taucher",
+ "kind": "vat",
+ "role": "tank",
+ "verts": 2572,
+ "tris": 3350,
+ "width": 1024,
+ "rows": 228,
+ "rpf": 3,
+ "fps": 10,
+ "bounds_min": [
+  -2.297564559371674,
+  -0.4480269914611157,
+  -1.1592962147333552
+ ],
+ "bounds_size": [
+  3.9755301991755765,
+  4.300488377827397,
+  8.529661267145732
+ ],
+ "height": 3.358068553763778,
+ "radius": 1.5673853414950645,
+ "clips": {
+  "idle": {
+   "row": 0,
+   "n": 16,
+   "dur": 1.6,
+   "loop": true,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "walk": {
+   "row": 16,
+   "n": 16,
+   "dur": 1.6,
+   "loop": true,
+   "stride": 1.7,
+   "hit": -1.0
+  },
+  "attack": {
+   "row": 32,
+   "n": 12,
+   "dur": 1.1,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.6
+  },
+  "hit": {
+   "row": 44,
+   "n": 4,
+   "dur": 0.3,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "death": {
+   "row": 48,
+   "n": 15,
+   "dur": 1.4,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "throw": {
+   "row": 63,
+   "n": 13,
+   "dur": 1.2,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.5
+  }
+ }
+}

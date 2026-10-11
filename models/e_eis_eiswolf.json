@@ -1,0 +1,81 @@
+{
+ "key": "eis_eiswolf",
+ "kind": "vat",
+ "role": "fast",
+ "verts": 640,
+ "tris": 698,
+ "width": 640,
+ "rows": 54,
+ "rpf": 1,
+ "fps": 10,
+ "bounds_min": [
+  -0.27101380946395204,
+  -0.20856079864756993,
+  -0.9869174248056363
+ ],
+ "bounds_size": [
+  1.375061853322389,
+  2.4459298952132214,
+  2.7255880601623237
+ ],
+ "height": 1.0936917066574097,
+ "radius": 0.9605983262338543,
+ "clips": {
+  "idle": {
+   "row": 0,
+   "n": 10,
+   "dur": 1.0,
+   "loop": true,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "walk": {
+   "row": 10,
+   "n": 4,
+   "dur": 0.4,
+   "loop": true,
+   "stride": 2.2,
+   "hit": -1.0
+  },
+  "attack": {
+   "row": 14,
+   "n": 6,
+   "dur": 0.5,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.26666666666666666
+  },
+  "pounce": {
+   "row": 20,
+   "n": 6,
+   "dur": 0.5,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.3333333333333333
+  },
+  "howl": {
+   "row": 26,
+   "n": 13,
+   "dur": 1.2,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "hit": {
+   "row": 39,
+   "n": 4,
+   "dur": 0.3,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "death": {
+   "row": 43,
+   "n": 11,
+   "dur": 1.0,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  }
+ }
+}

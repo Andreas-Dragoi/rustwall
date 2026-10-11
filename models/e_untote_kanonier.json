@@ -1,0 +1,73 @@
+{
+ "key": "untote_kanonier",
+ "kind": "vat",
+ "role": "ranged",
+ "verts": 1264,
+ "tris": 1580,
+ "width": 1024,
+ "rows": 130,
+ "rpf": 2,
+ "fps": 10,
+ "bounds_min": [
+  -0.7233549291392551,
+  -1.1533721453825405,
+  -1.024266744455686
+ ],
+ "bounds_size": [
+  2.3994736981911156,
+  4.061415447306201,
+  2.955655630103532
+ ],
+ "height": 2.3193774272451915,
+ "radius": 0.6464390827863907,
+ "clips": {
+  "idle": {
+   "row": 0,
+   "n": 12,
+   "dur": 1.2,
+   "loop": true,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "walk": {
+   "row": 12,
+   "n": 8,
+   "dur": 0.8,
+   "loop": true,
+   "stride": 1.35,
+   "hit": -1.0
+  },
+  "attack": {
+   "row": 20,
+   "n": 17,
+   "dur": 1.6,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.8
+  },
+  "hit": {
+   "row": 37,
+   "n": 4,
+   "dur": 0.3,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "death": {
+   "row": 41,
+   "n": 13,
+   "dur": 1.2,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "spawn": {
+   "row": 54,
+   "n": 11,
+   "dur": 1.0,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  }
+ }
+}

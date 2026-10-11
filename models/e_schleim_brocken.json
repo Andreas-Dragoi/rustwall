@@ -1,0 +1,73 @@
+{
+ "key": "schleim_brocken",
+ "kind": "vat",
+ "role": "tank",
+ "verts": 758,
+ "tris": 1212,
+ "width": 758,
+ "rows": 45,
+ "rpf": 1,
+ "fps": 10,
+ "bounds_min": [
+  -3.1299587355524974,
+  -0.8565299916632603,
+  -3.1019232244584725
+ ],
+ "bounds_size": [
+  6.259917471104995,
+  5.409983065354556,
+  6.7572605349647645
+ ],
+ "height": 3.436200285959245,
+ "radius": 2.014348034212767,
+ "clips": {
+  "idle": {
+   "row": 0,
+   "n": 12,
+   "dur": 1.2,
+   "loop": true,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "walk": {
+   "row": 12,
+   "n": 7,
+   "dur": 0.7,
+   "loop": true,
+   "stride": 1.12,
+   "hit": -1.0
+  },
+  "attack": {
+   "row": 19,
+   "n": 6,
+   "dur": 0.5,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.26666666666666666
+  },
+  "hit": {
+   "row": 25,
+   "n": 4,
+   "dur": 0.3,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "death": {
+   "row": 29,
+   "n": 10,
+   "dur": 0.9,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "spawn": {
+   "row": 39,
+   "n": 6,
+   "dur": 0.5,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  }
+ }
+}

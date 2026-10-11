@@ -1,0 +1,73 @@
+{
+ "key": "daemonen_hund",
+ "kind": "vat",
+ "role": "fast",
+ "verts": 888,
+ "tris": 904,
+ "width": 888,
+ "rows": 37,
+ "rpf": 1,
+ "fps": 10,
+ "bounds_min": [
+  -0.4019361889760369,
+  -0.18205231135150424,
+  -1.0696002403021445
+ ],
+ "bounds_size": [
+  1.5863214953011542,
+  1.4951268731659504,
+  2.2392200071550716
+ ],
+ "height": 1.128279447555542,
+ "radius": 0.965460687116669,
+ "clips": {
+  "idle": {
+   "row": 0,
+   "n": 10,
+   "dur": 1.0,
+   "loop": true,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "walk": {
+   "row": 10,
+   "n": 4,
+   "dur": 0.4,
+   "loop": true,
+   "stride": 2.3,
+   "hit": -1.0
+  },
+  "attack": {
+   "row": 14,
+   "n": 5,
+   "dur": 0.4,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.2
+  },
+  "charge": {
+   "row": 19,
+   "n": 3,
+   "dur": 0.3,
+   "loop": true,
+   "stride": 2.0,
+   "hit": -1.0
+  },
+  "hit": {
+   "row": 22,
+   "n": 4,
+   "dur": 0.3,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "death": {
+   "row": 26,
+   "n": 11,
+   "dur": 1.0,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  }
+ }
+}

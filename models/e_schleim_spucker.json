@@ -1,0 +1,73 @@
+{
+ "key": "schleim_spucker",
+ "kind": "vat",
+ "role": "ranged",
+ "verts": 658,
+ "tris": 1064,
+ "width": 658,
+ "rows": 43,
+ "rpf": 1,
+ "fps": 10,
+ "bounds_min": [
+  -1.502154196212903,
+  -0.3188986586132929,
+  -1.4887457681566902
+ ],
+ "bounds_size": [
+  3.004308392425806,
+  2.4276031618549068,
+  3.5042811106203917
+ ],
+ "height": 1.567499965429306,
+ "radius": 1.2012182168221808,
+ "clips": {
+  "idle": {
+   "row": 0,
+   "n": 12,
+   "dur": 1.2,
+   "loop": true,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "walk": {
+   "row": 12,
+   "n": 5,
+   "dur": 0.5,
+   "loop": true,
+   "stride": 1.0,
+   "hit": -1.0
+  },
+  "attack": {
+   "row": 17,
+   "n": 6,
+   "dur": 0.5,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.26666666666666666
+  },
+  "hit": {
+   "row": 23,
+   "n": 4,
+   "dur": 0.3,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "death": {
+   "row": 27,
+   "n": 10,
+   "dur": 0.9,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "spawn": {
+   "row": 37,
+   "n": 6,
+   "dur": 0.5,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  }
+ }
+}

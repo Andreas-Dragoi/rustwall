@@ -1,0 +1,73 @@
+{
+ "key": "daemonen_feuerspeier",
+ "kind": "vat",
+ "role": "ranged",
+ "verts": 478,
+ "tris": 668,
+ "width": 478,
+ "rows": 62,
+ "rpf": 1,
+ "fps": 10,
+ "bounds_min": [
+  -1.072694997088304,
+  -1.6172000244140625,
+  -1.030000069141389
+ ],
+ "bounds_size": [
+  2.1317671841752213,
+  3.854100661652179,
+  2.060000138282778
+ ],
+ "height": 1.8158845901489258,
+ "radius": 0.8969766378653778,
+ "clips": {
+  "idle": {
+   "row": 0,
+   "n": 14,
+   "dur": 1.4,
+   "loop": true,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "walk": {
+   "row": 14,
+   "n": 9,
+   "dur": 0.9,
+   "loop": true,
+   "stride": 1.3,
+   "hit": -1.0
+  },
+  "attack": {
+   "row": 23,
+   "n": 15,
+   "dur": 1.4,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 1.0
+  },
+  "hit": {
+   "row": 38,
+   "n": 4,
+   "dur": 0.3,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "death": {
+   "row": 42,
+   "n": 11,
+   "dur": 1.0,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "spawn": {
+   "row": 53,
+   "n": 9,
+   "dur": 0.8,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  }
+ }
+}

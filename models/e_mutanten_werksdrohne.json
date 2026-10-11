@@ -1,0 +1,73 @@
+{
+ "key": "mutanten_werksdrohne",
+ "kind": "vat",
+ "role": "air",
+ "verts": 818,
+ "tris": 736,
+ "width": 818,
+ "rows": 43,
+ "rpf": 1,
+ "fps": 10,
+ "bounds_min": [
+  -0.7985177053484895,
+  -0.3940000317096717,
+  -1.6199939319887968
+ ],
+ "bounds_size": [
+  2.293243116080266,
+  2.0444795800052504,
+  2.2160064835987257
+ ],
+ "height": 1.3600000143051147,
+ "radius": 0.7935208214226551,
+ "clips": {
+  "idle": {
+   "row": 0,
+   "n": 8,
+   "dur": 0.8,
+   "loop": true,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "walk": {
+   "row": 8,
+   "n": 6,
+   "dur": 0.6,
+   "loop": true,
+   "stride": 1.8,
+   "hit": -1.0
+  },
+  "attack": {
+   "row": 14,
+   "n": 8,
+   "dur": 0.7,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.3333333333333333
+  },
+  "hit": {
+   "row": 22,
+   "n": 4,
+   "dur": 0.3,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "death": {
+   "row": 26,
+   "n": 10,
+   "dur": 0.9,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "spawn": {
+   "row": 36,
+   "n": 7,
+   "dur": 0.6,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  }
+ }
+}

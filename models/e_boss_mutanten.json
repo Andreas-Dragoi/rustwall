@@ -1,0 +1,58 @@
+{
+ "key": "boss_mutanten",
+ "kind": "boss",
+ "tris": 2506,
+ "height": 4.050000190734863,
+ "radius": 3.7065065842375917,
+ "clips": {
+  "idle": {
+   "start": 0.0,
+   "dur": 1.8,
+   "loop": true,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "walk": {
+   "start": 2.2,
+   "dur": 1.8,
+   "loop": true,
+   "stride": 1.6,
+   "hit": -1.0
+  },
+  "attack": {
+   "start": 4.4,
+   "dur": 1.2,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.6666666666666666
+  },
+  "hit": {
+   "start": 6.0,
+   "dur": 0.3,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "death": {
+   "start": 6.7,
+   "dur": 2.0,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "slam": {
+   "start": 9.1,
+   "dur": 1.4,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.8
+  },
+  "special": {
+   "start": 10.9,
+   "dur": 1.4,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.7333333333333333
+  }
+ }
+}

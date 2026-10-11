@@ -1,0 +1,73 @@
+{
+ "key": "wueste_geier",
+ "kind": "vat",
+ "role": "air",
+ "verts": 1080,
+ "tris": 924,
+ "width": 1024,
+ "rows": 86,
+ "rpf": 2,
+ "fps": 10,
+ "bounds_min": [
+  -1.6238806575144304,
+  -1.4290185423593604,
+  -1.0564024050349003
+ ],
+ "bounds_size": [
+  3.4352951114256336,
+  3.253439138202874,
+  2.144628253025385
+ ],
+ "height": 1.2563986778259277,
+ "radius": 1.5107089964779596,
+ "clips": {
+  "idle": {
+   "row": 0,
+   "n": 8,
+   "dur": 0.8,
+   "loop": true,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "walk": {
+   "row": 8,
+   "n": 5,
+   "dur": 0.5,
+   "loop": true,
+   "stride": 1.6,
+   "hit": -1.0
+  },
+  "attack": {
+   "row": 13,
+   "n": 7,
+   "dur": 0.6,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.3333333333333333
+  },
+  "hit": {
+   "row": 20,
+   "n": 4,
+   "dur": 0.3,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "death": {
+   "row": 24,
+   "n": 10,
+   "dur": 0.9,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "spawn": {
+   "row": 34,
+   "n": 9,
+   "dur": 0.8,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  }
+ }
+}

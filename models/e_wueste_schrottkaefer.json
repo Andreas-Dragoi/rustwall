@@ -1,0 +1,73 @@
+{
+ "key": "wueste_schrottkaefer",
+ "kind": "vat",
+ "role": "mass",
+ "verts": 892,
+ "tris": 764,
+ "width": 892,
+ "rows": 45,
+ "rpf": 1,
+ "fps": 10,
+ "bounds_min": [
+  -0.6605906700017522,
+  -1.2160000388622285,
+  -0.7067339064073865
+ ],
+ "bounds_size": [
+  1.790779220069115,
+  2.4986329352195793,
+  1.8544413839148413
+ ],
+ "height": 1.0787804126739502,
+ "radius": 0.900122658449829,
+ "clips": {
+  "idle": {
+   "row": 0,
+   "n": 10,
+   "dur": 1.0,
+   "loop": true,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "walk": {
+   "row": 10,
+   "n": 5,
+   "dur": 0.5,
+   "loop": true,
+   "stride": 1.1,
+   "hit": -1.0
+  },
+  "attack": {
+   "row": 15,
+   "n": 7,
+   "dur": 0.6,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.3333333333333333
+  },
+  "hit": {
+   "row": 22,
+   "n": 4,
+   "dur": 0.3,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "death": {
+   "row": 26,
+   "n": 10,
+   "dur": 0.9,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "spawn": {
+   "row": 36,
+   "n": 9,
+   "dur": 0.8,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  }
+ }
+}

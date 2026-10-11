@@ -1,0 +1,73 @@
+{
+ "key": "schleim_helm",
+ "kind": "vat",
+ "role": "mass",
+ "verts": 639,
+ "tris": 1046,
+ "width": 639,
+ "rows": 43,
+ "rpf": 1,
+ "fps": 10,
+ "bounds_min": [
+  -1.4343290429888447,
+  -0.16792525805062053,
+  -1.4215301823779447
+ ],
+ "bounds_size": [
+  2.8686580859776893,
+  2.486907219897283,
+  3.2054863629380788
+ ],
+ "height": 1.6537501599788698,
+ "radius": 0.9450000661611568,
+ "clips": {
+  "idle": {
+   "row": 0,
+   "n": 12,
+   "dur": 1.2,
+   "loop": true,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "walk": {
+   "row": 12,
+   "n": 5,
+   "dur": 0.5,
+   "loop": true,
+   "stride": 1.1,
+   "hit": -1.0
+  },
+  "attack": {
+   "row": 17,
+   "n": 6,
+   "dur": 0.5,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.26666666666666666
+  },
+  "hit": {
+   "row": 23,
+   "n": 4,
+   "dur": 0.3,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "death": {
+   "row": 27,
+   "n": 10,
+   "dur": 0.9,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "spawn": {
+   "row": 37,
+   "n": 6,
+   "dur": 0.5,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  }
+ }
+}

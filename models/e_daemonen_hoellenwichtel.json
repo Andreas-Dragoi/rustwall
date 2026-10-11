@@ -1,0 +1,73 @@
+{
+ "key": "daemonen_hoellenwichtel",
+ "kind": "vat",
+ "role": "mass",
+ "verts": 706,
+ "tris": 736,
+ "width": 706,
+ "rows": 44,
+ "rpf": 1,
+ "fps": 10,
+ "bounds_min": [
+  -0.7131217428391683,
+  -1.2112000780582426,
+  -0.8388087866834459
+ ],
+ "bounds_size": [
+  1.3595091504979986,
+  2.847574365626539,
+  1.8100994109384665
+ ],
+ "height": 1.4301022291183472,
+ "radius": 0.6299999952316284,
+ "clips": {
+  "idle": {
+   "row": 0,
+   "n": 10,
+   "dur": 1.0,
+   "loop": true,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "walk": {
+   "row": 10,
+   "n": 4,
+   "dur": 0.4,
+   "loop": true,
+   "stride": 1.25,
+   "hit": -1.0
+  },
+  "attack": {
+   "row": 14,
+   "n": 7,
+   "dur": 0.6,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.3
+  },
+  "hit": {
+   "row": 21,
+   "n": 4,
+   "dur": 0.3,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "death": {
+   "row": 25,
+   "n": 10,
+   "dur": 0.9,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "spawn": {
+   "row": 35,
+   "n": 9,
+   "dur": 0.8,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  }
+ }
+}

@@ -1,0 +1,73 @@
+{
+ "key": "schleim_schamane",
+ "kind": "vat",
+ "role": "special",
+ "verts": 789,
+ "tris": 1138,
+ "width": 789,
+ "rows": 43,
+ "rpf": 1,
+ "fps": 10,
+ "bounds_min": [
+  -1.5699793677762488,
+  -0.1850907712854044,
+  -1.5559616122292363
+ ],
+ "bounds_size": [
+  3.2475032214632926,
+  3.1671441296009917,
+  3.406875420049119
+ ],
+ "height": 2.236761216680364,
+ "radius": 1.3879509702616581,
+ "clips": {
+  "idle": {
+   "row": 0,
+   "n": 12,
+   "dur": 1.2,
+   "loop": true,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "walk": {
+   "row": 12,
+   "n": 5,
+   "dur": 0.5,
+   "loop": true,
+   "stride": 1.0,
+   "hit": -1.0
+  },
+  "attack": {
+   "row": 17,
+   "n": 6,
+   "dur": 0.5,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.26666666666666666
+  },
+  "hit": {
+   "row": 23,
+   "n": 4,
+   "dur": 0.3,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "death": {
+   "row": 27,
+   "n": 10,
+   "dur": 0.9,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "spawn": {
+   "row": 37,
+   "n": 6,
+   "dur": 0.5,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  }
+ }
+}

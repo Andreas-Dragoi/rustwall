@@ -1,0 +1,58 @@
+{
+ "key": "boss_wueste",
+ "kind": "boss",
+ "tris": 1910,
+ "height": 4.71999979019165,
+ "radius": 2.340765866781065,
+ "clips": {
+  "idle": {
+   "start": 0.0,
+   "dur": 1.6,
+   "loop": true,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "walk": {
+   "start": 2.0,
+   "dur": 1.6,
+   "loop": true,
+   "stride": 2.4,
+   "hit": -1.0
+  },
+  "attack": {
+   "start": 4.0,
+   "dur": 1.2,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.6333333333333333
+  },
+  "hit": {
+   "start": 5.6,
+   "dur": 0.3,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "death": {
+   "start": 6.3,
+   "dur": 2.0,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "slam": {
+   "start": 8.7,
+   "dur": 1.4,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.7333333333333333
+  },
+  "special": {
+   "start": 10.5,
+   "dur": 1.5,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.8666666666666667
+  }
+ }
+}

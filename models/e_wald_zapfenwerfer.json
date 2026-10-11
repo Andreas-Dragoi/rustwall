@@ -1,0 +1,73 @@
+{
+ "key": "wald_zapfenwerfer",
+ "kind": "vat",
+ "role": "ranged",
+ "verts": 853,
+ "tris": 942,
+ "width": 853,
+ "rows": 53,
+ "rpf": 1,
+ "fps": 10,
+ "bounds_min": [
+  -1.114873901731955,
+  -1.208800040435792,
+  -1.7825024622824797
+ ],
+ "bounds_size": [
+  1.83585688966972,
+  3.1706461009206177,
+  2.2997071359479087
+ ],
+ "height": 1.6899999380111694,
+ "radius": 0.6332275042031354,
+ "clips": {
+  "idle": {
+   "row": 0,
+   "n": 12,
+   "dur": 1.2,
+   "loop": true,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "walk": {
+   "row": 12,
+   "n": 6,
+   "dur": 0.6,
+   "loop": true,
+   "stride": 1.4,
+   "hit": -1.0
+  },
+  "attack": {
+   "row": 18,
+   "n": 11,
+   "dur": 1.0,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.6666666666666666
+  },
+  "hit": {
+   "row": 29,
+   "n": 4,
+   "dur": 0.3,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "death": {
+   "row": 33,
+   "n": 11,
+   "dur": 1.0,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "spawn": {
+   "row": 44,
+   "n": 9,
+   "dur": 0.8,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  }
+ }
+}

@@ -1,0 +1,73 @@
+{
+ "key": "schleim_schleimling",
+ "kind": "vat",
+ "role": "mass",
+ "verts": 532,
+ "tris": 904,
+ "width": 532,
+ "rows": 43,
+ "rpf": 1,
+ "fps": 10,
+ "bounds_min": [
+  -1.3665038622558552,
+  -0.1604049988847971,
+  -1.3543144475770774
+ ],
+ "bounds_size": [
+  2.7330077245117104,
+  1.9757567689295186,
+  2.9099974405237865
+ ],
+ "height": 1.2750000357627869,
+ "radius": 0.8420372634634283,
+ "clips": {
+  "idle": {
+   "row": 0,
+   "n": 12,
+   "dur": 1.2,
+   "loop": true,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "walk": {
+   "row": 12,
+   "n": 5,
+   "dur": 0.5,
+   "loop": true,
+   "stride": 1.15,
+   "hit": -1.0
+  },
+  "attack": {
+   "row": 17,
+   "n": 6,
+   "dur": 0.5,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.26666666666666666
+  },
+  "hit": {
+   "row": 23,
+   "n": 4,
+   "dur": 0.3,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "death": {
+   "row": 27,
+   "n": 10,
+   "dur": 0.9,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "spawn": {
+   "row": 37,
+   "n": 6,
+   "dur": 0.5,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  }
+ }
+}

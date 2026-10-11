@@ -1,0 +1,73 @@
+{
+ "key": "schleim_boss",
+ "kind": "vat",
+ "role": "tank",
+ "verts": 856,
+ "tris": 1144,
+ "width": 856,
+ "rows": 47,
+ "rpf": 1,
+ "fps": 10,
+ "bounds_min": [
+  -6.249917471104995,
+  -1.0278520227785448,
+  -6.193846448916945
+ ],
+ "bounds_size": [
+  12.49983494220999,
+  11.16163052247888,
+  13.514493950609047
+ ],
+ "height": 7.797000179529192,
+ "radius": 4.082303701057886,
+ "clips": {
+  "idle": {
+   "row": 0,
+   "n": 12,
+   "dur": 1.2,
+   "loop": true,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "walk": {
+   "row": 12,
+   "n": 9,
+   "dur": 0.9,
+   "loop": true,
+   "stride": 1.1700000000000002,
+   "hit": -1.0
+  },
+  "attack": {
+   "row": 21,
+   "n": 6,
+   "dur": 0.5,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.26666666666666666
+  },
+  "hit": {
+   "row": 27,
+   "n": 4,
+   "dur": 0.3,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "death": {
+   "row": 31,
+   "n": 10,
+   "dur": 0.9,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "spawn": {
+   "row": 41,
+   "n": 6,
+   "dur": 0.5,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  }
+ }
+}

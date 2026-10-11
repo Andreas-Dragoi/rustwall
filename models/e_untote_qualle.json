@@ -1,0 +1,73 @@
+{
+ "key": "untote_qualle",
+ "kind": "vat",
+ "role": "air",
+ "verts": 738,
+ "tris": 1140,
+ "width": 738,
+ "rows": 54,
+ "rpf": 1,
+ "fps": 10,
+ "bounds_min": [
+  -1.1580084984211185,
+  -0.06179291550362786,
+  -1.479715409781255
+ ],
+ "bounds_size": [
+  2.3175914022744366,
+  2.46667416839834,
+  2.95943081956251
+ ],
+ "height": 1.7854254472630273,
+ "radius": 0.6178831890219934,
+ "clips": {
+  "idle": {
+   "row": 0,
+   "n": 12,
+   "dur": 1.2,
+   "loop": true,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "walk": {
+   "row": 12,
+   "n": 10,
+   "dur": 1.0,
+   "loop": true,
+   "stride": 1.5,
+   "hit": -1.0
+  },
+  "attack": {
+   "row": 22,
+   "n": 7,
+   "dur": 0.6,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.26666666666666666
+  },
+  "hit": {
+   "row": 29,
+   "n": 4,
+   "dur": 0.3,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "death": {
+   "row": 33,
+   "n": 13,
+   "dur": 1.2,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "zap": {
+   "row": 46,
+   "n": 8,
+   "dur": 0.7,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.3333333333333333
+  }
+ }
+}

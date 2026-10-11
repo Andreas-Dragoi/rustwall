@@ -1,0 +1,73 @@
+{
+ "key": "mutanten_egelschwarm",
+ "kind": "vat",
+ "role": "fast",
+ "verts": 758,
+ "tris": 788,
+ "width": 758,
+ "rows": 40,
+ "rpf": 1,
+ "fps": 10,
+ "bounds_min": [
+  -1.2121072567072366,
+  -0.6644000455498695,
+  -1.3433529867863825
+ ],
+ "bounds_size": [
+  2.4242145134144732,
+  1.320842882294875,
+  3.173918461842659
+ ],
+ "height": 0.23871999278545264,
+ "radius": 1.022500054597807,
+ "clips": {
+  "idle": {
+   "row": 0,
+   "n": 10,
+   "dur": 1.0,
+   "loop": true,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "walk": {
+   "row": 10,
+   "n": 5,
+   "dur": 0.5,
+   "loop": true,
+   "stride": 1.5,
+   "hit": -1.0
+  },
+  "attack": {
+   "row": 15,
+   "n": 6,
+   "dur": 0.5,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.26666666666666666
+  },
+  "hit": {
+   "row": 21,
+   "n": 4,
+   "dur": 0.3,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "death": {
+   "row": 25,
+   "n": 9,
+   "dur": 0.8,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "spawn": {
+   "row": 34,
+   "n": 6,
+   "dur": 0.5,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  }
+ }
+}

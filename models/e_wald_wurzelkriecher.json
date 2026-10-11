@@ -1,0 +1,89 @@
+{
+ "key": "wald_wurzelkriecher",
+ "kind": "vat",
+ "role": "special",
+ "verts": 1294,
+ "tris": 1292,
+ "width": 1024,
+ "rows": 112,
+ "rpf": 2,
+ "fps": 10,
+ "bounds_min": [
+  -1.212818815103079,
+  -0.6212110684292578,
+  -1.2743093168735504
+ ],
+ "bounds_size": [
+  2.425637630206158,
+  2.003211217202454,
+  2.548618633747101
+ ],
+ "height": 0.960000067949295,
+ "radius": 1.0170201472827103,
+ "clips": {
+  "idle": {
+   "row": 0,
+   "n": 10,
+   "dur": 1.0,
+   "loop": true,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "walk": {
+   "row": 10,
+   "n": 6,
+   "dur": 0.6,
+   "loop": true,
+   "stride": 1.6,
+   "hit": -1.0
+  },
+  "attack": {
+   "row": 16,
+   "n": 7,
+   "dur": 0.6,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.3333333333333333
+  },
+  "hit": {
+   "row": 23,
+   "n": 4,
+   "dur": 0.3,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "death": {
+   "row": 27,
+   "n": 11,
+   "dur": 1.0,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "dig": {
+   "row": 38,
+   "n": 8,
+   "dur": 0.7,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "under": {
+   "row": 46,
+   "n": 4,
+   "dur": 0.4,
+   "loop": true,
+   "stride": 1.6,
+   "hit": -1.0
+  },
+  "rise": {
+   "row": 50,
+   "n": 6,
+   "dur": 0.5,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  }
+ }
+}

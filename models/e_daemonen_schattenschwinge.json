@@ -1,0 +1,73 @@
+{
+ "key": "daemonen_schattenschwinge",
+ "kind": "vat",
+ "role": "air",
+ "verts": 910,
+ "tris": 708,
+ "width": 910,
+ "rows": 39,
+ "rpf": 1,
+ "fps": 10,
+ "bounds_min": [
+  -1.4216878458658828,
+  -0.7135768336928658,
+  -1.4218780298509224
+ ],
+ "bounds_size": [
+  2.826907057187386,
+  2.67377465955948,
+  2.9099054537121343
+ ],
+ "height": 1.472240686416626,
+ "radius": 1.5006555445197802,
+ "clips": {
+  "idle": {
+   "row": 0,
+   "n": 6,
+   "dur": 0.6,
+   "loop": true,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "walk": {
+   "row": 6,
+   "n": 5,
+   "dur": 0.5,
+   "loop": true,
+   "stride": 2.4,
+   "hit": -1.0
+  },
+  "attack": {
+   "row": 11,
+   "n": 6,
+   "dur": 0.5,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.26666666666666666
+  },
+  "dive": {
+   "row": 17,
+   "n": 8,
+   "dur": 0.7,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.4666666666666667
+  },
+  "hit": {
+   "row": 25,
+   "n": 4,
+   "dur": 0.3,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "death": {
+   "row": 29,
+   "n": 10,
+   "dur": 0.9,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  }
+ }
+}

@@ -1,0 +1,65 @@
+{
+ "key": "boss_daemonen",
+ "kind": "boss",
+ "tris": 2156,
+ "height": 4.623176097869873,
+ "radius": 2.852379261460673,
+ "clips": {
+  "idle": {
+   "start": 0.0,
+   "dur": 1.6,
+   "loop": true,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "walk": {
+   "start": 2.0,
+   "dur": 1.4,
+   "loop": true,
+   "stride": 2.6,
+   "hit": -1.0
+  },
+  "attack": {
+   "start": 3.8,
+   "dur": 1.1,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.6
+  },
+  "hit": {
+   "start": 5.3,
+   "dur": 0.3,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "death": {
+   "start": 6.0,
+   "dur": 2.0,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "summon": {
+   "start": 8.4,
+   "dur": 1.3,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.7333333333333333
+  },
+  "special": {
+   "start": 10.1,
+   "dur": 1.2,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.6666666666666666
+  },
+  "slam": {
+   "start": 11.7,
+   "dur": 1.4,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.8
+  }
+ }
+}

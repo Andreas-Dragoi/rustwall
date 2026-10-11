@@ -1,0 +1,73 @@
+{
+ "key": "wueste_kaktusschuetze",
+ "kind": "vat",
+ "role": "ranged",
+ "verts": 987,
+ "tris": 938,
+ "width": 987,
+ "rows": 57,
+ "rpf": 1,
+ "fps": 10,
+ "bounds_min": [
+  -0.8459704901913112,
+  -1.2100000703334806,
+  -0.9522805151472273
+ ],
+ "bounds_size": [
+  1.9932341172675128,
+  3.4869423210552632,
+  2.949903110201714
+ ],
+ "height": 1.9600001573562622,
+ "radius": 0.7000000134065146,
+ "clips": {
+  "idle": {
+   "row": 0,
+   "n": 14,
+   "dur": 1.4,
+   "loop": true,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "walk": {
+   "row": 14,
+   "n": 7,
+   "dur": 0.7,
+   "loop": true,
+   "stride": 1.3,
+   "hit": -1.0
+  },
+  "attack": {
+   "row": 21,
+   "n": 11,
+   "dur": 1.0,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.5666666666666667
+  },
+  "hit": {
+   "row": 32,
+   "n": 4,
+   "dur": 0.3,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "death": {
+   "row": 36,
+   "n": 12,
+   "dur": 1.1,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "spawn": {
+   "row": 48,
+   "n": 9,
+   "dur": 0.8,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  }
+ }
+}

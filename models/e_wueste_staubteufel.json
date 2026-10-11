@@ -1,0 +1,73 @@
+{
+ "key": "wueste_staubteufel",
+ "kind": "vat",
+ "role": "fast",
+ "verts": 442,
+ "tris": 470,
+ "width": 442,
+ "rows": 38,
+ "rpf": 1,
+ "fps": 10,
+ "bounds_min": [
+  -0.7501714913180833,
+  -1.2100000494718552,
+  -0.9034891381695707
+ ],
+ "bounds_size": [
+  1.5641039574740518,
+  2.988060733675957,
+  1.856105142422639
+ ],
+ "height": 1.387499988079071,
+ "radius": 0.7200000286102295,
+ "clips": {
+  "idle": {
+   "row": 0,
+   "n": 6,
+   "dur": 0.6,
+   "loop": true,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "walk": {
+   "row": 6,
+   "n": 4,
+   "dur": 0.4,
+   "loop": true,
+   "stride": 2.4,
+   "hit": -1.0
+  },
+  "attack": {
+   "row": 10,
+   "n": 6,
+   "dur": 0.5,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.26666666666666666
+  },
+  "hit": {
+   "row": 16,
+   "n": 4,
+   "dur": 0.3,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "death": {
+   "row": 20,
+   "n": 9,
+   "dur": 0.8,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "spawn": {
+   "row": 29,
+   "n": 9,
+   "dur": 0.8,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  }
+ }
+}

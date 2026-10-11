@@ -1,0 +1,73 @@
+{
+ "key": "daemonen_portal",
+ "kind": "vat",
+ "role": "special",
+ "verts": 557,
+ "tris": 549,
+ "width": 557,
+ "rows": 37,
+ "rpf": 1,
+ "fps": 10,
+ "bounds_min": [
+  -1.1816829985380173,
+  -1.2151016381010413,
+  -1.972442747628665
+ ],
+ "bounds_size": [
+  2.3633659970760346,
+  3.9651015394553504,
+  3.1304427180647614
+ ],
+ "height": 1.2999999299645424,
+ "radius": 1.1688490908731761,
+ "clips": {
+  "idle": {
+   "row": 0,
+   "n": 12,
+   "dur": 1.2,
+   "loop": true,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "walk": {
+   "row": 12,
+   "n": 1,
+   "dur": 0.1,
+   "loop": true,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "attack": {
+   "row": 13,
+   "n": 5,
+   "dur": 0.4,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.2
+  },
+  "hit": {
+   "row": 18,
+   "n": 4,
+   "dur": 0.3,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "death": {
+   "row": 22,
+   "n": 9,
+   "dur": 0.8,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "spawn": {
+   "row": 31,
+   "n": 6,
+   "dur": 0.5,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  }
+ }
+}
