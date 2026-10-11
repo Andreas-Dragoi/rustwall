@@ -181,6 +181,11 @@ func apply_quality() -> void:
 	var vp := get_viewport()
 	var q := quality()
 	vp.scaling_3d_scale = [0.7, 0.85, 1.0][q]
+	if web_mobile() or arg("s3d") != "":
+		# Handy-Browser: Oberfläche in voller Bildschirmschärfe, 3D-Welt mit etwa 1300 Bildpunkten Breite (spart Speicher)
+		var w: float = maxf(float(DisplayServer.window_get_size().x), 1.0)
+		var target: float = [1300.0, 1600.0, 2000.0][q]
+		vp.scaling_3d_scale = clampf(target / w, 0.35, 1.0) if arg("s3d") == "" else float(arg("s3d"))
 	vp.msaa_3d = [Viewport.MSAA_DISABLED, Viewport.MSAA_DISABLED, Viewport.MSAA_2X][q]
 	Engine.max_fps = 60 if P.d.settings.get("fps60", not web_mobile()) else 30
 	if autotest != "":

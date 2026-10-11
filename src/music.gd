@@ -62,6 +62,10 @@ func _ready() -> void:
 		var p := AudioStreamPlayer.new()
 		p.bus = "Music"
 		p.volume_db = -80.0
+		# Browser: Musik als Datenstrom abspielen. Im Standard („Sample“) würde das ganze Stück vorab
+		# entpackt (über 100 MB) – auf dem iPhone kommt dann keine Musik; Lautstärke-Blenden gehen nur so.
+		if OS.has_feature("web"):
+			p.playback_type = AudioServer.PLAYBACK_TYPE_STREAM
 		add_child(p)
 		_pl.append(p)
 	_last_us = Time.get_ticks_usec()

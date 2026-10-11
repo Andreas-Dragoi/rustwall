@@ -25,6 +25,7 @@ func _ready() -> void:
 	G.main = self
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	G.apply_quality()
+	get_viewport().size_changed.connect(G.apply_quality)
 	hud = Hud.new()
 	add_child(hud)
 	G.hud = hud
