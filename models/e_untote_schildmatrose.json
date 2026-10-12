@@ -1,0 +1,81 @@
+{
+ "key": "untote_schildmatrose",
+ "kind": "vat",
+ "role": "shield",
+ "verts": 739,
+ "tris": 866,
+ "width": 739,
+ "rows": 63,
+ "rpf": 1,
+ "fps": 10,
+ "bounds_min": [
+  -0.8864515312060297,
+  -2.075199968624114,
+  -0.7711140348017242
+ ],
+ "bounds_size": [
+  2.089990219652743,
+  4.595883949812731,
+  2.345250587768582
+ ],
+ "height": 2.200000047683716,
+ "radius": 0.8354639481049251,
+ "clips": {
+  "idle": {
+   "row": 0,
+   "n": 14,
+   "dur": 1.4,
+   "loop": true,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "walk": {
+   "row": 14,
+   "n": 9,
+   "dur": 0.9,
+   "loop": true,
+   "stride": 1.53,
+   "hit": -1.0
+  },
+  "attack": {
+   "row": 23,
+   "n": 9,
+   "dur": 0.8,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.4
+  },
+  "hit": {
+   "row": 32,
+   "n": 4,
+   "dur": 0.3,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "death": {
+   "row": 36,
+   "n": 12,
+   "dur": 1.1,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "block": {
+   "row": 48,
+   "n": 6,
+   "dur": 0.5,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "spawn": {
+   "row": 54,
+   "n": 9,
+   "dur": 0.8,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  }
+ }
+}

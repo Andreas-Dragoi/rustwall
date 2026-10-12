@@ -1,0 +1,81 @@
+{
+ "key": "mutanten_brutkessel",
+ "kind": "vat",
+ "role": "brood",
+ "verts": 805,
+ "tris": 1090,
+ "width": 805,
+ "rows": 63,
+ "rpf": 1,
+ "fps": 10,
+ "bounds_min": [
+  -1.6090339507553628,
+  -2.0799999332427976,
+  -1.2513625325696436
+ ],
+ "bounds_size": [
+  3.1917103613227202,
+  4.857907791612451,
+  2.5249401906663014
+ ],
+ "height": 2.3438994884490967,
+ "radius": 1.0195970207664065,
+ "clips": {
+  "idle": {
+   "row": 0,
+   "n": 12,
+   "dur": 1.2,
+   "loop": true,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "walk": {
+   "row": 12,
+   "n": 8,
+   "dur": 0.8,
+   "loop": true,
+   "stride": 1.04,
+   "hit": -1.0
+  },
+  "attack": {
+   "row": 20,
+   "n": 8,
+   "dur": 0.7,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.36666666666666664
+  },
+  "hit": {
+   "row": 28,
+   "n": 4,
+   "dur": 0.3,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "death": {
+   "row": 32,
+   "n": 11,
+   "dur": 1.0,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "brood": {
+   "row": 43,
+   "n": 11,
+   "dur": 1.0,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.6
+  },
+  "spawn": {
+   "row": 54,
+   "n": 9,
+   "dur": 0.8,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  }
+ }
+}

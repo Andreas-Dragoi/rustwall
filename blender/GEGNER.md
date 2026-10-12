@@ -196,3 +196,28 @@ Alle Umrisse einer Familie nebeneinander (für die Abnahme):
   `shaders/vat.gdshader` liest je Eckpunkt mit `texelFetch` zwei Bilder des Clips, rechnet dazwischen und blendet zum vorigen Clip über.
 - `src/horde.gd` übergibt je Figur über `INSTANCE_CUSTOM` Clip A + Blickrichtung + „Zubehör weg“, Fortschritt A, Clip B + Mischung,
   Fortschritt B und über die Instanzfarbe Zustandsfärbung und Trefferblitz.
+
+## 8. Paket G2: neue Rollen, Minibosse, Weltboss (Kapitel 6.3 / 6.5)
+
+| Skript | Arten |
+|---|---|
+| `enemies2_kit.py` | gemeinsame Abläufe: `biped(...)` (Zweibeiner) und `quad(...)` (Vierbeiner/Krabbler) mit allen Pflicht-Clips und dem Rollen-Clip, `mound()` (Erdhügel der Tunnelgräber) |
+| `enemies2_schleim.py` | Brutschleim, Deckelschild, Klauschleim, Miniboss Glibberkoloss (mit `slime()` aus `enemies_schleim.py`, Parameter `more=` für Zusatz-Clips) |
+| `enemies2_wald.py` · `_wueste.py` · `_untote.py` · `_mutanten.py` · `_eis.py` · `_daemonen.py` | je drei neue Rollen + Miniboss der Familie |
+| `enemies2_leviathan.py` | Weltboss `boss_leviathan` (echte Boss-Figur) |
+
+Rollen-Clips (das Spiel ruft sie über `anims` in `src/data.gd`):
+
+| Rolle (`role`) | Clip | wann |
+|---|---|---|
+| `healer` | `heal` | Heilpuls |
+| `shield` | `block` | ein Treffer prallt am Schild ab (Teil `shield` bzw. Zubehör vorn) |
+| `digger` | `dig`, `under` (Schleife, nur der Erdhügel `mound` ist sichtbar), `rise` | unter Mauern hindurch |
+| `jammer` | `jam` | Wurf auf einen Turm |
+| `thief` | `grab` | greift in das Lager |
+| `brood` | `brood` | Junge schlüpfen |
+| `miniboss` | `skill` | Fähigkeit mit roter Bodenmarkierung |
+
+Grenzen: die neuen Rollen wie Fernkämpfer (1 600 Eckpunkte), Minibosse wie Brocken (2 800).
+Weitere Clips in Paket G2: `kneel` (Kanonier) und `puff` (Feuerspeier) spielt das Spiel vor jedem Schuss (`anims.aim`),
+der Yeti wirft mit `throw` (`anims.shot` = eigener Clip für Fernschüsse).

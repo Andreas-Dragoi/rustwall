@@ -33,7 +33,7 @@ func _fresh() -> void:
 # ---------------------------------------------------------------- reine Regeln (Paket 4)
 func _rules() -> void:
 	_fresh()
-	T._check(D.OUTPOSTS.size() == 7, "OUTPOSTS: sieben Gebiete in data.gd")
+	T._check(D.OUTPOSTS.size() == D.AREAS.size(), "OUTPOSTS: je Gebiet einer in data.gd")
 	for a in D.AREAS:
 		T._check(D.OUTPOSTS.has(String(a.key)) and D.OUTPOSTS[String(a.key)].effects.size() >= 2, "Vorteile für %s" % a.key)
 	# Holzproduktion mit und ohne Außenbasis

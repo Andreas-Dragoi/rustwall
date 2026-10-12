@@ -7,6 +7,9 @@ const D = preload("res://src/data.gd")
 const UI = preload("res://src/ui.gd")
 const CD = preload("res://src/companion_data.gd")
 const Models = preload("res://src/models.gd")
+const CompanionPose = preload("res://src/companion_pose.gd")
+const DW = preload("res://src/data_welt.gd")
+const WS = preload("res://src/welt_state.gd")
 
 const ABIL_ICON := {"coins": "res_coins", "heavy": "ui_pack", "protect": "ui_shield", "mine": "ui_hammer", "dig": "ui_hammer",
 	"chop": "res_wood", "scout": "ui_map", "luck": "ui_clover", "chests": "ui_chest", "fight": "ui_sword", "run": "ui_boot",
@@ -139,7 +142,8 @@ func _detail(c: VBoxContainer, key: String) -> void:
 	# ---- Vorschau
 	var fly: bool = String(def.move) == "fly"
 	var big: bool = key in ["golem", "husky", "schnecke"]
-	var pv: Control = S.preview_model("comp:" + key, func() -> Node3D: return Models.glb("comp_" + key), 3.3 if big else 2.6, 1.15 if fly else (0.6 if big else 0.45))
+	# Paket Welt: die Vorschau bewegt sich (läuft auf der Stelle, schaut, wedelt, flattert)
+	var pv: Control = S.preview_model("comp:" + key, func() -> Node3D: return CompanionPose.new().setup(key), 3.3 if big else 2.6, 1.15 if fly else (0.6 if big else 0.45))
 	pv.custom_minimum_size = Vector2(620, 400)
 	var inner: Control = pv
 	if not owned:
@@ -189,6 +193,12 @@ func _detail(c: VBoxContainer, key: String) -> void:
 		t.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		stats.add_child(UI.hbox(12, [UI.pic(String(ABIL_ICON.get(an, "ui_star")), 40.0, "star", UI.SKY), t]))
 		i += 1
+	# Paket Welt: Köder (alle Begleiter ab Stufe 3) und Sammeln in der Basis
+	var lure_ok := owned and lv >= DW.LURE_LEVEL
+	var lt := UI.vbox(-2, [UI.label("Köder" + ("" if lure_ok else " (ab Stufe %d)" % DW.LURE_LEVEL), 24, UI.SKY if lure_ok else UI.GREY),
+		UI.text("Wird es eng, lockt er die Gegner für %d s von dir weg." % int(DW.LURE_TIME), 20, UI.TEXT)])
+	lt.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	stats.add_child(UI.hbox(12, [UI.pic("ui_target", 40.0, "star", UI.SKY if lure_ok else UI.GREY), lt]))
 	info.add_child(UI.card(stats, UI.NAVY, 18, Color(UI.EDGE, 0.8)))
 	top.add_child(info)
 	c.add_child(top)
@@ -201,6 +211,38 @@ func _detail(c: VBoxContainer, key: String) -> void:
 		hb.add_child(UI.spacer(true))
 		hb.add_child(UI.badge("in deiner Truppe", Color("2F8D4E"), 20))
 	c.add_child(UI.card(hb, UI.NAVY_L, 12))
+	_nest(c)
+
+
+## Paket Welt: Brutnest mit Begleiter-Eiern (aus Schleimnestern, seltenen Kisten und von der Karawane).
+func _nest(c: VBoxContainer) -> void:
+	var eggs: Array = WS.eggs()
+	var v := UI.vbox(8)
+	v.add_child(UI.hbox(12, [UI.pic("p_egg_nest", 48.0, "ui_heart"), UI.label("Brutnest – %d von %d Eiern" % [eggs.size(), DW.EGG_MAX], 25, UI.GOLD)]))
+	if eggs.is_empty():
+		v.add_child(UI.text("Eier findest du in Schleimnestern der Expeditionen, in seltenen Kisten und bei der Händler-Karawane. Sie schlüpfen nach %d Stunden." % int(DW.EGG_HATCH_HOURS), 20, UI.TEXT))
+	for i in eggs.size():
+		var left := WS.egg_left(i)
+		var k := String(eggs[i].key)
+		var known := CD.owned(k)
+		var nm := UI.label("Ei: %s" % ("ein " + String(CD.def(k).name) if known else "Überraschung!"), 22)
+		var bar := UI.bar(1.0 - left / (DW.EGG_HATCH_HOURS * 3600.0), UI.GOLD if left <= 0.0 else D.C_BAR_BLUE, Vector2(220, 20))
+		bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		var row := UI.hbox(12, [UI.pic("p_egg", 48.0, "ui_heart"), nm, bar])
+		var idx := i
+		if left <= 0.0:
+			var b := UI.button("Schlüpfen lassen", S.act(func():
+				var txt := WS.hatch(idx)
+				if txt != "":
+					Sfx.play("egg_hatch", -3.0)
+					S.toast(txt)), "green", 22, "ui_star")
+			b.custom_minimum_size = Vector2(230, 56)
+			row.add_child(b)
+		else:
+			row.add_child(UI.label(UI.time_text(left), 22, UI.TEXT))
+		v.add_child(row)
+	c.add_child(UI.card(v, UI.NAVY_L, 12))
 
 
 ## Knopf unter der Vorschau, wenn der Begleiter noch fehlt: herstellen, kaufen oder Hinweis zum Finden.

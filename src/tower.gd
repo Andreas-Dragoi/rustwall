@@ -19,6 +19,7 @@ var head: Node3D
 var pitch: Node3D
 var muzzles: Array[Node3D] = []
 var shots := 0
+var aim := ""                # Paket F: Zielwahl je Turm ("" automatisch, near, strong, fly, boss)
 
 var _target = null
 var _think := 0.0
@@ -329,6 +330,10 @@ func _physics_process(dt: float) -> void:
 				_target = horde.densest(me, rng, def.get("min_range", 0.0), def.get("splash", 3.0), _air)
 			_:
 				_target = horde.nearest(me, rng, 0.0, false, _air)
+		if aim != "":
+			var at = _aim_target(horde, me, rng)
+			if at != null:
+				_target = at
 	_cool -= dt * rate
 	_recoil = maxf(0.0, _recoil - dt * 8.0)
 	pitch.position.z = _pitch_z - _recoil * 0.25
@@ -361,6 +366,23 @@ func _physics_process(dt: float) -> void:
 				_fire(_target, to)
 	if _flame:
 		_flame.emitting = firing
+
+
+## Paket F: eingestelltes Ziel (nächster, stärkster, fliegend, Boss). null = keins in Reichweite, dann gilt die Standardwahl.
+func _aim_target(horde, me: Vector2, rng: float):
+	match aim:
+		"near":
+			return horde.nearest(me, rng, float(def.get("min_range", 0.0)), false, _air)
+		"strong":
+			return horde.strongest(me, rng, _air)
+		"fly":
+			if _air != 1:
+				return horde.nearest(me, rng, float(def.get("min_range", 0.0)), false, 2)
+		"boss":
+			var b = horde.boss
+			if b != null and b.st < 2 and not b.under and not (_air == 1 and b.fly) and not (_air == 2 and not b.fly) and b.p.distance_to(me) < rng + b.r:
+				return b
+	return null
 
 
 func _fire(e, to: Vector2) -> void:

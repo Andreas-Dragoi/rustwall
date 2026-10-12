@@ -13,6 +13,9 @@ const Models = preload("res://src/models.gd")
 const Vat = preload("res://src/vat.gd")
 const AI = preload("res://src/enemy_ai.gd")
 const BossFig = preload("res://src/boss_fig.gd")
+const BossCtrl = preload("res://src/boss_ctrl.gd")
+const EliteFx = preload("res://src/elite_fx.gd")
+const LO = preload("res://src/liveops.gd")                 # Paket L: Ereignisse, Halloween, Albtraum+
 
 const ST_MOVE := 0
 const ST_ATTACK := 1
@@ -107,6 +110,19 @@ class E:
 	var lead = null            # Schwarm: übernimmt Wachposten/Leine vom ersten Tier
 	var hunter := false        # Elitegegner: jagt den Helden auf jede Entfernung, auch ohne Ziel-Gebäude
 	var next_phase := ""       # Boss: diese Art bricht beim Tod hervor
+	# ---- Paket G2
+	var elite := false         # Elite-Gegner: Krone, Aura, Namensschild, eigene Farbe
+	var kid := false           # Junges einer Brutmutter (brütet nicht selbst)
+	var jam_tw = null          # Turmstörer: Ziel-Turm · Dieb: Ziel-Lager
+	var loot := {}             # Dieb: gestohlene Rohstoffe
+	var blk_t := -9.0          # Schildträger: letzter Block (Ton, Clip)
+	var aimed := false         # Fernkämpfer: Vorbereitungs-Clip (knien, aufblähen) für den nächsten Schuss läuft schon
+	var expose := 0.0          # Boss: erschöpft, Schwachstelle offen (Restzeit)
+	var rage := false          # Boss: Wutphase
+	var phase := 1             # Boss: Phase
+	var specs: Array = []      # Boss: Sonderangriffe im Wechsel (ab Phase 2 mit Zusatz)
+	var bait_t := 0.0          # Lockköder: läuft so lange zum Köder
+	var bait_p := Vector2.ZERO
 
 
 var list: Array = []
@@ -114,6 +130,12 @@ var alive := 0
 var kills := 0
 var boss: E = null
 var boss_name := ""
+var mini: E = null            # Miniboss mit eigener Lebensleiste (Paket G2)
+var bossctl: RefCounted       # Phasen, Wut, Schwachstelle, Auftritt der Bosse (src/boss_ctrl.gd)
+var elite_fx: Node3D          # Krone, Aura und Namensschild der Elite-Gegner und Minibosse (src/elite_fx.gd)
+var _aoe := false             # gerade läuft Flächenschaden (explode): Schilde blocken ihn nicht
+var _grid_ok := false         # Raster dieses Schritts ist vollständig (kein Gegner seither erzeugt)
+var _siege_n := 0             # Expedition: gezählte Belagerungs-Gegner (jeder MINI_EXP_EVERY-te wird ein Miniboss)
 var aggro_range := 13.0
 var logic_ms := 0.0           # Rechenzeit der Logik je Schritt (geglättet)
 var logic_last := 0.0         # … des letzten Schritts
@@ -147,13 +169,17 @@ var _dbg_done := false
 func _ready() -> void:
 	_rng.seed = 4711
 	ai = AI.new(self)
+	bossctl = BossCtrl.new(self)
+	elite_fx = EliteFx.new()
+	add_child(elite_fx)
 	_portal_t = int(D.ENEMY_INDEX.get("daemonen_portal", -1))
 	for t in D.ENEMIES.size():
 		var def: Dictionary = D.ENEMIES[t]
 		_vis.append(null)
 		_cnt.append(0)
 		_flags.append(AI.flags_of(def))
-		_elite.append(def.role == "tank" or def.role == "boss" or (t >= D.E_FIRST_NEW and def.role == "special") or t == D.E_SHAMAN)
+		_elite.append(def.role == "tank" or def.role == "boss" or (t >= D.E_FIRST_NEW and def.role == "special") or t == D.E_SHAMAN
+			or ["healer", "jammer", "brood", "thief", "miniboss"].has(String(def.role)))
 		_near.append(t == D.E_SLIME or t == D.E_BARREL or (t >= D.E_FIRST_NEW and (def.role == "mass" or def.role == "special")))
 		var fam: Dictionary = D.FAMILIES[def.family]
 		_slowmul.append(1.0 - 0.45 * float(fam.get("slow", 1.0)))
@@ -279,6 +305,7 @@ func spawn(t: int, pos: Vector2, hp_mult := 1.0, dmg_mult := 1.0, player_dmg := 
 	var def: Dictionary = D.ENEMIES[t]
 	var vis := _ensure_vis(t)
 	var e := E.new()
+	_grid_ok = false
 	e.t = t
 	e.p = pos
 	e.mhp = def.hp * hp_mult
@@ -304,6 +331,7 @@ func spawn(t: int, pos: Vector2, hp_mult := 1.0, dmg_mult := 1.0, player_dmg := 
 	e.tint = Color(tn.r * k, tn.g * k * _rng.randf_range(0.96, 1.03), tn.b * k * _rng.randf_range(0.92, 1.0))
 	e.yaw = _rng.randf() * TAU
 	e.ct = _rng.randf()
+	LO.on_spawn(e, def)                                       # Paket L: Kürbis-Schleime (Halloween), Albtraum+ Hast
 	if vis.vat != null:
 		e.dlim = float(vis.vat.dur[int(vis.vat.clips.get("death", 0))]) + SINK_T if vis.vat.clips.has("death") else 0.5
 	list.append(e)
@@ -323,6 +351,12 @@ func spawn(t: int, pos: Vector2, hp_mult := 1.0, dmg_mult := 1.0, player_dmg := 
 			e.fig = fig
 			e.vs = k0
 			e.dlim = fig.clip_len("death") + 1.0
+		bossctl.on_spawn(e)
+	elif def.role == "miniboss":
+		if mini == null or mini.st == ST_DEAD:
+			mini = e
+		elite_fx.add(e)
+		Sfx.play("miniboss_arrive", -4.0)
 	_snd(e, "spawn", -14.0, 0.25)
 	return e
 
@@ -336,22 +370,29 @@ func spawn_for_area(area: int, pos: Vector2, hp_mult := 1.0, dmg_mult := 1.0, pl
 
 
 func spawn_family(fam: String, pos: Vector2, hp_mult := 1.0, dmg_mult := 1.0, player_dmg := 1.0, role := "") -> E:
+	prewarm(fam)
 	var elite := role == "elite"
 	# Rollen der Expedition: guard/raid = gemischt, siege = bevorzugt Brecher und Fernkämpfer
+	if role == "guard" or role == "raid":
+		role = ""
+	if role == "siege" or role == "miniboss":
+		# Expedition: der MINI_EXP_EVERY-te Belagerungs-Gegner ist der Miniboss der Familie (einmal je Kampf)
+		_siege_n += 1
+		var mt := D.family_mini(fam)
+		if mt >= 0 and (role == "miniboss" or (_siege_n == D.MINI_EXP_EVERY and (mini == null or mini.st == ST_DEAD))):
+			if role == "miniboss":
+				return spawn(mt, pos, hp_mult, dmg_mult, player_dmg)
+			# mitten im Großangriff: ein Zwischengegner, kein zweiter Endgegner (Leben und Schaden gedämpft)
+			return spawn(mt, pos, hp_mult * D.MINI_EXP_HP, dmg_mult * 0.8, player_dmg * 0.8)
+		if role == "miniboss":
+			role = ""
 	if role == "siege":
 		role = ["tank", "ranged", ""][_rng.randi() % 3]
-	elif role == "guard" or role == "raid":
-		role = ""
 	var t := strongest_type(fam) if elite else pick_type(fam, role)
 	var def: Dictionary = D.ENEMIES[t]
-	var e := spawn(t, pos, hp_mult * (2.5 if elite else 1.0), dmg_mult * (1.3 if elite else 1.0), player_dmg * (1.3 if elite else 1.0))
+	var e := spawn(t, pos, hp_mult * (D.ELITE_HP if elite else 1.0), dmg_mult * (1.3 if elite else 1.0), player_dmg * (1.3 if elite else 1.0))
 	if elite:
-		e.sc *= 1.2
-		e.vs *= 1.2
-		e.r *= 1.15
-		e.coins *= 3
-		e.hunter = true
-		e.tint = Color(e.tint.r * 1.25, e.tint.g * 1.1, e.tint.b * 0.8)
+		make_elite(e)
 	elif def.has("swarm"):
 		# kommt als Schwarm: die übrigen Tiere stehen dicht beim ersten und übernehmen dessen Wachposten
 		var n := _rng.randi_range(int(def.swarm[0]), int(def.swarm[1])) - 1
@@ -366,6 +407,70 @@ func spawn_family(fam: String, pos: Vector2, hp_mult := 1.0, dmg_mult := 1.0, pl
 			o.lead = e
 			o.coins = 0 if i % 2 == 1 else o.coins
 	return e
+
+
+var _warm := {}
+
+
+## Lädt Modelle und Animations-Texturen aller Arten einer Familie vorab (beim ersten Gegner der Familie bzw. beim Planen
+## einer Welle), damit später beim Brüten, Teilen oder Beschwören kein Ruckler in der Gegner-Logik entsteht.
+func prewarm(fam: String) -> void:
+	if _warm.has(fam):
+		return
+	_warm[fam] = true
+	for i in D.family_all(fam):
+		_ensure_vis(i)
+	var mt := D.family_mini(fam)
+	if mt >= 0:
+		_ensure_vis(mt)
+
+
+## Macht einen Gegner zum Elite-Gegner (6.2): mehr Größe, Münzen, eigene Farbe, Krone, Aura und Namensschild; jagt den Helden.
+## Das Leben stellt der Aufrufer ein (D.ELITE_HP).
+func make_elite(e: E) -> void:
+	e.elite = true
+	e.sc *= 1.2
+	e.vs *= 1.2
+	e.r *= 1.15
+	e.coins *= 3
+	e.hunter = true
+	e.tint = Color(e.tint.r * D.ELITE_COLOR.r, e.tint.g * D.ELITE_COLOR.g, e.tint.b * D.ELITE_COLOR.b)
+	elite_fx.add(e)
+
+
+## Flut (Paket G2): ergänzt die Warteschlange einer Welle um die neuen Schleim-Rollen (D.FLOOD_EXTRA), Elite-Gegner
+## (ab Woche D.ELITE_WEEK, Welle 2+) und in der mittleren Welle einen Miniboss (ab Woche D.MINI_WEEK).
+## Kennung in der Warteschlange: Art + 1000 = Elite, Art + 2000 = Miniboss (spawn_planned löst sie auf).
+func plan_wave(queue: Array, week: int, wave: int, waves: int, n: int, guests: Array) -> void:
+	prewarm("schleim")
+	for g in guests:
+		prewarm(String(g))
+	for key in D.FLOOD_EXTRA:
+		var ex: Array = D.FLOOD_EXTRA[key]
+		if week >= int(ex[0]) and wave > 1:
+			for i in int(round(n * float(ex[1]))):
+				queue.append(int(D.ENEMY_INDEX[key]))
+	if wave > 1:
+		for i in D.flood_elites(week) + LO.extra_elites():      # Paket L: Elite-Flut
+			var fam := String(guests[i % guests.size()]) if not guests.is_empty() and i % 2 == 1 else "schleim"
+			queue.append(1000 + strongest_type(fam))
+	if week >= D.MINI_WEEK and wave == maxi(1, int(ceil(waves / 2.0))):
+		var fam2 := String(guests[0]) if not guests.is_empty() else "schleim"
+		var mt := D.family_mini(fam2)
+		if mt >= 0:
+			queue.append(2000 + mt)
+
+
+func spawn_planned(code: int, pos: Vector2, hp_mult: float, dmg_mult: float) -> E:
+	if code >= 2000:
+		var m := spawn(code - 2000, pos, hp_mult, dmg_mult, dmg_mult)
+		P.toast.emit("Miniboss: %s!" % String(D.ENEMIES[m.t].name))
+		return m
+	if code >= 1000:
+		var e := spawn(code - 1000, pos, hp_mult * D.ELITE_HP, dmg_mult * 1.3, dmg_mult * 1.3)
+		make_elite(e)
+		return e
+	return spawn(code, pos, hp_mult, dmg_mult, dmg_mult)
 
 
 ## Stärkste Nicht-Boss-Art einer Familie (meistes Leben) – für Elite-Gegner.
@@ -384,7 +489,7 @@ func strongest_type(fam: String) -> int:
 func pick_type(fam: String, role := "") -> int:
 	if not _fam_cache.has(fam):
 		var by := {}
-		for i in D.family_enemies(fam):
+		for i in D.family_all(fam):
 			var r := String(D.ENEMIES[i].role)
 			if not by.has(r):
 				by[r] = []
@@ -426,6 +531,9 @@ func spawn_boss(area: int, pos: Vector2, hp_mult := 1.0, dmg_mult := 1.0) -> E:
 	return e
 
 
+var _line_n := 0
+
+
 ## Test: --spawn=untote_matrose:200[,untote_qualle:20] stellt beim Kampfbeginn Gegner rund um den Helden auf (--spawn_r=Abstand).
 func _debug_spawn() -> void:
 	var arg := G.arg("spawn")
@@ -442,9 +550,18 @@ func _debug_spawn() -> void:
 		for i in n:
 			var a := _rng.randf() * TAU
 			var q := pp + Vector2(cos(a), sin(a)) * (rad + sqrt(float(i)) * 0.5 * _rng.randf_range(0.6, 1.4))
+			if G.arg("spawn_line") != "":                  # Bilder: alle Arten nebeneinander vor dem Helden
+				var gap := float(G.arg("spawn_line"))
+				q = pp + Vector2((_line_n - 0.5 * (arg.split(",").size() - 1)) * gap, -rad)
+				_line_n += 1
 			if G.field.is_solid(q):
 				continue
 			var e := spawn(int(D.ENEMY_INDEX[kv[0]]), q, float(G.arg("spawn_hp", "1")), 1.0, 1.0)
+			if G.arg("spawn_stun") != "":                  # Bilder: stehen still (idle), schauen zum Helden
+				e.stun = 1.0e6
+				e.yaw = atan2(pp.x - q.x, pp.y - q.y)
+			if G.arg("spawn_elite") != "":
+				make_elite(e)
 			if G.game.mode == "exp":
 				e.home = pp
 				e.leash = 14.0
@@ -459,7 +576,11 @@ func clear() -> void:
 	list.clear()
 	alive = 0
 	boss = null
+	mini = null
+	_siege_n = 0
 	ai.clear()
+	elite_fx.clear()
+	bossctl.clear()
 	for vis in _vis:
 		if vis != null:
 			vis.mm.visible_instance_count = 0
@@ -479,6 +600,8 @@ func despawn(e: E) -> void:
 	alive -= 1
 	if e == boss:
 		boss = null
+	if e == mini:
+		mini = null
 
 
 # ---------------------------------------------------------------- Animation
@@ -576,6 +699,7 @@ func _physics_process(dt: float) -> void:
 	_time += dt
 	time = _time
 	_grid.clear()
+	_grid_ok = true
 	for e: E in list:
 		if e.st != ST_DEAD:
 			var key := int(floor(e.p.x * CELL_INV)) + 512 + (int(floor(e.p.y * CELL_INV)) + 512) * 1024
@@ -596,6 +720,7 @@ func _physics_process(dt: float) -> void:
 		if he.st == ST_MOVE and not he.fly and not he.stat and he.t < D.E_FIRST_NEW and he.p.distance_squared_to(pp) < 196.0:
 			Sfx.play_at("slime_hop", Vector3(he.p.x, 0, he.p.y), -21.0, 1.0 / maxf(0.7, sqrt(he.sc)), 0.2)
 	ai.tick(dt, pp, p_ok)
+	bossctl.tick_ui(dt)
 	var i := list.size() - 1
 	while i >= 0:
 		var e: E = list[i]
@@ -667,6 +792,11 @@ func _step(e: E, dt: float, pp: Vector2, p_ok: bool, i: int, field, zones: Array
 	if e.haste > 0.0:
 		e.haste -= dt
 		speed *= 1.2
+	if e.rage:
+		speed *= float(D.BOSS_RAGE.speed)
+	if def.get("boss", false):
+		if bossctl.tick(e, dt):
+			return                                          # erschöpft: steht still, Schwachstelle offen
 	# Flächen am Boden (Feuer, Gewitter, Fallen) – nur jedes dritte Bild prüfen
 	if not e.fly and not e.under and zones.size() > 0 and (i + _frame) % 3 == 0:
 		for z in zones:
@@ -710,24 +840,26 @@ func _step(e: E, dt: float, pp: Vector2, p_ok: bool, i: int, field, zones: Array
 		e.sp_t -= dt
 		if e.sp_t <= 0.0:
 			e.sp_t = 1.0
-			for o: E in in_radius(e.p, 5.0):
+			for o: E in near(e.p, 5.0):
 				if o != e and o.hp < o.mhp:
 					o.hp = minf(o.mhp, o.hp + def.heal * o.hm)
 			if _rng.randf() < 0.3:
 				G.fx.ring(Vector3(e.p.x, 0, e.p.y), 5.0, Color(0.7, 0.5, 1.0, 0.6), 0.5)
 				Sfx.play_at("shaman_heal", Vector3(e.p.x, 0, e.p.y), -13.0, 1.0, 1.2)
 	elif e.special != "":
-		e.sp_t -= dt
+		e.sp_t -= dt / (float(D.BOSS_RAGE.special) if e.rage else 1.0)     # Wutphase: Sonderangriffe öfter
 		if e.sp_t <= 0.0:
 			_boss_special(e, pp, p_ok)
 	var d2p := e.p.distance_squared_to(pp)
 	# ---- Bausteine, die den Schritt übernehmen (Ansturm, Sprung, Eingraben, Sturzflug …)
 	if fl & AI.PRE_MASK != 0:
-		if fl & AI.PRE_MASK == AI.F_TOWERHUNT:
-			# nur ein Laufziel suchen: reicht jedes vierte Bild, das Ziel bleibt dazwischen bestehen
+		if fl & AI.PRE_MASK & ~AI.LIGHT_MASK == 0 and e.ai_s == 0:
+			# nur Laufziele und Zeitgeber (Rattenjagd, Heiler, Brutmutter, Turmstörer, Dieb, Miniboss): reicht jedes vierte Bild,
+			# das Ziel bleibt dazwischen bestehen (spart Rechenzeit bei großen Horden)
 			if (i + _frame) & 3 == 0:
 				e.g_on = false
-				ai.pre(e, def, fl, dt * 4.0, pp, p_ok, d2p, speed)
+				if ai.pre(e, def, fl, dt * 4.0, pp, p_ok, d2p, speed):
+					return
 		else:
 			e.g_on = false
 			if ai.pre(e, def, fl, dt, pp, p_ok, d2p, speed):
@@ -753,12 +885,22 @@ func _step(e: E, dt: float, pp: Vector2, p_ok: bool, i: int, field, zones: Array
 			e.yaw = lerp_angle(e.yaw, atan2(to.x, to.y), minf(1.0, dt * 8.0))
 			e.v = Vector2.ZERO
 			e.tm -= dt
-			if not e.swung and e.tm <= _lead(e):
+			var clip := _attack_clip(e, def, tp)
+			var ld := _lead(e) if clip == "attack" else _lead_clip(e, clip)
+			if not e.aimed and not e.swung and e.fig == null and def.has("anims") and def.anims.has("aim") and clip == "attack" and e.rng > 0.0:
+				var ad := _clip_dur(e, String(def.anims.aim))
+				if ad > 0.0 and e.tm <= ld + ad:
+					e.aimed = true
+					play(e, String(def.anims.aim))         # kniet zum Schuss / bläht sich auf
+			if not e.swung and e.tm <= ld:
 				e.swung = true
-				play(e, "attack")
+				play(e, clip)
+				if fl & AI.F_SHOCKWAVE != 0:
+					ai.warn_line(e.p, (tp - e.p).normalized(), e.r, float(def.wave), maxf(e.tm, 0.0) + 0.15)
 			if e.tm <= 0.0:
 				e.tm = def.interval
 				e.swung = false
+				e.aimed = false
 				_strike(e, def, fl, pp)
 			return
 	# ---- Bewegung
@@ -788,7 +930,7 @@ func _step(e: E, dt: float, pp: Vector2, p_ok: bool, i: int, field, zones: Array
 				chase = true
 		e.chase = chase
 		if chase:
-			dir = (pp - e.p).normalized()
+			dir = ((G.game.lure_p if G.game.lure_t > 0.0 and e.p.distance_squared_to(G.game.lure_p) < 400.0 else pp) - e.p).normalized()   # Köder des Begleiters (Paket Welt)
 		elif e.leash > 0.0:
 			var th := e.p - e.home
 			if th.length_squared() > e.leash * e.leash:
@@ -808,6 +950,13 @@ func _step(e: E, dt: float, pp: Vector2, p_ok: bool, i: int, field, zones: Array
 			dir = tg.normalized()
 		else:
 			dir = field.dir_at(e.p)
+	if e.bait_t > 0.0:
+		# Lockköder: läuft zum Köder (außer Bosse)
+		e.bait_t -= dt
+		var tb := e.bait_p - e.p
+		if tb.length_squared() > 1.0:
+			dir = tb.normalized()
+			chase = false
 	if fl & AI.F_ZIGZAG != 0:
 		dir = dir.rotated(sin(_time * 2.6 + e.ph) * 0.95)
 	if fl & AI.F_FLEE != 0 and e.g_on:
@@ -855,7 +1004,7 @@ func _step(e: E, dt: float, pp: Vector2, p_ok: bool, i: int, field, zones: Array
 				np = e.p
 		var s = field.structure_at(np)
 		if s != null and not s.passable:
-			if fl & AI.F_BURROW != 0 and ai.start_burrow(e, def, dir):
+			if fl & (AI.F_BURROW | AI.F_TUNNEL) != 0 and ai.start_burrow(e, def, dir):
 				return
 			e.st = ST_ATTACK
 			e.tgt = s
@@ -877,6 +1026,32 @@ func _lead(e: E) -> float:
 		return vis.lead
 	vis["lead"] = _lead_of(vis)
 	return vis.lead
+
+
+## Clip für den nächsten Schlag: Fernschuss mit eigenem Clip (anims.shot, z. B. Yeti „throw“) oder „attack“.
+func _attack_clip(e: E, def: Dictionary, tp: Vector2) -> String:
+	if e.rng > 0.0 and def.has("anims") and def.anims.has("shot") and e.p.distance_squared_to(tp) > (e.r + 1.6) ** 2:
+		return String(def.anims.shot)
+	return "attack"
+
+
+func _clip_dur(e: E, clip: String) -> float:
+	var vis = _vis[e.t]
+	if vis == null or vis.vat == null:
+		return 0.0
+	var ci: int = vis.vat.clips.get(clip, -1)
+	return float(vis.vat.dur[ci]) if ci >= 0 else 0.0
+
+
+func _lead_clip(e: E, clip: String) -> float:
+	var vis = _vis[e.t]
+	if vis == null or vis.vat == null:
+		return -1.0
+	var ci: int = vis.vat.clips.get(clip, -1)
+	if ci < 0:
+		return _lead(e)
+	var hh: float = vis.vat.hit[ci]
+	return hh if hh >= 0.0 else float(vis.vat.dur[ci]) * 0.5
 
 
 func _lead_of(vis: Dictionary) -> float:
@@ -967,7 +1142,7 @@ func _boss_special(e: E, pp: Vector2, p_ok: bool) -> void:
 	if kind == "all":
 		kind = ["summon", "spit", "slam"][_rng.randi() % 3]
 	elif kind == "cycle":
-		var sl: Array = def.specials
+		var sl: Array = e.specs if not e.specs.is_empty() else def.specials
 		kind = String(sl[e.ai_n % sl.size()])
 		e.ai_n += 1
 	var pos3 := Vector3(e.p.x, 0, e.p.y)
@@ -1007,17 +1182,24 @@ func _boss_special(e: E, pp: Vector2, p_ok: bool) -> void:
 					return
 				tg = gs.mid
 			play(e, "special")
+			ai.telegraph(tg, 3.5, 0.75, Callable())
 			_spit(e, tg, def.dmg * 0.6 * e.dp, 3.5)
 		"slam":
 			e.sp_t = 6.5
 			play(e, "slam")
-			G.fx.ring(pos3, 7.0, Color(1.0, 0.8, 0.3), 0.5)
-			G.fx.puff(pos3 + Vector3(0, 0.3, 0), Color(0.6, 0.5, 0.4), 24, 2.0)
-			G.cam.shake(0.35)
-			Sfx.play_at("boss_slam", pos3, -1.0)
-			G.game.damage_structures(e.p, 7.0, def.dmg * 0.7 * e.dm)
-			if p_ok and e.p.distance_to(pp) < 7.0:
-				G.player.hurt(def.dmg * 0.5 * e.dp, e)
+			# rote Zone kündigt den Bodenschlag an; danach ist der Boss kurz erschöpft (Schwachstelle)
+			var c := e.p
+			var dmg: float = float(def.dmg)
+			ai.telegraph(c, 7.0, 1.0, func():
+				var c3 := Vector3(c.x, 0, c.y)
+				G.fx.ring(c3, 7.0, Color(1.0, 0.8, 0.3), 0.5)
+				G.fx.puff(c3 + Vector3(0, 0.3, 0), Color(0.6, 0.5, 0.4), 24, 2.0)
+				G.cam.shake(0.35)
+				Sfx.play_at("boss_slam", c3, -1.0)
+				G.game.damage_structures(c, 7.0, dmg * 0.7 * e.dm)
+				if G.player.alive and G.player.pos2().distance_to(c) < 7.0:
+					G.player.hurt(dmg * 0.5 * e.dp, e)
+				bossctl.expose_now(e))
 		_:
 			e.sp_t = 6.0
 			ai.boss_special(e, def, kind, pp, p_ok)
@@ -1069,13 +1251,17 @@ func damage(e: E, amt: float, from := Vector2.ZERO, ap := false, dot := false, e
 			return false
 		amt *= wk
 	if fl & AI.DMG_MASK != 0:
-		amt = ai.modify_damage(e, D.ENEMIES[e.t], fl, amt, from)
+		amt = ai.modify_damage(e, D.ENEMIES[e.t], fl, amt, from, element)
+		if amt < 0.0:
+			return false                                    # vom Schild abgeprallt
+	if e.expose > 0.0:
+		amt *= D.BOSS_EXPOSE_DMG                            # Schwachstelle offen
 	if e.mark > 0.0:
 		amt *= 1.4
 	if e.shrink > 0.0:
 		amt *= 1.3
 	e.hp -= amt
-	e.fl = 1.0
+	e.fl = 0.45 if (e.elite or e.r > 0.9) else 1.0         # große Gegner blitzen schwächer (Dauerfeuer machte sie sonst weiß)
 	e.hit_t = 0.0
 	if e.hp <= 0.0:
 		_kill(e, from, element)
@@ -1114,10 +1300,15 @@ func _kill(e: E, _from: Vector2, element := "") -> void:
 	kills += 1
 	_book[e.t] = int(_book.get(e.t, 0)) + 1
 	var is_boss := e == boss
+	if e == mini:
+		mini = null
+		Sfx.play("miniboss_defeat", -3.0)
 	if G.game != null and not e.hide:
 		G.game.add_kill_xp(2 if is_boss else (1 if _elite[e.t] else 0))
 	if e.coins > 0 and G.coins:
-		G.coins.drop(e.p, e.coins)
+		G.coins.drop(e.p, LO.kill_coins(e.coins, String(def.family), e.elite))     # Paket L: Schleimregen, Goldrausch, Elite-Flut
+	if LO.nm_explode and not is_boss:
+		LO.on_kill(e)                                         # Paket L: Albtraum+ – Gegner explodieren
 	var big: bool = is_boss or def.role == "tank"
 	if not e.hide:
 		var vis = _vis[e.t]
@@ -1152,6 +1343,7 @@ func _kill(e: E, _from: Vector2, element := "") -> void:
 				e.fig.die()
 			return
 		boss = null
+		bossctl.on_defeat(e)
 		Sfx.play("boss_defeat", -2.0)
 		G.fx.explosion(Vector3(e.p.x, 1.5, e.p.y), 6.0, Color(0.7, 0.9, 0.2))
 		G.cam.shake(0.5)
@@ -1173,6 +1365,7 @@ func explode(c: Vector2, radius: float, dmg: float, opts := {}) -> int:
 	var n := 0
 	var kn: float = opts.get("knock", 1.5)
 	var el: String = opts.get("element", "explosion")
+	_aoe = true
 	for e: E in list:
 		if e.st != ST_DEAD:
 			var d := e.p.distance_to(c)
@@ -1194,6 +1387,7 @@ func explode(c: Vector2, radius: float, dmg: float, opts := {}) -> int:
 						e.poison = maxf(e.poison, opts.poison)
 				damage(e, dmg * fall, dir, false, false, el)
 				n += 1
+	_aoe = false
 	return n
 
 
@@ -1258,6 +1452,27 @@ func densest(c: Vector2, rng: float, min_rng: float, radius: float, air := 1) ->
 			best = a
 		j += step
 	return best
+
+
+## Wie in_radius, aber über das Raster der Abstoßung (viel schneller bei großen Horden, für Heiler, Auren und Fallen).
+## Fällt auf in_radius zurück, wenn seit dem Aufbau des Rasters Gegner erzeugt wurden.
+func near(c: Vector2, radius: float) -> Array:
+	if not _grid_ok or radius > 12.0:
+		return in_radius(c, radius)
+	var out: Array = []
+	var x0 := int(floor((c.x - radius - 1.2) * CELL_INV)) + 512
+	var x1 := int(floor((c.x + radius + 1.2) * CELL_INV)) + 512
+	var z0 := int(floor((c.y - radius - 1.2) * CELL_INV)) + 512
+	var z1 := int(floor((c.y + radius + 1.2) * CELL_INV)) + 512
+	for z in range(z0, z1 + 1):
+		for x in range(x0, x1 + 1):
+			var arr = _grid.get(x + z * 1024)
+			if arr == null:
+				continue
+			for e: E in arr:
+				if e.st < ST_DEAD and not e.under and e.p.distance_to(c) < radius + e.r:
+					out.append(e)
+	return out
 
 
 func in_radius(c: Vector2, radius: float) -> Array:
@@ -1414,3 +1629,4 @@ func _process(dt: float) -> void:
 	for t in _vis.size():
 		if _vis[t] != null:
 			_vis[t].mm.visible_instance_count = _cnt[t]
+	elite_fx.update(self, dt)

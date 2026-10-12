@@ -58,6 +58,8 @@ var _mats: Array = []
 var boat: Node3D
 var jetty: Node3D
 var sea_mat: ShaderMaterial
+var felled := {}                 # Paket Welt: gefällte Bäume  "x:y:Modell" -> {t, stump}
+var _regrow_t := 5.0
 
 
 func setup(world: Node3D) -> void:
@@ -94,6 +96,10 @@ func _process(dt: float) -> void:
 
 func tick(dt: float) -> void:
 	_since += dt
+	_regrow_t -= dt
+	if _regrow_t <= 0.0:
+		_regrow_t = 5.0
+		_regrow()
 	if _pending >= 0.0:
 		_pending -= dt
 		if _pending < 0.0:
@@ -714,6 +720,9 @@ func _place_plants(occ: Dictionary, gm: int) -> void:
 			per[pl.m] = []
 		var wp: Vector2 = w.cell_min(pl.c.x, pl.c.y) + Vector2(1, 1) + pl.off
 		var sc: float = pl.s * (0.55 if pl.m == "p_mushroom_1" else 1.0)
+		pl["k"] = per[pl.m].size()                       # Paket Welt: Platz im MultiMesh (gefällte Bäume)
+		if felled.has(_tree_key(pl)):
+			sc = 0.0
 		per[pl.m].append(Transform3D(Basis(Vector3.UP, pl.yaw).scaled(Vector3.ONE * sc), Vector3(wp.x, 0, wp.y)))
 		if pl.tree:
 			perch_spots.append(Vector3(wp.x, 3.6 * pl.s, wp.y))
@@ -916,7 +925,7 @@ func make_coast(rng: RandomNumberGenerator) -> void:
 			var c: Vector2 = f.center(x + z * f.w)
 			if in_sea(c, -0.6):
 				f.block_rect(c - Vector2(0.9, 0.9), c + Vector2(0.9, 0.9), true)
-			elif in_brook(c, 1.7) and absf(c.y - BRIDGE.y) > 11.0:
+			elif in_brook(c, 1.7) and absf(c.y - BRIDGE.y) > 2.6:      # nur über die Brücke (5 m breit), nicht durch die Furt
 				f.block_rect(c - Vector2(0.9, 0.9), c + Vector2(0.9, 0.9), true)
 	# Steg und Boot
 	var sea_dir := Vector2(-DIAG, DIAG)
@@ -998,3 +1007,85 @@ func make_forest(rng: RandomNumberGenerator) -> void:
 			if maxf(absf(p.x), absf(p.y)) < 47.0:
 				continue
 			w.scatter("p_fern" if k == 0 else "p_shrub_%d" % rng.randi_range(1, 3), Vector3(p.x, 0, p.y), rng.randf() * TAU, rng.randf_range(0.8, 1.2))
+
+
+# ---------------------------------------------------------------- Bäume fällen (Paket Welt)
+## Holzfäller fällen echte Bäume der Basis (Pflanzen im Baufeld und Waldsaum); nach einer Weile wächst der Baum nach.
+const _DW = preload("res://src/data_welt.gd")
+
+
+func _tree_key(pl: Dictionary) -> String:
+	return "%d:%d:%s" % [pl.c.x, pl.c.y, pl.m]
+
+
+func tree_pos(pl: Dictionary) -> Vector2:
+	return w.cell_min(pl.c.x, pl.c.y) + Vector2(1, 1) + pl.off
+
+
+## Stehende Bäume im Umkreis r um c (nächster zuerst); skip = Schlüssel, die schon jemand fällt.
+func trees_near(c: Vector2, r: float, skip: Dictionary = {}) -> Array:
+	var out: Array = []
+	for pl in _plants + _ring:
+		if not pl.tree or felled.has(_tree_key(pl)) or skip.has(_tree_key(pl)):
+			continue
+		var d := tree_pos(pl).distance_to(c)
+		if d < r:
+			out.append([d, pl])
+	out.sort_custom(func(a, b): return a[0] < b[0])
+	return out.map(func(x): return x[1])
+
+
+## Baum fällt (vom Holzfäller weg), Stumpf bleibt stehen.
+func fell_tree(pl: Dictionary, from: Vector2) -> void:
+	var key := _tree_key(pl)
+	if felled.has(key) or not _mm.has(pl.m):
+		return
+	var p := tree_pos(pl)
+	var mm: MultiMesh = _mm[pl.m]
+	var k := int(pl.get("k", -1))
+	if k >= 0 and k < mm.instance_count:
+		var tr := mm.get_instance_transform(k)
+		mm.set_instance_transform(k, Transform3D(Basis().scaled(Vector3.ZERO), tr.origin))
+	var stump: Node3D = null
+	if Models.has_glb("n_stump"):
+		stump = Models.glb("n_stump")
+		stump.position = Vector3(p.x, 0, p.y)
+		stump.scale = Vector3.ONE * float(pl.s) * 0.8
+		add_child(stump)
+	felled[key] = {"t": w.time, "stump": stump, "pl": pl}
+	# fallender Stamm: Modell kippt in 1,1 s um, versinkt dann
+	if Models.has_glb(pl.m):
+		var n := Models.glb(pl.m)
+		n.position = Vector3(p.x, 0, p.y)
+		n.rotation.y = float(pl.yaw)
+		n.scale = Vector3.ONE * float(pl.s)
+		add_child(n)
+		var dir := (p - from).normalized() if p.distance_to(from) > 0.1 else Vector2.RIGHT
+		var axis := Vector3(dir.y, 0, -dir.x)
+		var tw := n.create_tween()
+		tw.tween_method(func(a: float): n.basis = Basis(axis, a * a * PI * 0.47).rotated(Vector3.UP, 0.0) * Basis(Vector3.UP, float(pl.yaw)).scaled(Vector3.ONE * float(pl.s)), 0.0, 1.0, 1.1)
+		tw.tween_interval(1.4)
+		tw.tween_property(n, "position:y", -2.5, 1.2)
+		tw.tween_callback(n.queue_free)
+	Sfx.play_at("tree_fall", Vector3(p.x, 0, p.y), -6.0, 1.0, 0.2)
+	if G.fx != null:
+		G.fx.puff(Vector3(p.x, 1.2, p.y), Color(0.5, 0.75, 0.3), 14, 1.4)
+
+
+func _regrow() -> void:
+	for key in felled.keys():
+		var f: Dictionary = felled[key]
+		if w.time - float(f.t) < _DW.NPC_TREE_REGROW:
+			continue
+		var pl: Dictionary = f.pl
+		felled.erase(key)
+		if f.stump != null and is_instance_valid(f.stump):
+			f.stump.queue_free()
+		if _mm.has(pl.m):
+			var mm: MultiMesh = _mm[pl.m]
+			var k := int(pl.get("k", -1))
+			if k >= 0 and k < mm.instance_count:
+				var p := tree_pos(pl)
+				mm.set_instance_transform(k, Transform3D(Basis(Vector3.UP, float(pl.yaw)).scaled(Vector3.ONE * float(pl.s)), Vector3(p.x, 0, p.y)))
+				if G.fx != null:
+					G.fx.puff(Vector3(p.x, 0.8, p.y), Color(0.55, 0.85, 0.35), 10, 1.2)

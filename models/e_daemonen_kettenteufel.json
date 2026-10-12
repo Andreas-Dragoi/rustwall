@@ -1,0 +1,89 @@
+{
+ "key": "daemonen_kettenteufel",
+ "kind": "vat",
+ "role": "miniboss",
+ "verts": 1356,
+ "tris": 1592,
+ "width": 1024,
+ "rows": 166,
+ "rpf": 2,
+ "fps": 10,
+ "bounds_min": [
+  -2.5933695667019006,
+  -4.030000085830688,
+  -2.225528708799567
+ ],
+ "bounds_size": [
+  4.999499595749768,
+  9.916331644357347,
+  5.489838004229021
+ ],
+ "height": 4.465909004211426,
+ "radius": 2.1896569936211665,
+ "clips": {
+  "idle": {
+   "row": 0,
+   "n": 14,
+   "dur": 1.4,
+   "loop": true,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "walk": {
+   "row": 14,
+   "n": 10,
+   "dur": 1.0,
+   "loop": true,
+   "stride": 1.4,
+   "hit": -1.0
+  },
+  "attack": {
+   "row": 24,
+   "n": 9,
+   "dur": 0.8,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.4
+  },
+  "hit": {
+   "row": 33,
+   "n": 4,
+   "dur": 0.3,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "death": {
+   "row": 37,
+   "n": 12,
+   "dur": 1.1,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "skill": {
+   "row": 49,
+   "n": 14,
+   "dur": 1.3,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.9
+  },
+  "spawn": {
+   "row": 63,
+   "n": 9,
+   "dur": 0.8,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "throw": {
+   "row": 72,
+   "n": 11,
+   "dur": 1.0,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.5
+  }
+ }
+}

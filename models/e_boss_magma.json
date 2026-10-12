@@ -1,0 +1,65 @@
+{
+ "key": "boss_magma",
+ "kind": "boss",
+ "tris": 1988,
+ "height": 5.689128875732422,
+ "radius": 2.8532169903037654,
+ "clips": {
+  "idle": {
+   "start": 0.0,
+   "dur": 1.6,
+   "loop": true,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "walk": {
+   "start": 2.0,
+   "dur": 1.6,
+   "loop": true,
+   "stride": 1.9199999999999997,
+   "hit": -1.0
+  },
+  "attack": {
+   "start": 4.0,
+   "dur": 1.2,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.6666666666666666
+  },
+  "hit": {
+   "start": 5.6,
+   "dur": 0.3,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "death": {
+   "start": 6.3,
+   "dur": 2.0,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "special": {
+   "start": 8.7,
+   "dur": 1.5,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.8
+  },
+  "summon": {
+   "start": 10.6,
+   "dur": 1.3,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.7333333333333333
+  },
+  "slam": {
+   "start": 12.3,
+   "dur": 1.3,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.8
+  }
+ }
+}

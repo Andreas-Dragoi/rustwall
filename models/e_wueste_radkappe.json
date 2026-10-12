@@ -1,0 +1,81 @@
+{
+ "key": "wueste_radkappe",
+ "kind": "vat",
+ "role": "shield",
+ "verts": 621,
+ "tris": 786,
+ "width": 621,
+ "rows": 58,
+ "rpf": 1,
+ "fps": 10,
+ "bounds_min": [
+  -1.0623699902879997,
+  -1.0424716793486175,
+  -1.0719662064374338
+ ],
+ "bounds_size": [
+  2.0541420875483056,
+  2.4779603621632202,
+  2.578490988524033
+ ],
+ "height": 1.209999918937683,
+ "radius": 1.2163162283689588,
+ "clips": {
+  "idle": {
+   "row": 0,
+   "n": 12,
+   "dur": 1.2,
+   "loop": true,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "walk": {
+   "row": 12,
+   "n": 8,
+   "dur": 0.8,
+   "loop": true,
+   "stride": 1.2800000000000002,
+   "hit": -1.0
+  },
+  "attack": {
+   "row": 20,
+   "n": 8,
+   "dur": 0.7,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.36666666666666664
+  },
+  "hit": {
+   "row": 28,
+   "n": 4,
+   "dur": 0.3,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "death": {
+   "row": 32,
+   "n": 11,
+   "dur": 1.0,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "block": {
+   "row": 43,
+   "n": 6,
+   "dur": 0.5,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "spawn": {
+   "row": 49,
+   "n": 9,
+   "dur": 0.8,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  }
+ }
+}

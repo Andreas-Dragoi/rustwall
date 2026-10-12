@@ -5,6 +5,7 @@ extends Control
 
 const D = preload("res://src/data.gd")
 const UI = preload("res://src/ui.gd")
+const I18N = preload("res://src/i18n.gd")
 
 const JOY_R := 120.0
 const DEAD := 0.12
@@ -45,7 +46,8 @@ func _layout() -> void:
 	var s := _sz()
 	var has_veh: bool = G.player.veh_node != null
 	if G.is_touch:
-		var base := Vector2(s.x - 150.0, s.y - 150.0)
+		var safe: Vector4 = preload("res://src/screen_fit.gd").safe_margins(get_viewport())     # Paket F: Notch / Home-Leiste
+		var base := Vector2(s.x - 150.0 - safe.z, s.y - 150.0 - safe.w)
 		_btns.append({"c": base, "r": 84.0, "slot": 2})
 		_btns.append({"c": base + Vector2(-190, 30), "r": 66.0, "slot": 0})
 		_btns.append({"c": base + Vector2(-130, -150), "r": 66.0, "slot": 1})
@@ -190,8 +192,11 @@ func _draw() -> void:
 			draw_arc(c, (r - 5.0) * 0.5, -PI * 0.5, -PI * 0.5 + TAU * ratio, 40, Color(col, 0.9), r - 5.0, true)
 			draw_arc(c, r - 2.0, 0, TAU, 48, col.lightened(0.3), 3.0, true)
 		var fs := int(clampf(r * 0.3, 15.0, 24.0))
+		text = I18N.t(text)                    # Paket S: gezeichneter Text wird nicht automatisch übersetzt
 		var words := text.split(" ")
 		var line := words[0] if words[0].length() <= 11 else words[0].substr(0, 10) + "."
+		if I18N.is_en() and font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x <= r * 1.8:
+			line = text                        # englische Namen haben oft zwei kurze Wörter
 		var w := font.get_string_size(line, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
 		draw_string_outline(font, c + Vector2(-w * 0.5, fs * 0.35), line, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, 6, UI.OUTLINE)
 		draw_string(font, c + Vector2(-w * 0.5, fs * 0.35), line, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, Color.WHITE if not locked else Color(1, 1, 1, 0.4))
@@ -202,6 +207,8 @@ func _draw() -> void:
 			draw_string(font, c + Vector2(-w2 * 0.5, -r * 0.35), left, HORIZONTAL_ALIGNMENT_LEFT, -1, 22, UI.GOLD)
 		if not G.is_touch:
 			var kt: String = KEYS[slot]
+			if kt == "Leer" and I18N.is_en():
+				kt = "Space"
 			var w3 := font.get_string_size(kt, HORIZONTAL_ALIGNMENT_LEFT, -1, 18).x
 			draw_style_box(_key_box(), Rect2(c.x - w3 * 0.5 - 9, c.y + r - 10, w3 + 18, 28))
 			draw_string(font, c + Vector2(-w3 * 0.5, r + 10), kt, HORIZONTAL_ALIGNMENT_LEFT, -1, 18, UI.GOLD)

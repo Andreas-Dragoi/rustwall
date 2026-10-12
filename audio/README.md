@@ -72,3 +72,31 @@ engine_hover (Schleifen, Tonhöhe folgt dem Tempo)
 
 Ältere Namen aus dem Code (z. B. `shot_mg`, `explosion`, `pop`, `zap`) werden in `src/sfx.gd` (Tabelle `ALIAS`) auf die
 neuen Dateien umgeleitet.
+
+## Paket Welt (V5): Musik je Ort, Ton-Prüfung, Mischpult, Rufe
+
+**Musik** (`python3 tools/make_music.py [name|areas]`, Stil je Gebiet, nahtlose Schleifen, 32 kHz, OGG):
+`area_<gebiet>.ogg` (Ruhe-Lage) und `area_<gebiet>_fight.ogg` (Gefahr-Lage: Schlagzeug, Bass, Bläser) für alle sieben
+Gebiete, dazu `boss.ogg`, `menu.ogg`, `win.ogg`, `lose.ogg` (Stinger). Die beiden Lagen laufen im Spiel synchron
+(`AudioStreamSynchronized`); die Gefahr-Lage wird nach der Zahl der Gegner um den Helden eingeblendet (Großangriff: ganz).
+Boss-Stimmung (Expedition und Flut) spielt `boss.ogg`, das Hauptmenü nach dem ersten Durchlauf des eigenen Lieds
+`menu.ogg`. Die Klänge `win` und `lose` werden durch die Stinger ersetzt (die übrige Musik wird dafür kurz leiser).
+In der Basis läuft die Wiedergabeliste wie bisher. Lautheit: Ruhe-Lage −16,5 LUFS, Gefahr-Lage 2,5 dB leiser.
+
+**Ton-Prüfung ohne Ohren:** `python3 tools/check_audio.py [--fix] [--music]` misst jede Datei (Kurzzeit-Lautheit wie
+make_sfx, Spitze, übersteuerte Werte, Stille am Anfang/Ende, Gleichanteil, Sprung an der Schleifen-Naht) und vergleicht
+mit dem Ziel der Gruppe (Oberfläche, Waffen, Einschläge, Gegner, Ereignisse, Begleiter, Held, Umgebung, Stimmen …).
+`make_sfx.py` hält jeden Klang höchstens 70 % der erlaubten Abweichung vom Gruppenziel entfernt. Gefunden und behoben:
+`gate_open` (Gleichanteil statt Ton, 10 dB zu leise) und die Motorschleifen `engine_*` (Knacks an der Naht alle 0,5 s).
+
+**OGG:** Einzelklänge über 1,2 s und Schleifen ab 4 s schreibt `make_sfx.py` als OGG (bitgenau, `sfx.gd` lädt beides).
+
+**Mischpult:** vier Regler in den Einstellungen – Musik (Kanal `Music`), Geräusche (`SFX`), Umgebung (`Ambient`: alle
+Schleifen `amb…`, `nat_…`, `wx_…`) und Stimmen (`Voice`: alle `v_…`).
+
+**Neu:** lange Gebiets-Umgebung `amb_x_<gebiet>` und `amb_x_night`; Ereignisse `ev_amb_*` (Sandsturm, Schneesturm,
+Giftnebel, Nebel, Brandung, Regen, Meteoritenglut) und `ev_*`; Quellen `hit_tap/ice/pump/shell/resin/honey/geyser`;
+`landmark_discover`, `journal_page`, `tool_get`, `tool_missing`, `caravan_bell`, `caravan_trade`, `quest_new`,
+`quest_step`, `egg_found/crack/hatch`, `comp_lure`, `comp_collect`, `dummy_hit`, `dummy_reset`, `train_start`,
+`npc_wish(_done)`, `npc_shoo`, `npc_sigh`, `tree_chop_base`, `barrow_squeak`, `lamp_on`; Helden-Rufe
+`v_<held>_<start|skill|dodge|hurt|down|cheer|win>` (Formant-Stimme, je Held eigene Stimmlage und Worte).

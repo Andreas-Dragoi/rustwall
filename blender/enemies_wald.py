@@ -555,25 +555,29 @@ def boss_wald():
     p.ball(0.12, (0, -0.52, 3.32), "8A2A3A", scale=(1.5, 0.4, 0.6), subdiv=1)                    # Mund
     p.cone(0.04, 0.07, (0.07, -0.56, 3.36), WHITE, r=rot(180, 0, 0), sides=3)
     p.cone(0.04, 0.07, (-0.07, -0.56, 3.36), WHITE, r=rot(180, 0, 0), sides=3)
-    lathe(p, [(0.4, 3.8, CAP_D), (1.15, 3.85, CAP_D), (1.2, 3.95, CAP), (1.05, 4.25, CAP), (0.7, 4.55, CAP), (0.0, 4.7, CAP)], sides=18)
-    for (x, y, z, r) in ((0.0, 0.0, 4.68, 0.16), (0.6, -0.45, 4.35, 0.15), (-0.62, -0.4, 4.33, 0.14), (0.65, 0.45, 4.33, 0.15), (-0.55, 0.55, 4.35, 0.13), (0.0, -0.85, 4.15, 0.12), (1.0, 0.0, 4.1, 0.11), (-1.0, 0.0, 4.1, 0.11), (0, 0.9, 4.15, 0.12)):
-        p.ball(r, (x, y, z), DOT, scale=(1, 1, 0.45), subdiv=2)
+    # Pilzhut (Paket G2): kleiner und nach hinten gekippt, damit die Spielkamera (55° von oben) das Gesicht sieht
+    HM = T(0, 0.22, 3.9) @ rot(-24, 0, 0)
+    def hp(x, y, z):
+        return tuple(HM @ Vector((x, y, z)))
+    lathe(p, [(0.4, -0.06, CAP_D), (0.95, 0.0, CAP_D), (1.0, 0.09, CAP), (0.86, 0.36, CAP), (0.58, 0.62, CAP), (0.0, 0.76, CAP)], sides=18, r=HM)
+    for (x, y, z, r) in ((0.0, 0.0, 0.74, 0.15), (0.5, -0.38, 0.47, 0.13), (-0.52, -0.33, 0.45, 0.12), (0.55, 0.38, 0.45, 0.13), (-0.46, 0.46, 0.47, 0.11), (0.0, -0.7, 0.3, 0.1), (0.84, 0.0, 0.24, 0.1), (-0.84, 0.0, 0.24, 0.1), (0, 0.76, 0.3, 0.1)):
+        p.ball(r, hp(x, y, z), DOT, scale=(1, 1, 0.45), r=rot(-24, 0, 0), subdiv=2)
     rig.add("head", p, parent="torso", pivot=(0, 0, 3.15))
     p = Part()
     for s in (-1, 1):
         p.ball(0.07, (0.2 * s, -0.58, 3.65), INK, scale=(1, 0.5, 1.1), subdiv=1)
     rig.add("pupil", p, parent="head", pivot=(0, -0.58, 3.65), look=True)
-    p = Part()                                                                                       # goldene Krone mit Glühsteinen
-    lathe(p, [(0.42, 4.62, "E8B22A"), (0.44, 4.8, "FFD24A"), (0.4, 4.82, "E8B22A")], sides=10, cap=False)
+    p = Part()                                                                                       # goldene Krone mit Glühsteinen (sitzt auf dem gekippten Hut)
+    lathe(p, [(0.38, 0.68, "E8B22A"), (0.4, 0.86, "FFD24A"), (0.36, 0.88, "E8B22A")], sides=10, cap=False, r=HM)
     for k in range(5):
         a = k * math.tau / 5
-        p.cone(0.09, 0.3, (0.42 * math.cos(a), 0.42 * math.sin(a), 4.95), "FFD24A", sides=4)
-    rig.add("crown", p, parent="head", pivot=(0, 0, 4.7))
+        p.cone(0.08, 0.28, hp(0.38 * math.cos(a), 0.38 * math.sin(a), 1.0), "FFD24A", r=rot(-24, 0, 0), sides=4)
+    rig.add("crown", p, parent="head", pivot=hp(0, 0, 0.76))
     p = Part()
     for k in range(5):
         a = k * math.tau / 5
-        p.ball(0.06, (0.44 * math.cos(a), 0.44 * math.sin(a), 4.72), "5AF0A0", subdiv=1)
-    rig.add("gems", p, parent="crown", pivot=(0, 0, 4.72), glow=True)
+        p.ball(0.06, hp(0.4 * math.cos(a), 0.4 * math.sin(a), 0.78), "5AF0A0", subdiv=1)
+    rig.add("gems", p, parent="crown", pivot=hp(0, 0, 0.78), glow=True)
     # ---- Arme: links ein Zepter mit Glühpilz, rechts die offene Hand
     p = Part()
     capsule(p, (0.55, 0, 2.95), (1.1, -0.2, 2.4), 0.16, 0.13, STEM_D, sides=7)

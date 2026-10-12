@@ -1,0 +1,81 @@
+{
+ "key": "eis_mammut",
+ "kind": "vat",
+ "role": "miniboss",
+ "verts": 1052,
+ "tris": 1264,
+ "width": 1024,
+ "rows": 136,
+ "rpf": 2,
+ "fps": 10,
+ "bounds_min": [
+  -2.5641575691376506,
+  -3.0729998804330823,
+  -2.267753715988806
+ ],
+ "bounds_size": [
+  4.969207321121928,
+  7.472194151628546,
+  5.282694928468099
+ ],
+ "height": 3.200000047683716,
+ "radius": 2.864793872082379,
+ "clips": {
+  "idle": {
+   "row": 0,
+   "n": 12,
+   "dur": 1.2,
+   "loop": true,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "walk": {
+   "row": 12,
+   "n": 10,
+   "dur": 1.0,
+   "loop": true,
+   "stride": 1.2,
+   "hit": -1.0
+  },
+  "attack": {
+   "row": 22,
+   "n": 8,
+   "dur": 0.7,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.36666666666666664
+  },
+  "hit": {
+   "row": 30,
+   "n": 4,
+   "dur": 0.3,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "death": {
+   "row": 34,
+   "n": 11,
+   "dur": 1.0,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "skill": {
+   "row": 45,
+   "n": 14,
+   "dur": 1.3,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.9
+  },
+  "spawn": {
+   "row": 59,
+   "n": 9,
+   "dur": 0.8,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  }
+ }
+}

@@ -29,7 +29,7 @@ var cells := PackedInt32Array()   # vom Richtungsfeld gesperrte Felder; nach dem
 
 func setup(node_kind: String, pos: Vector2, amount: float, ring_idx: int, yaw: float) -> void:
 	kind = node_kind
-	def = D.EXP_NODES[kind]
+	def = D.EXP_NODES[kind] if D.EXP_NODES.has(kind) else preload("res://src/data_welt.gd").SOURCES[kind]   # Welt: gebietseigene Quellen
 	res = String(def.res)
 	p = pos
 	total = maxf(1.0, amount)

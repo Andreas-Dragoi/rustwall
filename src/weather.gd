@@ -78,6 +78,8 @@ func setup(world: Node3D, nat: Node3D) -> void:
 	var dt_arg := G.arg("daytime")
 	if dt_arg in MOODS:
 		force = dt_arg
+	elif dt_arg == "" and (G.selftest or G.autotest != ""):
+		force = "tag"          # Tests sollen nicht von der Uhrzeit abhängen (nachts schlafen die Bewohner)
 	wind_angle = _rng.randf() * TAU
 	_target_angle = wind_angle
 	_rain_t = _rng.randf_range(RAIN_GAP[0], RAIN_GAP[1])

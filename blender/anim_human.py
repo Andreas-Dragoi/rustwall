@@ -584,6 +584,39 @@ def c_work():
     clip("sleep", 3.0, [(0.0, a), (1.5, sl(1)), (3.0, a)], loop=True)
 
 
+def c_welt():
+    """Paket Welt (V5): Tagesablauf und Berufe der Bewohner – Stirn wischen, Hühner scheuchen, Hände am Feuer wärmen,
+    frühstücken. (Die Schubkarre schiebt der Steinmetz im Trage-Gang carry_walk; die Karre hängt vor seinen Händen.)"""
+    s0 = stand(0.006)
+    # Stirn wischen: linke Hand an die Stirn, zur Seite streichen, ausatmen
+    w1 = stand(0.004).set(head=(-8, 0, 0), upper_arm_l=(-122, 22, 0), fore_arm_l=(-118, 0, 0), hand_l=(0, 0, -20))
+    w2 = stand(0.004).set(head=(-4, 0, -10), chest=(0, 0, 4), upper_arm_l=(-112, 52, 0), fore_arm_l=(-104, 0, 0), hand_l=(0, 0, -10))
+    w3 = stand(0.012).set(spine=(7, 0, 0), chest=(5, 0, 0), head=(8, 0, 0), upper_arm_l=(-30, 30, 0), fore_arm_l=(-40, 0, 0))
+    clip("wipe_brow", 1.6, [(0.0, s0), (0.35, w1), (0.7, w2), (0.85, w2), (1.15, w3), (1.6, s0)])
+    # Hühner scheuchen: vorgebeugt, beide Arme schwingen nach vorn-unten
+    def sh(up, fore, z):
+        p = body((0, -0.03, -0.05 - z), (16, 0, 0))
+        p.set(spine=(12, 0, 0), chest=(6, 0, 0), head=(-16, 0, 0))
+        p.both("upper_arm", up, -18, 0).both("fore_arm", fore, 0, 0)
+        p["hand_r"] = I3.copy()
+        p["prop_r"] = I3.copy()
+        return p
+    a = sh(-72, -34, 0.0)
+    b = sh(-22, -8, 0.02)
+    clip("shoo", 0.8, [(0.0, a), (0.2, b), (0.4, a), (0.6, b), (0.8, a)], loop=True)
+    # Hände am Feuer wärmen: Arme vor der Brust, Hände reiben sich
+    def wm(k):
+        p = stand(0.01).set(spine=(4, 0, 0), chest=(3, 0, 0), head=(-6, 0, 0))
+        p.set(upper_arm_l=(-58, 20 + 4 * k, 0), fore_arm_l=(-58, 10 * k, 0), upper_arm_r=(-58, -20 + 4 * k, 0), fore_arm_r=(-58, 10 * k, 0), hand_r=(0, 0, 0), prop_r=(0, 0, 0))
+        return p
+    clip("warm_hands", 1.2, [(0.0, wm(-1)), (0.3, wm(1)), (0.6, wm(-1)), (0.9, wm(1)), (1.2, wm(-1))], loop=True)
+    # frühstücken: Brot zum Mund, kauen
+    e1 = stand(0.006).set(upper_arm_l=(-40, 14, 0), fore_arm_l=(-70, 0, 0))
+    e2 = stand(0.006).set(head=(6, 0, 0), upper_arm_l=(-92, 16, 0), fore_arm_l=(-128, 0, 0))
+    e3 = e2.copy().set(head=(-2, 0, 0))
+    clip("eat", 1.6, [(0.0, e1), (0.45, e2), (0.7, e3), (0.95, e2), (1.25, e1), (1.6, e1)], loop=True)
+
+
 # ---------------------------------------------------------------- Fahrzeug
 def ride_pose(kind, k=0.0):
     """Sitzpose; der Ursprung der Figur liegt auf dem Sitz (hero.gd setzt sie dorthin)."""
@@ -849,6 +882,7 @@ ALL = (["idle", "idle_look", "idle_stretch", "idle_weapon_check",
         "reload_rifle", "reload_heavy", "reload_bow", "reload_thrower",
         "dodge_roll", "dodge_land", "hit_light", "hit_heavy", "down", "revive",
         "chop", "mine", "pick_up", "carry_walk", "hammer", "pay", "wave", "cheer", "sit", "sleep",
+        "wipe_brow", "shoo", "warm_hands", "eat",
         "ride_quad", "ride_bike", "ride_car", "ride_hover", "ride_steer", "mount", "dismount"]
        + ["%s_%s" % (h, k) for h in HEROES for k in ("skill_1", "skill_2", "special")]
        + ["level_up", "victory", "defeat"])
@@ -867,6 +901,7 @@ def define_all():
     c_reload()
     c_dodge_hit()
     c_work()
+    c_welt()
     c_ride()
     c_skills()
     c_party()

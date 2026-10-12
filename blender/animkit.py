@@ -32,7 +32,9 @@ BAKE_STEP = 3       # jedes dritte Bild wird gespeichert = 10 Bilder je Sekunde
 GAP = 12            # Abstand zwischen zwei Clips auf der Zeitleiste
 
 # Grenzen je Rolle (Eckpunkte des fertigen Meshes, so wie die Grafikkarte sie zählt)
-VERT_LIMIT = {"mass": 900, "fast": 900, "ranged": 1600, "air": 1600, "special": 1600, "tank": 2800, "boss": 99999}
+VERT_LIMIT = {"mass": 900, "fast": 900, "ranged": 1600, "air": 1600, "special": 1600, "tank": 2800, "boss": 99999,
+              # Paket G2: neue Rollen (6.3) und Minibosse
+              "healer": 1600, "shield": 1600, "digger": 1600, "jammer": 1600, "thief": 1600, "brood": 1600, "miniboss": 2800}
 CHANNELS = (("loc", "location"), ("rot", "rotation_euler"), ("scale", "scale"))
 
 # Kennungen für Teile (landen in der ersten UV des fertigen Meshes; der Shader wertet sie aus)

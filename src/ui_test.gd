@@ -11,8 +11,8 @@ const Screens = preload("res://src/screens.gd")
 const UI = preload("res://src/ui.gd")
 const Hud = preload("res://src/hud.gd")
 
-const TAB_COUNT := {"heroes": 7, "chests": 1, "workshop": 1, "garage": 1, "social": 3, "clan": 3, "profile": 2, "quests": 1, "expedition": 1, "settings": 1, "shop": 1, "erfolge": 1, "bestiary": 7, "begleiter": 1}
-const ORDER := ["heroes", "chests", "workshop", "garage", "social", "clan", "profile", "quests", "expedition", "settings", "shop", "erfolge", "bestiary", "begleiter"]
+const TAB_COUNT := {"heroes": 7, "chests": 1, "workshop": 1, "garage": 1, "social": 3, "clan": 3, "profile": 2, "quests": 1, "expedition": 1, "settings": 1, "shop": 1, "erfolge": 1, "bestiary": 7, "begleiter": 1, "hilfe": 8, "legal": 4, "tagebuch": 7, "saison": 7, "garderobe": 6}
+const ORDER := ["heroes", "chests", "workshop", "garage", "social", "clan", "profile", "quests", "expedition", "settings", "shop", "erfolge", "bestiary", "begleiter", "hilfe", "legal", "tagebuch", "saison", "garderobe"]
 
 var scr: CanvasLayer
 var presses := 0

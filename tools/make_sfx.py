@@ -9,7 +9,7 @@ import numpy as np
 from scipy import signal as sg
 
 SR = 44100
-OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "audio", "sfx")
+OUT = os.environ.get("RW_SFX_OUT") or os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "audio", "sfx")
 REG = []            # (name, fn, opts)
 _seed = [1]
 
@@ -306,7 +306,8 @@ def finish(x, opts):
         peak = np.max(np.abs(x)) + 1e-9
         idx = np.nonzero(np.abs(x) > peak * 0.02)[0]
         end = min(len(x), idx[-1] + int(0.03 * sr))
-        x = x[:end]
+        start = idx[0] - int(0.02 * sr) if idx[0] > int(0.08 * sr) else 0     # V5: lange Stille am Anfang kürzen
+        x = x[start:end]
         fi = min(len(x) // 4, int(0.0015 * sr))
         fo = min(len(x) // 3, int(opts.get("fade", 0.045) * sr))
         x[:fi] *= np.linspace(0, 1, fi)
@@ -318,7 +319,7 @@ def finish(x, opts):
         else:
             x = sg.resample_poly(x, 1, 2)
         sr = SR // 2
-    target = -15.0 + opts.get("g", 0.0)
+    target = group_target(opts.get("name", ""), -15.0 + opts.get("g", 0.0))
     x = x * 10 ** ((target - loud(x, sr)) / 20)
     pk = np.max(np.abs(x))
     if pk > 0.84:                       # Spitzen weich begrenzen statt alles leiser zu machen
@@ -328,6 +329,46 @@ def finish(x, opts):
         if pk > 0.89:
             x *= 0.89 / pk
     return x, sr
+
+
+# ------------------------------------------------------------------ V5: Lautheit je Gruppe, OGG für lange Klänge
+try:
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    from check_audio import GROUPS as _GROUPS, group_of as _group_of
+except Exception:                              # Prüfwerkzeug fehlt: ohne Gruppenrahmen
+    _GROUPS, _group_of = [], None
+
+
+def group_target(name, want):
+    """Zielwert eines Klangs: sein eigener Wert (-15 + g), aber höchstens 70 % der erlaubten Abweichung
+    vom Ziel seiner Gruppe entfernt (tools/check_audio.py, GROUPS). So bleiben gewollte Unterschiede, Ausreißer nicht."""
+    if _group_of is None or not name:
+        return want
+    g = _group_of(name)
+    lo, hi = g[2] - g[3] * 0.7, g[2] + g[3] * 0.7
+    return float(np.clip(want, lo, hi))
+
+
+def use_ogg(name, x, sr, opts):
+    """Lange Einzelklänge (über 1,2 s) und lange Schleifen (ab 4 s) als OGG – spart im Web viel Platz."""
+    if "ogg" in opts:
+        return bool(opts["ogg"])
+    n = len(x) / sr
+    return n >= 4.0 if opts.get("loop", False) else n > 1.2
+
+
+def write_ogg(path_ogg, x, sr):
+    import tempfile, subprocess
+    tmp = os.path.join(tempfile.gettempdir(), "rw_sfx_%d.wav" % os.getpid())
+    write_wav(tmp, x, sr, False)
+    subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-i", tmp, "-c:a", "libvorbis", "-q:a", "4", "-map_metadata", "-1", "-fflags", "+bitexact", "-flags:a", "+bitexact", path_ogg], check=True)
+    os.remove(tmp)
+
+
+def _remove(path):
+    for p in (path, path + ".import"):
+        if os.path.exists(p):
+            os.remove(p)
 
 
 # ================================================================== Bedienung
@@ -1249,6 +1290,13 @@ def _():
     return mix(s, (brass(hz("G3"), 0.5, 0.05) * 0.5, 0.0, 1.0))
 
 # ================================================================== Fahrzeuge
+def lp_loop(x, fc, order=2):
+    """Tiefpass für Schleifen: dreimal hintereinander filtern und die Mitte nehmen, damit die Naht nicht springt
+    (V5: die Motorgeräusche knackten so alle 0,5 s, gefunden mit tools/check_audio.py)."""
+    n = len(x)
+    return lp(np.tile(x, 3), fc, order)[n:2 * n]
+
+
 def _engine(base, rough, kind):
     d = 0.5
     t = tt(d)
@@ -1261,8 +1309,8 @@ def _engine(base, rough, kind):
     n = loopify(lp(noise(d + 0.1), 1800 if kind != "hover" else 3500), 0.1)
     if kind == "hover":
         fan = n * (0.7 + 0.3 * np.sin(2 * np.pi * 24 * t)) * 2.5
-        return 0.35 * lp(x, 600) + fan
-    return lp(x, 1400) + 0.25 * n * putt
+        return 0.35 * lp_loop(x, 600) + fan
+    return lp_loop(x, 1400) + 0.25 * n * putt
 
 for _nm, _b, _r in (("quad", 84.0, 0.7), ("bike", 64.0, 0.9), ("buggy", 96.0, 0.6), ("pickup", 52.0, 0.5), ("hover", 112.0, 0.2)):
     REG.append(("engine_%s" % _nm, (lambda b=_b, r=_r, k=_nm: _engine(b, r, k)), {"loop": True, "g": -2}))
@@ -1421,7 +1469,8 @@ def _():
 @snd("gate_open")
 def _():
     creak = reso(noise(0.34), 520, 14.0) * ramp(0.34, 0.2, 1.0) * ar(0.34, 0.05, 0.1) * 0.5
-    return mix(creak, (gliss(0.34, 180, 260) * ar(0.34, 0.03, 0.1) * 0.25, 0, 1.0), (thump(0.12, 150, 70, 20.0), 0.3, 0.9), (click(0.02, 900, 3000), 0.31, 0.5))
+    # V5: früher stand hier gliss() ohne osc() – das ergab einen Gleichanteil statt eines Tons (Prüfung: Gleichanteil 0,11, 10 dB zu leise)
+    return mix(creak, (osc(gliss(0.34, 180, 260), "tri") * ar(0.34, 0.03, 0.1) * 0.25, 0, 1.0), (thump(0.12, 150, 70, 20.0), 0.3, 0.9), (click(0.02, 900, 3000), 0.31, 0.5))
 
 @snd("gate_close")
 def _():
@@ -1764,19 +1813,726 @@ for _n, _f in COMP.items():
 
 
 
+# ================================================================== V5: Welt (Gebiete, Ereignisse, Quellen, Stimmen)
+VSR = 22050
+LONG = 16.0                                    # lange Gebiets-Umgebung (Sekunden, nahtlos)
+
+
+def _vbed(fc_lo, fc_hi, d, mod_hz=0.3, depth=0.5, sr=VSR):
+    """Rauschteppich, nahtlos (Ende in den Anfang geblendet)."""
+    n = sg.sosfilt(sg.butter(2, [fc_lo, fc_hi], "band", fs=sr, output="sos"), rng().uniform(-1, 1, int((d + 1.0) * sr)))
+    m = sg.sosfilt(sg.butter(2, mod_hz, "low", fs=sr, output="sos"), rng().uniform(-1, 1, int((d + 1.0) * sr)))
+    m = m / (np.max(np.abs(m)) + 1e-9)
+    x = n * (1.0 - depth + depth * (0.5 + 0.5 * m))
+    k = int(1.0 * sr)
+    kk = np.linspace(0, 1, k)
+    y = x[:-k].copy()
+    y[:k] = x[:k] * np.sin(kk * np.pi / 2) + x[-k:] * np.cos(kk * np.pi / 2)
+    return y / (np.sqrt(np.mean(y ** 2)) + 1e-9)
+
+
+def _vchirp(f0, f1, d, vib=0.0, sr=VSR):
+    t = tt(d, sr)
+    f = gliss(d, f0, f1, sr) * (1 + vib * np.sin(2 * np.pi * 30 * t))
+    return osc(f, "sin", sr) * hann(d, sr)
+
+
+def _vput(buf, s, at, gain=1.0, sr=VSR):
+    wrap_add(buf, s * gain, int(at * sr))
+
+
+def _birdsong(buf, r, t0, f, n=5, gain=0.4):
+    for k in range(n):
+        _vput(buf, _vchirp(f * r.uniform(0.95, 1.05), f * r.uniform(1.15, 1.4), r.uniform(0.05, 0.09)), t0 + k * r.uniform(0.09, 0.13), gain)
+
+
+@snd("amb_x_gruental", loop=True, sr=VSR, g=-4, ogg=True)
+def _():
+    r = rng()
+    x = _vbed(150, 900, LONG, 0.25, 0.5) * 0.22 + _vbed(1800, 5000, LONG, 0.4, 0.6) * 0.05
+    for t0 in r.uniform(0, LONG, 7):
+        _birdsong(x, r, t0, r.uniform(2600, 3900), int(r.integers(3, 7)), 0.42)
+    for t0 in r.uniform(0, LONG, 3):                           # Bach im Hintergrund
+        _vput(x, bp(rng().uniform(-1, 1, int(1.5 * VSR)), 500, 2500, 2, VSR) * hann(1.5, VSR), t0, 0.05)
+    for t0 in (3.0, 11.5):                                     # Kuhglocke weit weg
+        tq = tt(0.8, VSR)
+        _vput(x, (np.sin(2 * np.pi * 620 * tq) + 0.5 * np.sin(2 * np.pi * 1490 * tq)) * np.exp(-tq * 6.0), t0, 0.05)
+    return x
+
+
+@snd("amb_x_forst", loop=True, sr=VSR, g=-4, ogg=True)
+def _():
+    r = rng()
+    x = _vbed(300, 2400, LONG, 0.4, 0.75) * 0.2 + _vbed(60, 300, LONG, 0.15, 0.4) * 0.2
+    for t0 in (2.0, 9.0):                                      # Kuckuck
+        _vput(x, _vchirp(659, 650, 0.2), t0, 0.32)
+        _vput(x, _vchirp(523, 515, 0.3), t0 + 0.3, 0.32)
+    for t0 in (5.5, 13.0):                                     # Specht
+        for k in range(int(r.integers(6, 10))):
+            _vput(x, bp(rng().uniform(-1, 1, int(0.02 * VSR)), 700, 1800, 2, VSR) * dec(0.02, 150, VSR), t0 + k * 0.06, 0.55)
+    for t0 in r.uniform(0, LONG, 5):                           # Knacken im Unterholz
+        _vput(x, click(0.03, 400, 2000, 120)[::2], t0, 0.2)
+    for t0 in (7.0, 14.5):                                     # Eule (gedämpft)
+        _vput(x, _vchirp(380, 360, 0.3), t0, 0.12)
+        _vput(x, _vchirp(370, 350, 0.45), t0 + 0.45, 0.12)
+    return x
+
+
+@snd("amb_x_staub", loop=True, sr=VSR, g=-4, ogg=True)
+def _():
+    r = rng()
+    t = tt(LONG, VSR)
+    base = _vbed(80, 400, LONG, 0.2, 0.3)
+    fc = 520 + 260 * np.sin(2 * np.pi * t / LONG * 2) + 120 * np.sin(2 * np.pi * 5 * t / LONG)
+    wh = base * osc(fc, "sin", VSR) * (0.5 + 0.5 * np.sin(2 * np.pi * t / LONG * 3 - 1.0))
+    x = wh / (np.sqrt(np.mean(wh ** 2)) + 1e-9) * 0.25 + _vbed(1500, 6000, LONG, 0.5, 0.8) * 0.08
+    for t0 in r.uniform(0, LONG, 3):                           # Klappern von Blech im Wind
+        for k in range(3):
+            _vput(x, reso(rng().uniform(-1, 1, int(0.05 * VSR)), 1700, 12.0, VSR) * dec(0.05, 60, VSR), t0 + k * 0.11, 0.25)
+    for t0 in (6.0,):                                          # Geier weit oben
+        _vput(x, _vchirp(1800, 1300, 0.6, 0.02), t0, 0.08)
+    return x
+
+
+@snd("amb_x_kueste", loop=True, sr=VSR, g=-4, ogg=True)
+def _():
+    r = rng()
+    t = tt(LONG, VSR)
+    x = np.zeros(len(t))
+    for w0 in np.arange(0, LONG, LONG / 4):                    # vier Wellen
+        sw = np.clip(np.sin(np.pi * ((t - w0) % LONG) / (LONG / 4 * 1.4)), 0, 1) ** 2
+        x += _vbed(200, 2000, LONG, 0.3, 0.2) * 0.15 * sw + _vbed(1800, 7000, LONG, 0.5, 0.3) * 0.1 * np.roll(sw, int(0.7 * VSR)) ** 3
+    for t0 in r.uniform(0, LONG, 4):                           # Möwen
+        f = r.uniform(1300, 1700)
+        for k in range(int(r.integers(1, 4))):
+            _vput(x, _vchirp(f, f * 0.72, 0.24, 0.02), t0 + k * 0.32, 0.12)
+    for t0 in (4.0, 12.0):                                     # Kette / Boje
+        tq = tt(0.7, VSR)
+        _vput(x, (np.sin(2 * np.pi * 880 * tq) + 0.4 * np.sin(2 * np.pi * 2210 * tq)) * np.exp(-tq * 5.0), t0, 0.04)
+    return x
+
+
+@snd("amb_x_sumpf", loop=True, sr=VSR, g=-4, ogg=True)
+def _():
+    r = rng()
+    t = tt(LONG, VSR)
+    x = _vbed(90, 500, LONG, 0.25, 0.4) * 0.16
+    x += np.sin(2 * np.pi * 4300 * t) * (np.sin(2 * np.pi * 31 * t) > 0.3) * (np.sin(2 * np.pi * 0.37 * t) > 0.25) * 0.03
+    def frog(f, d=0.17):
+        tq = tt(d, VSR)
+        s0 = sg.sosfilt(sg.butter(2, [300, 1400], "band", fs=VSR, output="sos"), np.sign(np.sin(2 * np.pi * f * tq)) * (0.5 + 0.5 * np.sin(2 * np.pi * 36 * tq)))
+        return s0 * hann(d, VSR)
+    for t0 in r.uniform(0, LONG, 6):
+        f = r.uniform(120, 180)
+        for k in range(int(r.integers(1, 4))):
+            _vput(x, frog(f), t0 + k * 0.26, 0.28)
+    for t0 in r.uniform(0, LONG, 14):                          # Blubbern
+        f = r.uniform(280, 650)
+        dd = r.uniform(0.05, 0.09)
+        _vput(x, _vchirp(f, f * 2.0, dd) * dec(dd, 25, VSR), t0, 0.3)
+    for t0 in (5.0, 13.0):                                     # Rohr knarzt (Fabrik)
+        _vput(x, reso(rng().uniform(-1, 1, int(0.6 * VSR)), 210, 18.0, VSR) * hann(0.6, VSR), t0, 0.12)
+    return x
+
+
+@snd("amb_x_frost", loop=True, sr=VSR, g=-4, ogg=True)
+def _():
+    r = rng()
+    t = tt(LONG, VSR)
+    base = _vbed(60, 300, LONG, 0.2, 0.3)
+    fc = 850 + 380 * np.sin(2 * np.pi * t / LONG * 2) + 160 * np.sin(2 * np.pi * 3 * t / LONG + 1.0)
+    howl = base * osc(fc, "sin", VSR) * (0.5 + 0.5 * np.sin(2 * np.pi * t / LONG * 2 + 0.5))
+    x = howl / (np.sqrt(np.mean(howl ** 2)) + 1e-9) * 0.3 + _vbed(1500, 6000, LONG, 0.4, 0.6) * 0.12
+    for t0 in r.uniform(0, LONG, 5):                           # Eis knistert
+        f = r.uniform(2000, 3200)
+        tq = tt(0.5, VSR)
+        _vput(x, np.sin(2 * np.pi * f * tq) * np.exp(-tq * 9.0), t0, 0.06)
+    return x
+
+
+@snd("amb_x_krater", loop=True, sr=VSR, g=-4, ogg=True)
+def _():
+    r = rng()
+    t = tt(LONG, VSR)
+    x = _vbed(60, 450, LONG, 0.2, 0.4) * 0.15 + (np.sin(2 * np.pi * 82 * t) + 0.5 * np.sin(2 * np.pi * 123.0 * t)) * (0.6 + 0.4 * np.sin(2 * np.pi * t / LONG * 4)) * 0.1
+    for t0 in r.uniform(0, LONG, 40):
+        f = r.uniform(200, 800)
+        dd = r.uniform(0.05, 0.1)
+        _vput(x, _vchirp(f, f * r.uniform(1.6, 2.4), dd) * dec(dd, 20, VSR), t0, r.uniform(0.2, 0.45))
+    for t0 in (3.0, 11.0):                                     # Grollen tief unten
+        _vput(x, lp(rng().uniform(-1, 1, int(2.5 * VSR)), 120, 2, VSR) * hann(2.5, VSR) * 3.0, t0, 0.3)
+    return x
+
+
+@snd("amb_x_night", loop=True, sr=VSR, g=-5, ogg=True)
+def _():
+    r = rng()
+    t = tt(LONG, VSR)
+    x = _vbed(100, 600, LONG, 0.2, 0.3) * 0.1
+    for f, ph in ((4400, 0.0), (4700, 1.3)):                 # Grillen
+        x += np.sin(2 * np.pi * f * t) * (np.sin(2 * np.pi * 28 * t + ph) > 0.45) * (np.sin(2 * np.pi * 0.6 * t + ph) > -0.1) * 0.035
+    for t0 in (4.0, 12.5):                                     # Käuzchen
+        _vput(x, _vchirp(760, 700, 0.25, 0.01), t0, 0.12)
+        _vput(x, _vchirp(800, 560, 0.5, 0.02), t0 + 0.6, 0.12)
+    return x
+
+
+# ---------------------------------------------------------------- Gebiets-Ereignisse
+@snd("ev_amb_sandstorm", loop=True, sr=VSR, g=-1, ogg=True)
+def _():
+    d = 8.0
+    t = tt(d, VSR)
+    x = _vbed(300, 4000, d, 0.6, 0.6) * 0.5 + _vbed(60, 300, d, 0.3, 0.5) * 0.3
+    fc = 700 + 400 * np.sin(2 * np.pi * t / d * 2) + 200 * np.sin(2 * np.pi * t / d * 5)
+    x += _vbed(80, 400, d, 0.2, 0.2) * osc(fc, "sin", VSR) * 0.25
+    x += _vbed(5000, 9000, d, 1.5, 0.9) * 0.12                # Sandkörner
+    return x
+
+
+@snd("ev_amb_blizzard", loop=True, sr=VSR, g=-2, ogg=True)
+def _():
+    d = 8.0
+    t = tt(d, VSR)
+    base = _vbed(60, 300, d, 0.3, 0.4)
+    fc = 1000 + 500 * np.sin(2 * np.pi * t / d * 3) + 200 * np.sin(2 * np.pi * t / d * 7)
+    howl = base * osc(fc, "sin", VSR)
+    return howl / (np.sqrt(np.mean(howl ** 2)) + 1e-9) * 0.4 + _vbed(1500, 7000, d, 0.8, 0.7) * 0.3
+
+
+@snd("ev_amb_toxic", loop=True, sr=VSR, g=-3, ogg=True)
+def _():
+    d = 8.0
+    r = rng()
+    x = _vbed(2000, 7000, d, 0.5, 0.6) * 0.12 + _vbed(80, 400, d, 0.2, 0.3) * 0.2
+    for t0 in r.uniform(0, d, 26):
+        f = r.uniform(150, 420)
+        dd = r.uniform(0.07, 0.14)
+        _vput(x, _vchirp(f, f * 1.8, dd) * dec(dd, 18, VSR), t0, 0.45)
+    return x
+
+
+@snd("ev_amb_fog", loop=True, sr=VSR, g=-4, ogg=True)
+def _():
+    d = 10.0
+    t = tt(d, VSR)
+    x = _vbed(100, 800, d, 0.15, 0.4) * 0.2
+    for f, ph in ((220.0, 0.0), (277.2, 1.7), (329.6, 3.1)):     # schwebende, unheimliche Fläche
+        x += np.sin(2 * np.pi * f * t + 0.8 * np.sin(2 * np.pi * 0.1 * t + ph)) * (0.5 + 0.5 * np.sin(2 * np.pi * t / d + ph)) * 0.05
+    return x
+
+
+@snd("ev_amb_tide", loop=True, sr=VSR, g=-2, ogg=True)
+def _():
+    d = 8.0
+    t = tt(d, VSR)
+    sw = (0.5 - 0.5 * np.cos(2 * np.pi * t / d * 2)) ** 1.5
+    return _vbed(150, 2500, d, 0.4, 0.2) * (0.25 + 0.6 * sw) + _vbed(2000, 8000, d, 0.6, 0.3) * 0.25 * np.roll(sw, int(0.5 * VSR)) ** 2
+
+
+@snd("ev_amb_rain", loop=True, sr=VSR, g=-3, ogg=True)
+def _():
+    d = 8.0
+    r = rng()
+    x = _vbed(800, 8000, d, 0.8, 0.3) * 0.35 + _vbed(100, 600, d, 0.3, 0.3) * 0.15
+    for t0 in r.uniform(0, d, 160):                            # einzelne Tropfen
+        f = r.uniform(1500, 4000)
+        _vput(x, _vchirp(f, f * 1.4, 0.02) * dec(0.02, 120, VSR), t0, r.uniform(0.05, 0.15))
+    return x
+
+
+@snd("ev_amb_meteor", loop=True, sr=VSR, g=-3, ogg=True)
+def _():
+    d = 8.0
+    t = tt(d, VSR)
+    return _vbed(25, 140, d, 0.25, 0.5) * 0.5 + np.sin(2 * np.pi * 55 * t) * (0.5 + 0.5 * np.sin(2 * np.pi * t / d * 2)) * 0.15 + _vbed(800, 3000, d, 0.6, 0.8) * 0.05
+
+
+EV = {
+    "ev_sandstorm": lambda: mix(whoosh(2.2, 200, 1400, 600, 0.6) * hann(2.2) * 1.2, (bp(noise(2.0), 4000, 9000) * hann(2.0) * 0.3, 0.3, 1.0)),
+    "ev_avalanche_warn": lambda: mix(*[(lp(noise(0.25), 200) * dec(0.25, 9.0) * 3.0, k * 0.35, 0.8 + 0.1 * k) for k in range(4)], (bell(1318, 0.5, 9.0) * 0.25, 0.0, 1.0)),
+    "ev_avalanche": lambda: mix(lp(noise(2.4), 260) * ar(2.4, 0.4, 1.0) * 3.5, (bp(noise(2.0), 600, 3000) * ar(2.0, 0.3, 0.8) * 0.6, 0.3, 1.0), (boom(1.2), 0.2, 0.7)),
+    "ev_toxic_puff": lambda: mix(bp(noise(0.9), 1500, 6000) * ar(0.9, 0.05, 0.6) * 0.7, (blub(0.3, 180, 120, 0.2), 0.0, 0.6)),
+    "ev_toxic_hurt": lambda: mix(bp(noise(0.25), 2000, 6000) * hann(0.25) * 0.5, (tone(0.2, 260, 200, "sq") * hann(0.2) * 0.2, 0.02, 1.0)),
+    "ev_meteor_fall": lambda: mix(osc(gliss(1.4, 2400, 300), "sin") * ramp(1.4, 0.1, 1.0) ** 2 * 0.5, (whoosh(1.4, 3000, 400, 900, 0.8) * ramp(1.4, 0.2, 1.0) * 0.8, 0, 1.0)),
+    "ev_meteor_impact": lambda: mix(boom(1.6), (crackle(0.8, 120, 2500) * dec(0.8, 4.0) * 0.5, 0.05, 1.0), (bell(196, 0.9, 3.0) * 0.2, 0.0, 1.0)),
+    "ev_fog_rise": lambda: mix(whoosh(2.0, 200, 700, 300, 0.7) * hann(2.0), (tone(2.0, 220, 233, "tri") * hann(2.0) * 0.12, 0, 1.0), (tone(2.0, 330, 311, "tri") * hann(2.0) * 0.08, 0.2, 1.0)),
+    "ev_tide_turn": lambda: mix(whoosh(1.8, 300, 1200, 800, 0.5) * hann(1.8) * 1.2, (bp(noise(1.2), 2000, 8000) * hann(1.2) * 0.6, 0.6, 1.0)),
+    "ev_rain_start": lambda: mix(lp(noise(1.6), 300) * ar(1.6, 0.05, 1.2) * dec(1.6, 1.5) * 4.0, (crackle(1.2, 60, 900) * hann(1.2) * 0.4, 0.1, 1.0)),
+    "ev_end": lambda: jingle(["G5", "C6", ("E6", "G6")], "bell", 0.09, 0.5, 6.0),
+    "landmark_discover": lambda: mix(jingle(["C5", "G5", "C6", ("E6", "G6", "C7")], "bell", 0.12, 1.0, 3.5), (sparkle(0.8, 2500, 7000, 10) * 0.25, 0.3, 1.0)),
+    "journal_page": lambda: mix(bp(noise(0.25), 1500, 7000) * hann(0.25) * 0.5, (bp(noise(0.18), 2000, 8000) * hann(0.18) * 0.4, 0.2, 1.0), (bell(1568, 0.5, 6.0) * 0.3, 0.3, 1.0), (bell(2093, 0.5, 6.0) * 0.25, 0.42, 1.0)),
+    "tool_get": lambda: mix(thump(0.1, 300, 150, 30), (jingle(["E5", "A5", "C#6", "E6"], "bell", 0.08, 0.5, 5.0), 0.05, 0.9)),
+    "tool_missing": lambda: mix(tone(0.12, 300, 260, "sq") * hann(0.12) * 0.3, (tone(0.16, 240, 200, "sq") * hann(0.16) * 0.3, 0.14, 1.0)),
+    "hit_tap": lambda: mix(blub(0.12, 600, 900, 0.1), (bubble(1200, 0.06, 1.5), 0.08, 0.6), (click(0.02, 1500, 5000), 0, 0.4)),
+    "hit_ice": lambda: mix(click(0.025, 3000, 9000, 150), (bell(2637, 0.3, 14.0) * 0.4, 0.0, 1.0), (bell(3520, 0.25, 18.0) * 0.25, 0.01, 1.0)),
+    "hit_pump": lambda: mix(thump(0.14, 120, 60, 18), (blub(0.22, 140, 90, 0.3, 12), 0.05, 0.8), (click(0.03, 500, 2000, 80), 0, 0.5)),
+    "hit_shell": lambda: mix(click(0.03, 2000, 6000, 120), (pluck(1760, 0.2, 18.0) * 0.4, 0.0, 1.0)),
+    "hit_resin": lambda: mix(squish(0.15, 700, 22.0), (click(0.03, 800, 3000, 90), 0, 0.6)),
+    "hit_honey": lambda: mix(squish(0.14, 500, 18.0), (bp(noise(0.3), 300, 900) * hann(0.3) * 0.3, 0.02, 1.0)),
+    "hit_geyser": lambda: mix(bp(noise(0.5), 1500, 6000) * ar(0.5, 0.02, 0.35) * 0.6, (blub(0.3, 200, 400, 0.3), 0.0, 0.7)),
+    "src_bonus": lambda: jingle(["A5", "E6"], "bell", 0.07, 0.35, 7.0),
+    "caravan_bell": lambda: mix(*[(bell(1046 if k % 2 == 0 else 1318, 0.45, 7.0) * 0.5, k * 0.28, 1.0) for k in range(4)], (lp(noise(1.2), 300) * hann(1.2) * 0.6, 0.0, 1.0)),
+    "caravan_trade": lambda: mix(*[(click(0.03, 2500, 7000, 100), k * 0.05, 0.6) for k in range(5)], (jingle(["C6", "G6"], "bell", 0.08, 0.4, 7.0), 0.25, 0.8)),
+    "quest_new": lambda: mix(bp(noise(0.2), 1500, 6000) * hann(0.2) * 0.4, (jingle(["G5", "D6"], "bell", 0.1, 0.4, 7.0), 0.1, 0.9)),
+    "quest_step": lambda: jingle(["E6", "G6"], "bell", 0.07, 0.3, 9.0),
+    "egg_found": lambda: mix(thump(0.1, 260, 160, 30), (jingle(["C6", "E6", "A6"], "bell", 0.07, 0.4, 7.0), 0.04, 0.9)),
+    "egg_crack": lambda: mix(*[(click(0.02, 1500 + 400 * k, 6000, 160), k * 0.09, 0.8) for k in range(4)]),
+    "egg_hatch": lambda: mix(click(0.04, 1200, 6000, 90), (jingle(["C5", "E5", "G5", "C6", "E6"], "bell", 0.07, 0.6, 5.0), 0.08, 0.8), (sparkle(0.5), 0.2, 0.3)),
+    "comp_lure": lambda: mix(tone(0.18, 1200, 1800, "sin") * hann(0.18) * 0.6, (tone(0.25, 1700, 1100, "sin") * hann(0.25) * 0.6, 0.2, 1.0)),
+    "comp_collect": lambda: mix(bubble(700, 0.06, 2.0), (bell(1760, 0.25, 12.0) * 0.4, 0.05, 1.0)),
+    "dummy_hit": lambda: mix(thump(0.12, 160, 80, 22), (bp(noise(0.08), 300, 1500) * dec(0.08, 40) * 0.6, 0, 1.0)),
+    "dummy_reset": lambda: mix(whoosh(0.3, 400, 1200, 400) * 0.5, (pluck(880, 0.15, 16.0) * 0.5, 0.2, 1.0)),
+    "train_start": lambda: mix(bell(1318, 0.3, 8.0) * 0.5, (bell(1760, 0.5, 6.0) * 0.5, 0.15, 1.0), (whoosh(0.4, 300, 1500, 500) * 0.3, 0, 1.0)),
+    "npc_wish": lambda: mix(bubble(800, 0.06, 1.8), (pluck(1175, 0.16, 14.0) * 0.5, 0.06, 1.0), (pluck(1568, 0.2, 12.0) * 0.5, 0.14, 1.0)),
+    "npc_wish_done": lambda: mix(jingle(["G5", "B5", "D6", "G6"], "bell", 0.08, 0.5, 6.0), (sparkle(0.4), 0.2, 0.3)),
+    "npc_shoo": lambda: mix(*[(tone(0.08, 900 + 200 * k, 700 + 150 * k, "sq") * hann(0.08) * 0.3, k * 0.1, 1.0) for k in range(4)], (whoosh(0.3, 600, 1600, 500) * 0.4, 0.0, 1.0)),
+    "npc_sigh": lambda: bp(noise(0.6), 300, 1800) * hann(0.6) * ramp(0.6, 1.0, 0.3) * 0.7,
+    "tree_chop_base": lambda: mix(thump(0.08, 300, 150, 30), (click(0.02, 1200, 4000, 140), 0, 0.7), (bp(noise(0.06), 800, 2500) * dec(0.06, 40), 0.0, 0.5)),
+    "barrow_squeak": lambda: mix(*[(tone(0.09, 1500, 1300, "tri") * hann(0.09) * 0.25, k * 0.3, 1.0) for k in range(2)]),
+    "lamp_on": lambda: mix(click(0.02, 1500, 5000, 150), (tone(0.3, 120, 120, "saw") * hann(0.3) * 0.08, 0.02, 1.0)),
+}
+for _n, _f in EV.items():
+    snd(_n)(_f)
+
+# Klänge, die andere Pakete schon aufrufen, die es aber noch nicht gab (gefunden mit tools/check_sounds.py)
+MISSING = {
+    "goal_done": lambda: mix(jingle(["E5", "G5", "C6"], "bell", 0.08, 0.5, 6.0), (sparkle(0.4), 0.15, 0.3)),
+    "tut_step": lambda: mix(bubble(700, 0.06, 1.8), (bell(1318, 0.3, 9.0) * 0.5, 0.05, 1.0)),
+    "tut_done": lambda: mix(jingle(["C5", "E5", "G5", ("C6", "E6")], "brass", 0.11, 0.7, 5.0), (sparkle(0.6), 0.35, 0.3)),
+    "queue_add": lambda: mix(click(0.03, 1200, 5000, 100), (pluck(988, 0.12, 20.0) * 0.6, 0.02, 1.0)),
+    "queue_start": lambda: mix(pluck(784, 0.12, 18.0), (pluck(1175, 0.16, 16.0), 0.08, 0.9)),
+    "loading_whoosh": lambda: whoosh(0.45, 300, 2200, 700, 0.4),
+    "return_summary": lambda: mix(jingle(["G4", "C5", "E5", "G5"], "bell", 0.1, 0.6, 5.0), (whoosh(0.3, 600, 1500, 400) * 0.3, 0.0, 1.0)),
+    "tower_frozen": lambda: mix(bell(2637, 0.4, 10.0) * 0.4, (bp(noise(0.3), 3000, 8000) * dec(0.3, 14.0) * 0.5, 0.0, 1.0), (click(0.02, 3000, 8000, 160), 0.0, 0.6)),
+    "tower_stunned": lambda: mix(*[(tone(0.12, 1400 - 150 * k, 1200 - 150 * k, "sin") * hann(0.12) * 0.4, k * 0.1, 1.0) for k in range(4)]),
+}
+for _n, _f in MISSING.items():
+    snd(_n)(_f)
+
+
+# ---------------------------------------------------------------- Comic-Rufe der Helden (Formant-Stimme)
+VOW = {"a": (800, 1250, 2600), "e": (480, 1900, 2600), "i": (300, 2300, 3000), "o": (480, 850, 2500), "u": (330, 780, 2350),
+       "ä": (650, 1700, 2500), "ei": (700, 1600, 2600), "au": (700, 1000, 2500)}
+# Held: Grundton, Formant-Faktor, Rauheit, Vibrato
+VOICE = {"jona": (138.0, 1.0, 0.15, 0.010), "bruno": (98.0, 0.9, 0.35, 0.006), "greta": (205.0, 1.08, 0.12, 0.022),
+         "mika": (228.0, 1.14, 0.1, 0.012), "ada": (240.0, 1.17, 0.06, 0.009), "yuki": (288.0, 1.22, 0.05, 0.014)}
+# Worte als Silben (Anlaut, Vokal, Dauer, Tonhöhe relativ) je Art; je Held eine andere Auswahl
+WORDS = {
+    "start": [[("l", "o", 0.26, 1.15), ("s", "", 0.1, 1.0)], [("h", "o", 0.12, 1.0), ("p", "a", 0.22, 1.25)], [("", "au", 0.2, 1.0), ("f", "", 0.08, 1.0)],
+              [("v", "o", 0.14, 1.0), ("r", "a", 0.12, 1.1), ("n", "", 0.06, 1.2)], [("l", "o", 0.14, 1.05), ("s", "", 0.06, 1.0), ("g", "e", 0.18, 1.25), ("ts", "", 0.06, 1.2)], [("j", "a", 0.12, 1.0), ("l", "a", 0.2, 1.3)]],
+    "skill": [[("h", "a", 0.28, 1.3)], [("j", "e", 0.12, 1.1), ("ts", "", 0.08, 1.0), ("t", "", 0.04, 1.0)], [("h", "i", 0.14, 1.2), ("j", "a", 0.3, 1.45)],
+              [("t", "a", 0.12, 1.1), ("t", "a", 0.24, 1.35)], [("h", "e", 0.18, 1.3), ("j", "", 0.04, 1.0)], [("", "u", 0.1, 1.0), ("j", "a", 0.26, 1.4)]],
+    "dodge": [[("h", "u", 0.1, 1.2), ("p", "", 0.05, 1.0)], [("h", "e", 0.2, 1.35)], [("w", "o", 0.3, 1.3)], [("h", "o", 0.1, 1.3), ("p", "", 0.04, 1.0), ("l", "a", 0.16, 1.15)]],
+    "hurt": [[("", "au", 0.24, 1.5)], [("", "u", 0.1, 1.3), ("f", "", 0.1, 1.0)], [("", "au", 0.14, 1.5), ("tsch", "", 0.1, 1.0)], [("", "o", 0.18, 1.45), ("", "u", 0.14, 1.1)]],
+    "down": [[("", "o", 0.55, 1.2), ("h", "", 0.1, 0.8)], [("", "u", 0.18, 1.2), ("", "a", 0.45, 0.95)], [("n", "e", 0.18, 1.15), ("", "i", 0.4, 0.9), ("n", "", 0.05, 0.8)]],
+    "cheer": [[("j", "u", 0.14, 1.1), ("h", "u", 0.26, 1.45)], [("j", "a", 0.4, 1.4)], [("j", "e", 0.36, 1.45)], [("", "u", 0.1, 1.2), ("j", "e", 0.12, 1.3), ("h", "a", 0.26, 1.5)]],
+    "win": [[("h", "u", 0.12, 1.1), ("r", "a", 0.38, 1.5)], [("g", "e", 0.1, 1.0), ("sch", "a", 0.22, 1.35), ("f", "", 0.06, 1.0), ("t", "", 0.04, 1.0)], [("s", "i", 0.14, 1.2), ("k", "a", 0.34, 1.5)],
+            [("j", "a", 0.16, 1.1), ("h", "u", 0.14, 1.3), ("h", "u", 0.3, 1.6)]],
+}
+HERO_ORDER_V = ["jona", "mika", "bruno", "ada", "yuki", "greta"]
+
+
+def _formant(x, fr, k, sr=VSR):
+    y = np.zeros_like(x)
+    for f, g, q in zip(fr, (1.0, 0.55, 0.25), (6.0, 9.0, 12.0)):
+        f2 = min(f * k, sr * 0.45)
+        b, a = sg.iirpeak(f2, q, fs=sr)
+        y += sg.lfilter(b, a, x) * g
+    return y
+
+
+def _syll(f0, kf, rough, vib, cons, vow, d, pk, sr=VSR):
+    parts = []
+    n = int(d * sr)
+    if cons:
+        cd = {"s": 0.07, "sch": 0.09, "tsch": 0.1, "ts": 0.06, "f": 0.07, "h": 0.05, "p": 0.02, "t": 0.02, "k": 0.025, "g": 0.03}.get(cons, 0.04)
+        cn = int(cd * sr)
+        if cons in ("s", "ts"):
+            c = bp(rng().uniform(-1, 1, cn), 4000, 9000, 2, sr) * hann(cd, sr) * 0.5
+        elif cons in ("sch", "tsch"):
+            c = bp(rng().uniform(-1, 1, cn), 1800, 5000, 2, sr) * hann(cd, sr) * 0.6
+        elif cons == "f":
+            c = bp(rng().uniform(-1, 1, cn), 1200, 7000, 2, sr) * hann(cd, sr) * 0.35
+        elif cons == "h":
+            c = _formant(rng().uniform(-1, 1, cn), VOW.get(vow or "a", VOW["a"]), kf, sr) * hann(cd, sr) * 0.25
+        elif cons in ("p", "t", "k", "g"):
+            c = bp(rng().uniform(-1, 1, cn), {"p": 500, "t": 3000, "k": 1500, "g": 900}[cons], {"p": 2000, "t": 8000, "k": 4000, "g": 2500}[cons], 2, sr) * dec(cd, 120, sr) * 0.6
+        else:                                   # l, m, n, r, j, v, w: kurzer stimmhafter Übergang
+            c = None
+        if c is not None:
+            parts.append(c)
+    if vow:
+        t = np.arange(n) / sr
+        contour = f0 * pk * (1.0 + 0.08 * np.sin(np.pi * t / max(d, 0.05))) * (1.0 + vib * np.sin(2 * np.pi * 5.5 * t))
+        if cons in ("l", "m", "n", "r", "j", "v", "w"):
+            contour = contour * (1.0 - 0.06 * np.exp(-t * 30.0))
+        ph = 2 * np.pi * np.cumsum(contour) / sr
+        src = np.zeros(n)
+        for h in range(1, 30):                   # Stimmband-Impulse: Obertöne fallen mit 1/h
+            if f0 * pk * h > sr * 0.42:
+                break
+            src += np.sin(ph * h) / h
+        if cons == "r":
+            src *= 0.7 + 0.3 * np.sin(2 * np.pi * 28 * t)
+        src += rng().uniform(-1, 1, n) * rough * 0.4
+        fr = VOW[vow]
+        if cons == "j":
+            fr = tuple(a + (b - a) * 0.0 for a, b in zip(fr, VOW["i"]))
+        v = _formant(src, fr, kf, sr)
+        env = ar(d, 0.025 if cons in ("", "h") else 0.01, min(0.08, d * 0.4), sr)
+        parts.append(v * env)
+    return np.concatenate(parts) if parts else np.zeros(1)
+
+
+def make_voice(hero, kind):
+    f0, kf, rough, vib = VOICE[hero]
+    words = WORDS[kind]
+    w = words[(HERO_ORDER_V.index(hero) * 3 + len(kind)) % len(words)]
+    segs = [_syll(f0, kf, rough, vib, c, v, d, pk) for (c, v, d, pk) in w]
+    out = np.zeros(sum(len(s0) for s0 in segs) + int(0.05 * VSR))
+    pos = 0
+    for s0 in segs:
+        out[pos:pos + len(s0)] += s0
+        pos += max(len(s0) - int(0.015 * VSR), 0)
+    out = out[:pos + int(0.05 * VSR)]
+    if kind in ("hurt", "down"):
+        out = soft(out * 1.4, 1.2)
+    return out
+
+
+for _h in HERO_ORDER_V:
+    for _k in WORDS:
+        snd("v_%s_%s" % (_h, _k), sr=VSR, full=True)((lambda h=_h, k=_k: make_voice(h, k)))
+
+
+# ================================================================== V5: Gegner 2 (Bosse, Minibosse, Fallen, Bauen)
+@snd("tower_jam_vine", g=-3)
+def _():
+    d = 0.7
+    rustle = bp(noise(d), 1500, 6000) * (0.4 + 0.6 * np.abs(np.sin(np.pi * tt(d) * 9))) * hann(d) * 0.5
+    creak = osc(gliss(0.5, 180, 120) + 25 * np.sin(2 * np.pi * 31 * tt(0.5)), "saw") * ar(0.5, 0.05, 0.2) * 0.25
+    return mix(rustle, (lp(creak, 1500), 0.15, 1.0))
+
+
+@snd("tower_jam_emp", g=-2)
+def _():
+    d = 0.6
+    hum = osc(np.full(int(d * SR), 120.0), "sq") * 0.3 + osc(np.full(int(d * SR), 240.0), "saw") * 0.15
+    env = np.ones(int(d * SR))
+    env[int(0.35 * SR):] = np.linspace(1, 0, int(d * SR) - int(0.35 * SR)) ** 3
+    zap = bp(noise(0.12), 2000, 9000) * dec(0.12, 30) * 0.8
+    return mix(zap, hum * env * (0.7 + 0.3 * np.sign(np.sin(2 * np.pi * 37 * tt(d)))), (tone(0.25, 900, 80, "saw") * dec(0.25, 9) * 0.3, 0.33, 1.0))
+
+
+@snd("tower_jam_lava", g=-3)
+def _():
+    d = 0.8
+    hiss = hp(noise(d), 3000) * ar(d, 0.02, 0.5) * 0.45
+    return mix(hiss, crackle(d, 80.0, 2000.0) * 0.4, thump(0.3, 120, 50) * 0.5)
+
+
+@snd("tower_jam_frost", g=-3)
+def _():
+    parts = [click(0.03, 2500, 9000, 150) * 0.8]
+    for i, t0 in enumerate((0.05, 0.13, 0.19, 0.28, 0.33)):
+        parts.append((bell(3000 + 700 * i, 0.25, 22, 2.7, 1.5) * 0.25, t0, 1.0))
+    parts.append((hp(noise(0.5), 4000) * dec(0.5, 6) * 0.2, 0.0, 1.0))
+    return mix(*parts)
+
+
+@snd("miniboss_arrive", g=0)
+def _():
+    horn = brass(hz("D3"), 0.9) * 0.6 + brass(hz("A3"), 0.9) * 0.3
+    stomps = [(thump(0.35, 90, 35, 9) * 0.9, t0, 1.0) for t0 in (0.0, 0.45, 0.9)]
+    return soft(mix(*stomps, (horn, 0.15, 1.0)), 1.3)
+
+
+@snd("miniboss_defeat", g=-1)
+def _():
+    return mix(jingle(["G4", "C5", "E5", ("G5", "C6")], "brass", 0.11, 0.6), (boom(0.6) * 0.3, 0.0, 1.0))
+
+
+@snd("boss_intro", g=1)
+def _():
+    hit = soft(mix(thump(0.9, 70, 30, 4) * 1.2, bp(noise(0.15), 300, 3000) * dec(0.15, 25) * 0.7), 1.5)
+    chord = (brass(hz("C3"), 1.4) + brass(hz("G3"), 1.4) * 0.7 + brass(hz("Eb4"), 1.4) * 0.5) * 0.35
+    return echo(mix(hit, (chord, 0.05, 1.0)), 0.18, 0.4, 3, 2000)
+
+
+@snd("boss_phase", g=0)
+def _():
+    d = 1.2
+    t = tt(d)
+    roar = lp(noise(d), 900) * osc(80 + 40 * np.sin(2 * np.pi * 3 * t), "sin") * 2.0 + osc(gliss(d, 110, 70), "saw") * 0.3
+    roar = soft(roar * ar(d, 0.08, 0.5), 1.6)
+    rumble = lp(noise(d), 120) * ar(d, 0.2, 0.6) * 2.0
+    return mix(roar * 0.7, rumble)
+
+
+@snd("boss_rage", g=0)
+def _():
+    d = 0.9
+    t = tt(d)
+    hiss = bp(noise(d), 1500, 7000) * ar(d, 0.05, 0.3) * 0.5
+    snarl = osc(gliss(d, 160, 420) * (1 + 0.05 * np.sin(2 * np.pi * 27 * t)), "saw") * ar(d, 0.1, 0.25) * 0.35
+    return soft(mix(hiss, lp(snarl, 3000)), 1.3)
+
+
+@snd("boss_weak", g=-2)
+def _():
+    return mix(bell(hz("E6"), 0.8, 4.0, 2.76, 1.2) * 0.5, (bell(hz("B6"), 0.7, 5.0, 2.76, 1.0) * 0.35, 0.06, 1.0), sparkle(0.5) * 0.15)
+
+
+@snd("tar_ignite", g=-2)
+def _():
+    d = 0.9
+    wh = whoosh(0.4, 200, 1800, 600)
+    return mix(wh * 0.8, (crackle(0.7, 140.0, 2500.0) * dec(0.7, 3) * 0.6, 0.2, 1.0), (lp(noise(d), 300) * ar(d, 0.1, 0.5) * 0.4, 0.1, 1.0))
+
+
+@snd("trap_spring", g=-2)
+def _():
+    return mix(click(0.02) * 0.7, boing(0.45, 220, 0.6, 16) * 0.6, (thump(0.15, 300, 120, 25) * 0.4, 0.0, 1.0))
+
+
+@snd("bait_squeak", g=-4)
+def _():
+    parts = []
+    for i, t0 in enumerate((0.0, 0.16)):
+        f0 = 1200 + 300 * i
+        parts.append((osc(gliss(0.12, f0, f0 * 1.6) + 120 * np.sin(2 * np.pi * 40 * tt(0.12)), "tri") * ar(0.12, 0.01, 0.04) * 0.5, t0, 1.0))
+    return mix(*parts)
+
+
+@snd("fence_zap", g=-2)
+def _():
+    d = 0.45
+    zap = bp(noise(0.1), 1500, 9000) * dec(0.1, 35) * 1.0
+    buzz = osc(np.full(int(d * SR), 100.0), "saw") * dec(d, 6) * 0.35
+    arc = (np.sign(np.sin(2 * np.pi * 13 * tt(0.2))) * 0.5 + 0.5) * hp(noise(0.2), 3000) * 0.4
+    return soft(mix(zap, buzz, (arc, 0.02, 1.0)), 1.4)
+
+
+@snd("ice_trap", g=-2)
+def _():
+    up = whoosh(0.25, 400, 3000, 500) * 0.6
+    crack = [(click(0.025, 2000, 8000, 160) * 0.8, t0, 1.0) for t0 in (0.18, 0.24, 0.31)]
+    ring = (bell(2600, 0.5, 9, 2.4, 1.5) * 0.2, 0.2, 1.0)
+    return mix(up, *crack, ring)
+
+
+@snd("build_thunk", g=-3)
+def _():
+    return mix(thump(0.22, 180, 70, 22) * 0.9, bp(noise(0.08), 400, 2500) * dec(0.08, 40) * 0.5, (pluck(320, 0.15, 25, "sq", 0.2) * 0.15, 0.0, 1.0))
+
+
+@snd("build_done_thud", g=-2)
+def _():
+    return mix(thump(0.4, 120, 45, 10) * 1.0, (bubble(500, 0.1, 2.5) * 0.5, 0.05, 1.0), (lp(noise(0.4), 600) * dec(0.4, 10) * 0.4, 0.0, 1.0))
+
+
+@snd("vine_burst", g=-2)
+def _():
+    d = 0.7
+    crack = [(click(0.03, 300, 2500, 120) * 0.7, t0, 1.0) for t0 in (0.0, 0.07, 0.15, 0.22)]
+    rustle = bp(noise(d), 800, 5000) * ar(d, 0.02, 0.4) * 0.45
+    dirt = lp(noise(0.3), 400) * dec(0.3, 10) * 0.6
+    return mix(*crack, rustle, dirt)
+
+
+# ------------------------------------------------------------------ V5: Vulkaninsel
+# Paket Z: Umgebung, Ausbruch, Lavaströme, Hitze, Glutgeode und die Familie der Magma-Wesen (e_magma_*).
+def _lava_bubbles(d, n, sr=SR, f_lo=90, f_hi=260):
+    r = rng()
+    x = np.zeros(int(d * sr))
+    for t0 in r.uniform(0, max(d - 0.3, 0.01), n):
+        f = r.uniform(f_lo, f_hi)
+        b = osc(gliss(0.18, f, f * 1.8, sr), "sin", sr) * dec(0.18, 14.0, sr) * ar(0.18, 0.004, 0.03, sr)
+        i = int(t0 * sr)
+        x[i:i + len(b)] += b[:len(x) - i] * r.uniform(0.3, 0.8)
+    return x
+
+
+@snd("amb_x_vulkan", loop=True, sr=VSR, g=-4, ogg=True)
+def _():
+    r = rng()
+    t = tt(LONG, VSR)
+    x = _vbed(30, 160, LONG, 0.15, 0.5) * 0.5                            # tiefes Grollen des Berges
+    x += np.sin(2 * np.pi * 41 * t) * (0.5 + 0.5 * np.sin(2 * np.pi * t / LONG * 3)) * 0.08
+    x += _lava_bubbles(LONG, 70, VSR) * 0.35                             # Lava blubbert
+    for t0 in r.uniform(0, LONG - 0.5, 60):                              # Glut knistert
+        _vput(x, hp(r.uniform(-1, 1, int(0.01 * VSR)), 2500, 2, VSR) * 0.5, t0, r.uniform(0.1, 0.35))
+    for t0 in (4.0, 12.0):                                               # Dampf zischt aus einer Fumarole
+        _vput(x, bp(r.uniform(-1, 1, int(1.6 * VSR)), 2500, 7000, 2, VSR) * hann(1.6, VSR) * 0.25, t0, 1.0)
+    return x
+
+
+@snd("ev_amb_eruption", loop=True, sr=VSR, g=-1, ogg=True)
+def _():
+    d = 8.0
+    t = tt(d, VSR)
+    x = _vbed(25, 120, d, 0.4, 0.6) * 0.9 + _vbed(200, 900, d, 0.7, 0.6) * 0.25          # Tosen
+    x += _vbed(3000, 8000, d, 1.1, 0.8) * 0.12                                            # Ascheregen rieselt
+    x += np.sin(2 * np.pi * 33 * t) * (0.6 + 0.4 * np.sin(2 * np.pi * t / d * 4)) * 0.12
+    x += _lava_bubbles(d, 30, VSR, 60, 180) * 0.3
+    return x
+
+
+VK = {
+    "ev_eruption": lambda: mix(boom(2.2), (lp(noise(2.6), 180) * ar(2.6, 0.3, 1.6) * 4.0, 0.1, 1.0), (crackle(1.6, 140, 2000) * dec(1.6, 2.5) * 0.6, 0.2, 1.0),
+                               (bp(noise(2.0), 600, 2500) * ar(2.0, 0.4, 1.2) * 0.5, 0.4, 1.0)),
+    "ev_lavabomb_fall": lambda: mix(osc(gliss(1.2, 1800, 260), "sin") * ramp(1.2, 0.1, 1.0) ** 2 * 0.45, (whoosh(1.2, 2200, 300, 700, 0.8) * ramp(1.2, 0.2, 1.0) * 0.8, 0, 1.0)),
+    "ev_lavabomb_impact": lambda: mix(boom(1.2), (bp(noise(1.0), 2500, 8000) * ar(1.0, 0.05, 0.8) * 0.5, 0.1, 1.0), (_lava_bubbles(0.8, 6) * 0.6, 0.15, 1.0)),
+    "lava_shift": lambda: mix(lp(noise(1.6), 220) * ar(1.6, 0.3, 1.0) * 3.0, (_lava_bubbles(1.4, 14) * 0.8, 0.2, 1.0), (crackle(1.2, 80, 1500) * hann(1.2) * 0.5, 0.1, 1.0)),
+    "lava_crack": lambda: mix(*[(click(0.04, 400 + 300 * k, 3000, 70) * 1.2, k * 0.16, 0.9 - 0.1 * k) for k in range(5)], (lp(noise(0.8), 300) * hann(0.8) * 0.8, 0.0, 1.0)),
+    "lava_burst": lambda: mix(thump(0.4, 120, 45, 9), (bp(noise(0.9), 300, 2500) * ar(0.9, 0.02, 0.7) * 1.0, 0.0, 1.0), (_lava_bubbles(0.7, 8) * 0.7, 0.1, 1.0)),
+    "heat_warn": lambda: mix(bp(noise(0.6), 3000, 8000) * hann(0.6) * 0.35, (bell(988, 0.35, 8.0) * 0.4, 0.05, 1.0), (bell(784, 0.4, 8.0) * 0.4, 0.25, 1.0)),
+    "heat_overheat": lambda: mix(bp(noise(1.0), 2500, 8000) * ar(1.0, 0.05, 0.6) * 0.6, *[(tone(0.16, 520, 440, "sq") * hann(0.16) * 0.25, k * 0.22, 1.0) for k in range(3)]),
+    "hit_geode": lambda: mix(click(0.03, 1500, 6000, 120), (bell(1760, 0.3, 12.0) * 0.35, 0.0, 1.0), (_lava_bubbles(0.3, 3) * 0.5, 0.02, 1.0), (thump(0.1, 200, 90, 25), 0.0, 0.6)),
+}
+for _n, _f in VK.items():
+    snd(_n)(_f)
+
+
+def _magma_voice(f, d, up=1.0):
+    """Magma-Wesen: grollender Kehllaut aus Rechteck und Rauschen, darunter blubbernde Lava."""
+    t = tt(d)
+    x = osc(gliss(d, f, f * up) * (1 + 0.06 * np.sin(2 * np.pi * 22 * t)), "sq") * 0.5 + osc(gliss(d, f * 0.5, f * 0.5 * up), "saw") * 0.5
+    y = soft(lp(x, 700) * hann(d) ** 0.5, 2.2) * 0.5
+    return mix(y, (lp(noise(d), 400) * hann(d) * 0.25, 0, 1.0), (_lava_bubbles(d, max(2, int(d * 10))) * 0.35, 0.0, 1.0))
+
+
+def _magma(what, v):
+    f = 95.0 * (1.0 + 0.08 * v)
+    if what == "spawn":
+        return mix(_magma_voice(f, 0.5, 1.3), (lp(noise(0.5), 300) * ar(0.5, 0.05, 0.3) * 1.2, 0, 1.0))
+    if what == "attack":
+        return mix(_magma_voice(f * 1.3, 0.22, 0.8), (whoosh(0.15, 1500, 400, 600, 0.3) * 0.5, 0.03, 1.0))
+    if what == "hit":
+        return mix(_magma_voice(f * 1.6, 0.12, 0.7) * 0.8, (click(0.03, 500, 3000, 80), 0, 0.7))
+    if what == "death":
+        return mix(_magma_voice(f * 1.1, 0.6, 0.5), (thump(0.3, 140, 50, 10), 0.3, 0.6), (bp(noise(0.6), 2500, 7000) * ar(0.6, 0.1, 0.4) * 0.3, 0.2, 1.0))
+    if what == "special":
+        return mix(_magma_voice(f * 0.8, 0.5, 1.6), (bp(noise(0.5), 2500, 7000) * hann(0.5) * 0.3, 0.1, 1.0))
+    if what == "shot":
+        return mix(whoosh(0.25, 500, 2200, 700, 0.2) * 0.6, (thump(0.12, 160, 70, 20), 0, 0.7), (_magma_voice(f * 2, 0.1, 1.2) * 0.5, 0, 1.0))
+    return mix(*[(_magma_voice(f * 1.4, 0.1, 1.1), i * 0.14, 1.0 - i * 0.15) for i in range(4)])
+
+
+for _what, _nv in (("spawn", 1), ("attack", 2), ("hit", 3), ("death", 2), ("special", 1), ("shot", 1), ("laugh", 1)):
+    for _v in range(_nv):
+        _nm = "e_magma_%s" % _what + ("_%d" % (_v + 1) if _nv > 1 else "")
+        snd(_nm, g=-2)((lambda what=_what, v=_v: _magma(what, v)))
+
+
+# ================================================================== V5: Live-Betrieb (Ereignisse, Saison, Kosmetik, Endspiel)
+@snd("event_claim", g=-2)
+def _():
+    return mix(jingle(["E5", "G5", "C6"], "bell", 0.07, 0.5), (sparkle(0.5) * 0.2, 0.05, 1.0))
+
+
+@snd("event_tier", g=-2)
+def _():
+    return mix(jingle(["C5", "E5", "G5", ("C6", "E6")], "bell", 0.08, 0.6), (sparkle(0.6, 3000, 7000, 10) * 0.2, 0.15, 1.0))
+
+
+@snd("worldboss_horn", g=0)
+def _():
+    d = 2.0
+    h = (brass(hz("A2"), d) * 0.6 + brass(hz("E3"), d) * 0.35 + brass(hz("A3"), d) * 0.2)
+    rumble = lp(noise(d), 150) * ar(d, 0.3, 0.8) * 1.5
+    return echo(soft(mix(h, rumble), 1.3), 0.25, 0.35, 3, 1500)
+
+
+@snd("worldboss_retreat", g=-2)
+def _():
+    d = 1.6
+    splash = bp(noise(d), 300, 4000) * ar(d, 0.05, 1.0) * 0.5
+    sink = osc(gliss(d, 160, 50), "saw") * ar(d, 0.1, 0.7) * 0.3
+    bubbles = [(bubble(300 + 80 * i, 0.08, 2.0) * 0.3, 0.4 + 0.11 * i, 1.0) for i in range(8)]
+    return mix(splash, lp(sink, 800), *bubbles)
+
+
+@snd("weekly_done", g=-1)
+def _():
+    return mix(jingle(["G4", "C5", "E5", "G5", ("C6", "G5")], "brass", 0.1, 0.7), (sparkle(0.6) * 0.15, 0.3, 1.0))
+
+
+@snd("boost_use", g=-3)
+def _():
+    d = 0.8
+    t = tt(d)
+    whirr = osc(gliss(d, 300, 1200), "saw") * (0.5 + 0.5 * np.sign(np.sin(2 * np.pi * 24 * t))) * ar(d, 0.05, 0.3) * 0.25
+    ticks = [(click(0.015, 2000, 7000, 250) * 0.5, i * 0.06, 1.0) for i in range(12)]
+    return mix(lp(whirr, 4000), *ticks, (bell(hz("C6"), 0.4) * 0.3, 0.7, 1.0))
+
+
+@snd("pass_tier", g=-2)
+def _():
+    return mix(jingle(["D5", "A5", "D6"], "bell", 0.08, 0.6), (whoosh(0.3, 500, 3000, 400) * 0.3, 0.0, 1.0))
+
+
+@snd("pass_unlock", g=-1)
+def _():
+    return mix(jingle([("C5", "E5"), ("F5", "A5"), ("G5", "B5"), ("C6", "E6", "G6")], "brass", 0.12, 0.9), (sparkle(1.0, 3000, 8000, 16) * 0.2, 0.3, 1.0))
+
+
+@snd("season_end", g=0)
+def _():
+    fan = jingle(["C5", "C5", "C5", "G5", ("C6", "E6", "G6")], "brass", 0.13, 1.1)
+    return mix(fan, (boom(0.4) * 0.25, 0.52, 1.0), (sparkle(1.0) * 0.2, 0.55, 1.0))
+
+
+@snd("cosmetic_get", g=-2)
+def _():
+    return mix(sparkle(0.6, 3000, 8000, 12) * 0.4, (jingle(["A5", "E6"], "bell", 0.09, 0.5), 0.05, 1.0))
+
+
+@snd("cosmetic_equip", g=-5)
+def _():
+    d = 0.35
+    return mix(bp(noise(d), 1500, 6000) * hann(d) * 0.4, (click(0.02, 800, 3000, 150) * 0.4, 0.28, 1.0))
+
+
+@snd("prestige_star", g=-1)
+def _():
+    return mix(bell(hz("E6"), 1.0, 3.0) * 0.4, (bell(hz("B6"), 0.9, 3.5) * 0.3, 0.1, 1.0), (bell(hz("E7"), 0.8, 4.0) * 0.2, 0.2, 1.0), sparkle(1.0, 4000, 9000, 14) * 0.25)
+
+
+@snd("challenge_start", g=0)
+def _():
+    drums = [(thump(0.3, 110, 40, 10) * 0.9, t0, 1.0) for t0 in (0.0, 0.25, 0.5, 0.62)]
+    return soft(mix(*drums, (brass(hz("D3"), 0.8) * 0.4 + brass(hz("A3"), 0.8) * 0.25, 0.62, 1.0)), 1.3)
+
+
+@snd("challenge_won", g=-1)
+def _():
+    return mix(jingle(["G4", "B4", "D5", "G5", ("B5", "D6", "G6")], "brass", 0.1, 0.9), (boom(0.5) * 0.2, 0.0, 1.0))
+
+
 # ------------------------------------------------------------------ Hauptprogramm
 def main():
     flt = sys.argv[1] if len(sys.argv) > 1 else ""
     os.makedirs(OUT, exist_ok=True)
     total = 0
     names = []
+    import re
     for i, (name, fn, opts) in enumerate(REG):
         _seed[0] = 1000 + i * 37                  # jeder Effekt ist für sich reproduzierbar
-        if flt and flt not in name:
+        if flt and not (re.search(flt, name) if flt.startswith("^") else flt in name):
             continue
-        x, sr = finish(fn(), opts)
+        base = re.sub(r"_\d+$", "", name)
+        o = dict(opts)
+        o["name"] = base
+        x, sr = finish(fn(), o)
         path = os.path.join(OUT, name + ".wav")
-        write_wav(path, x, sr, opts.get("loop", False))
+        if use_ogg(base, x, sr, opts):
+            _remove(path)
+            path = os.path.join(OUT, name + ".ogg")
+            write_ogg(path, x, sr)
+        else:
+            _remove(os.path.join(OUT, name + ".ogg"))
+            write_wav(path, x, sr, opts.get("loop", False))
         total += os.path.getsize(path)
         names.append(name)
         print("%-22s %5.2fs  peak %.2f  loud %6.1f dB%s" % (name, len(x) / sr, np.max(np.abs(x)), loud(x, sr), "  loop" if opts.get("loop") else ""))

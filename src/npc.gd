@@ -52,6 +52,13 @@ var _bubble_t := 0.0
 var _sign: Label3D
 var _sign_t := 0.0
 var _nav_v := -1
+# Paket Welt: Tagesablauf, Wünsche, Schubkarre
+var routine := ""                # zuletzt erledigter Teil des Tagesablaufs (morgen, mittag, abend)
+var wish: Dictionary = {}        # aktueller Wunsch (data_welt.gd NPC_WISHES) oder leer
+var _wish_icon: Sprite3D
+var _barrow: Node3D
+var _squeak_t := 0.0
+var cheers_walking := 0          # (Test) Jubel im Gehen, ohne anzuhalten
 
 
 func _init(b, node: Node3D, i: int) -> void:
@@ -133,6 +140,11 @@ func hide() -> void:
 
 func cheer(t: float) -> void:
 	if hidden or (task.get("kind", "") == "alarm"):
+		return
+	if state == "walk":
+		# Paket Welt: im Gehen nur ein Freudensymbol – der Weg wird nicht unterbrochen
+		bubble("ui_star")
+		cheers_walking += 1
 		return
 	cheer_t = t
 	h.stop_clip()
@@ -315,6 +327,11 @@ func _walk(dt: float, nav, others: Array, hero_pos) -> void:
 		h.rotation.y = lerp_angle(h.rotation.y, atan2(vel.x, vel.y), minf(1.0, dt * 8.0))
 	h.speed_mps = maxf(0.01, moved / maxf(dt, 0.0001))
 	h.move_amount = sp / 6.4
+	if _barrow != null:
+		_squeak_t -= dt
+		if _squeak_t <= 0.0:
+			_squeak_t = 0.9
+			Sfx.play_at("barrow_squeak", h.global_position, -16.0, 1.0, 0.3)
 	# Fortschritt: Abstand zum nächsten Wegpunkt muss sinken
 	var nd := pos.distance_to(path[pi])
 	if nd < best_d - 0.05:
@@ -376,6 +393,7 @@ func _act(dt: float) -> void:
 		act_t = float(st.get("dur", 1.0))
 		return
 	_end_clip()
+	board.step_done(self, st)
 	if st.has("take"):
 		carry = String(st.take)
 	if bool(st.get("drop", false)):
@@ -395,8 +413,43 @@ func _set_prop(k: String) -> void:
 	if k == prop_now:
 		return
 	prop_now = k
+	if _barrow != null:
+		_barrow.queue_free()
+		_barrow = null
+	if k == "c_barrow" and Models.has_glb(k):
+		# Schubkarre: steht vor dem Bewohner, Griffe in Höhe der Hände (Trage-Gang), das Rad vorn
+		h.set_weapon(null, 0)
+		_barrow = Models.glb(k)
+		_barrow.position = Vector3(0, 0.12, 0.62)
+		_barrow.rotation.x = -0.18
+		_barrow.scale = Vector3.ONE * 0.8
+		h.add_child(_barrow)
+		return
 	if k == "" or not Models.has_glb(k):
 		h.set_weapon(null, 0)
 		return
 	var m := Models.glb(k)
 	h.set_weapon(m, 0)
+
+
+# ---------------------------------------------------------------- Wünsche (Paket Welt)
+func show_wish(w0: Dictionary) -> void:
+	wish = w0
+	if _wish_icon == null:
+		_wish_icon = Sprite3D.new()
+		_wish_icon.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		_wish_icon.no_depth_test = true
+		_wish_icon.pixel_size = 0.004
+		_wish_icon.position = Vector3(0, 2.05, 0)
+		_wish_icon.render_priority = 5
+		h.add_child(_wish_icon)
+	var ic := String(w0.get("icon", "ui_heart"))
+	if ResourceLoader.exists("res://icons/%s.png" % ic):
+		_wish_icon.texture = load("res://icons/%s.png" % ic)
+	_wish_icon.visible = true
+
+
+func clear_wish() -> void:
+	wish = {}
+	if _wish_icon != null:
+		_wish_icon.visible = false

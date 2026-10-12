@@ -27,7 +27,7 @@ var constructing := false
 var sig := ""
 var shielded := false
 var _bar: Node3D
-var _rubble: MeshInstance3D
+var _rubble: Node3D               # Trümmer (Blender-Modell je Größe oder Ersatz aus dem Code)
 var _taken := 0.0
 var _window := 0.0
 var bubble: Node3D              # Sammelblase (Produktion)
@@ -96,6 +96,7 @@ func setup(entry: Dictionary, building_key: String, level: int, footprint: Vecto
 		tower.setup(def.tower, level)
 		tower.dmg_mult = pow(D.TOWER_DMG_GROWTH, level - 1) * (1.0 + P.cmd_bonus("tower_dmg"))
 		tower.active = not under_construction
+		tower.aim = String(entry.get("aim", ""))           # Paket F: Turmziel je Turm
 		model = tower
 	else:
 		model = Models.building(key, level, P.wall_tier_built())
@@ -516,6 +517,15 @@ func _destroy() -> void:
 	passable = false
 	_update_damage()
 	_refresh_work()
+	var rk := "b_rubble_%d" % clampi(maxi(size.x, size.y), 1, 4)
+	if _rubble == null and Models.has_glb(rk) and not gate:
+		# Paket G2: Trümmer-Modell je Größe (blender/def_g2.py)
+		var rb := Models.glb(rk)
+		rb.rotation.y = float(int(mid.x * 3.0 + mid.y * 5.0) % 4) * PI * 0.5
+		if size.x != size.y:
+			rb.scale = Vector3(float(size.x) / maxf(size.x, size.y), 1.0, float(size.y) / maxf(size.x, size.y)) if int(rb.rotation.y / (PI * 0.5)) % 2 == 0 else Vector3(float(size.y) / maxf(size.x, size.y), 1.0, float(size.x) / maxf(size.x, size.y))
+		add_child(rb)
+		_rubble = rb
 	if _rubble == null:
 		var st := MK.begin()
 		var rng := RandomNumberGenerator.new()

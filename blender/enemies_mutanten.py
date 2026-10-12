@@ -526,8 +526,9 @@ def boss_mutanten():
     with rig.clip("death", 60) as c:                               # brüllt, sinkt ins Becken, die Arme erschlaffen
         c.key(0, **rest)
         c.key(14, jaw=R(40, 0, 0), lip=R(-20, 0, 0), body=dict(rot=(-14, 0, 0)), eyeballs=dict(scale=1.4), **{n: R(-30, 0, 0) for n in tent})
-        c.key(40, hips=dict(loc=(0, 0, -2.4)), body=dict(rot=(10, 0, 20), scale=(1.1, 1.1, 0.8)), jaw=R(10, 0, 0), _i="LINEAR", **{n: R(40, 0, 0) for n in tent})
-        c.key(60, hips=dict(loc=(0, 0, -2.6)), body=dict(rot=(14, 0, 24), scale=(1.1, 1.1, 0.7)), eyeballs=dict(scale=0.4), **{n: R(50, 0, 0) for n in tent})
+        # sackt über den Beckenrand zusammen (Paket G2: versank vorher unter dem Boden)
+        c.key(40, hips=dict(loc=(0, 0, -0.9)), body=dict(rot=(48, 0, 16), scale=(1.12, 1.12, 0.72)), jaw=R(10, 0, 0), _i="LINEAR", **{n: R(40, 0, 0) for n in tent})
+        c.key(60, hips=dict(loc=(0, 0, -1.0)), body=dict(rot=(56, 0, 20), scale=(1.15, 1.15, 0.65)), eyeballs=dict(scale=0.4), **{n: R(50, 0, 0) for n in tent})
     with rig.clip("slam", 42, hit=24) as c:                        # beide Fangarme hoch und auf den Boden
         c.key(0, **rest)
         c.key(14, body=dict(rot=(-12, 0, 0)), jaw=R(30, 0, 0), **{n: R(-50, 0, 0) for n in tent})

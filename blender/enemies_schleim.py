@@ -12,7 +12,7 @@ CHAR = 1.5          # Figuren-Maßstab des Spiels (D.CHAR_SCALE)
 
 
 def slime(key, role, color, scale, speed, rx=0.5, ry=0.5, rz=0.425, hop=0.3, hop_frames=15, angry=False, mouth_col="4A1420",
-          eye_dx=0.17, eye_z=None, eye_r=0.1, acc=None, fly=False, feet=True, highlight=True):
+          eye_dx=0.17, eye_z=None, eye_r=0.1, acc=None, fly=False, feet=True, highlight=True, more=None):
     """Baut einen Schleimling. scale/speed wie in D.ENEMIES (Größe gegenüber dem Schleimling, m/s).
     acc(rig, pt) fügt Zubehör hinzu und liefert {teil: art} für die Mitbewegung: "bob" (wippt nach), "flap" (Flügel), "swing" (Stab)."""
     rig = Rig(key, role=role, size=CHAR * scale)
@@ -161,6 +161,8 @@ def slime(key, role, color, scale, speed, rx=0.5, ry=0.5, rz=0.425, hop=0.3, hop
         c.key(7, root=dict(loc=(0, 0, 0.25)), body=dict(scale=(0.85, 0.85, 1.3)), eyes=dict(scale=1.2))
         c.key(11, root=dict(loc=(0, 0, 0)), body=dict(scale=(1.2, 1.2, 0.76)))
         c.key(15, **rest)
+    if more:                                                         # Paket G2: besondere Clips der neuen Rollen (enemies2_schleim.py)
+        more(rig, rest, extra, closed)
     rig.finish(icon_yaw=-24, icon_pitch=14)
 
 

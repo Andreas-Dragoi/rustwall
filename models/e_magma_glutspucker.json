@@ -1,0 +1,81 @@
+{
+ "key": "magma_glutspucker",
+ "kind": "vat",
+ "role": "ranged",
+ "verts": 540,
+ "tris": 572,
+ "width": 540,
+ "rows": 58,
+ "rpf": 1,
+ "fps": 10,
+ "bounds_min": [
+  -0.9600384231139236,
+  -1.207600009346008,
+  -0.8333551140998046
+ ],
+ "bounds_size": [
+  1.9335389224579331,
+  2.911643017801691,
+  1.7278317555996208
+ ],
+ "height": 1.4199999570846558,
+ "radius": 0.7315798538024375,
+ "clips": {
+  "idle": {
+   "row": 0,
+   "n": 12,
+   "dur": 1.2,
+   "loop": true,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "walk": {
+   "row": 12,
+   "n": 6,
+   "dur": 0.6,
+   "loop": true,
+   "stride": 1.14,
+   "hit": -1.0
+  },
+  "attack": {
+   "row": 18,
+   "n": 9,
+   "dur": 0.8,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.4666666666666667
+  },
+  "hit": {
+   "row": 27,
+   "n": 4,
+   "dur": 0.3,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "death": {
+   "row": 31,
+   "n": 11,
+   "dur": 1.0,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "erupt": {
+   "row": 42,
+   "n": 7,
+   "dur": 0.6,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "spawn": {
+   "row": 49,
+   "n": 9,
+   "dur": 0.8,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  }
+ }
+}

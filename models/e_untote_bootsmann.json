@@ -1,0 +1,81 @@
+{
+ "key": "untote_bootsmann",
+ "kind": "vat",
+ "role": "miniboss",
+ "verts": 1027,
+ "tris": 1494,
+ "width": 1024,
+ "rows": 144,
+ "rpf": 2,
+ "fps": 10,
+ "bounds_min": [
+  -3.5826597526344184,
+  -3.8979998726844745,
+  -2.1527161353135122
+ ],
+ "bounds_size": [
+  6.073185260584527,
+  9.657078991175233,
+  5.434301909866577
+ ],
+ "height": 4.019999980926514,
+ "radius": 1.5134398738536086,
+ "clips": {
+  "idle": {
+   "row": 0,
+   "n": 14,
+   "dur": 1.4,
+   "loop": true,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "walk": {
+   "row": 14,
+   "n": 10,
+   "dur": 1.0,
+   "loop": true,
+   "stride": 1.3,
+   "hit": -1.0
+  },
+  "attack": {
+   "row": 24,
+   "n": 9,
+   "dur": 0.8,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.4
+  },
+  "hit": {
+   "row": 33,
+   "n": 4,
+   "dur": 0.3,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "death": {
+   "row": 37,
+   "n": 12,
+   "dur": 1.1,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "skill": {
+   "row": 49,
+   "n": 14,
+   "dur": 1.3,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.9
+  },
+  "spawn": {
+   "row": 63,
+   "n": 9,
+   "dur": 0.8,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  }
+ }
+}

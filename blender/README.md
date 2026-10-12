@@ -219,3 +219,27 @@ Animiert wird im Code (`src/companion.gd`) über bewegliche Teile – läuft so 
 
 Gelenk-Ursprünge: Beine an der Hüfte (drehen um X), Flügel an der Schulter (drehen um die Längsachse), Rotoren in der Achse
 (drehen um die eigene Z-Achse). Flieger (Drohne, Eule, Glühwürmchen) haben `body` in Flughöhe (1,2 – 1,5 m).
+
+## Paket Welt (V5): Wahrzeichen, Quellen, Werkzeuge, Kleinkram (`welt.py`)
+
+Aufruf: `python3 blender/welt.py [namen…]` (ohne Namen: alle; `list` zeigt die Namen). Baut auf `exp_common.py` auf.
+
+| Name | Bedeutung | Objekte mit Wirkung |
+|---|---|---|
+| `lm_<gebiet>` | Wahrzeichen (Mühle, Riesenkiefer, Wasserturm, Leuchtturm, Fabrikschlot, Eisbogen, Schleimportal); im Spiel 1,6-fach | `spin_sails`, `spin_wheel`, `spin_light_glow`, `spin_ring`, `pulse_core_glow`, `sway_lamp*_glow`, `ice_glow`, `pipe_glow`, `win_glow`, Leerobjekte `fx_smoke1`, `fx_steam2` |
+| `n_src_<gebiet>` | gebietseigene Quelle (Bienenstock, Harzkiefer, Wasserkaktus, Muschelbank, Ölquelle, Eiskristall, Schleimgeysir) | `bob_*`, `pulse_*`, `*_glow` |
+| `tool_<schlüssel>` | Werkzeug (nur Symbol) | – |
+| `p_journal`, `p_egg`, `p_egg_nest`, `p_dummy`, `n_meteor`, `c_barrow` | Tagebuchseite, Begleiter-Ei, Nest, Trainingspuppe, Meteorit, Schubkarre | `bob_page_glow`, `egg_glow`, `sway_dummy`, `rock_glow` |
+
+Neue Clips in `anim_human.py` (`c_welt`): `wipe_brow` (Stirn wischen), `shoo` (Hühner scheuchen), `warm_hands`
+(Hände am Feuer), `eat` (Frühstück). Die Schubkarre schiebt der Steinmetz im Trage-Gang `carry_walk`.
+
+## Paket Z: Vulkaninsel (Gebiet 8)
+
+| Skript | Modelle |
+|---|---|
+| `vulkan.py` | Kulissen `p_tree_lava_1/2`, `p_rock_lava_1…3`, `p_vk_ashgrass`, `p_vk_firebloom`, `p_vk_fumarole`, kühle Quelle `p_vk_spring`; Quellen `n_obsidian_1…3`, `n_sulfur`, `n_src_vulkan` (Glutgeode), `n_lavabomb`; Wahrzeichen `lm_vulkan`, Sperre `x_barrier_vulkan`, Spezialbau `o_special_vulkan` (Obsidianschmiede, lv2–lv5), Symbole `tool_tongs`, `area_vulkan`, Trophäe `b_trophy_brodel` |
+| `enemies_magma.py` | Magma-Wesen: `magma_lavaschnecke`, `_feuerkaefer`, `_obsidiangolem`, `_glutspucker`, `_aschegeist`, `_schlackenkriecher`, Rollen `_glutpriesterin` (healer), `_basaltschild` (shield), `_lavamutter` (brood), Miniboss `_glutbrecher`, Boss `boss_magma` (Magmafürst Brodel) |
+
+Die Lavaströme selbst sind kein Blender-Modell: `src/exp_vulkan.gd` baut je Arm einen Streifen mit `shaders/lava.gdshader`
+(Uniform `heat` 0 = Kruste … 1 = fließend, `warn` = Risse glühen).

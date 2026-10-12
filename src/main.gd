@@ -10,6 +10,7 @@ const TouchPad = preload("res://src/touch_pad.gd")
 const Tests = preload("res://src/tests.gd")
 const Admin = preload("res://src/admin.gd")
 const MainMenu = preload("res://src/main_menu.gd")
+const Loading = preload("res://src/loading.gd")       # Paket F: Ladebildschirm mit Tipps
 
 var world: Node3D
 var hud: CanvasLayer
@@ -19,6 +20,7 @@ var _fade: ColorRect
 var _tests: Node
 var admin: CanvasLayer
 var menu: CanvasLayer
+var loading: CanvasLayer
 
 
 func _ready() -> void:
@@ -52,6 +54,8 @@ func _ready() -> void:
 	_fade.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	fl.add_child(_fade)
 	G.input_mode_changed.connect(func(): hud._rebuild())
+	loading = Loading.new()
+	add_child(loading)
 	if G.autotest != "" or G.selftest or G.shots_dir != "" or G.arg("setup") != "":
 		_tests = Tests.new()
 		add_child(_tests)
@@ -143,6 +147,7 @@ func _swap(w: Node3D) -> void:
 	world = w
 	add_child(w)
 	move_child(w, 0)
+	preload("res://src/liveops_world.gd").attach(w)          # Paket L: Feiertage, Skins, Hüte, Eier, Weltboss
 	hud.set_world(w)
 	_fade.color.a = 1.0
 	var tw := create_tween()
@@ -150,17 +155,31 @@ func _swap(w: Node3D) -> void:
 
 
 func goto_base(open_screen := "") -> void:
+	if world != null and loading.wanted():
+		await loading.show_for("base")
 	_swap(BaseWorld.new())
+	loading.done()
 	if open_screen != "":
 		screens.open(open_screen)
 
 
 func start_expedition(area: int, mission: String, diff: int) -> void:
+	if loading.wanted():
+		await loading.show_for("exp", area)
 	var e := Expedition.new()
 	e.init(area, mission, diff)
 	_swap(e)
+	loading.done()
 	P.toast.emit("%s: %s" % [D_name(area), P.D.MISSIONS[e.mission].text])
 
 
 func D_name(area: int) -> String:
 	return P.D.AREAS[area].name
+
+
+## Übungsplatz (Paket Welt): Waffen-Testmodus mit Trainingspuppen, geöffnet vom Trainingsplatz.
+func start_training() -> void:
+	if loading.wanted():
+		await loading.show_for("base")
+	_swap(preload("res://src/training_ground.gd").new())
+	loading.done()

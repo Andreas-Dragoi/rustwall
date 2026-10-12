@@ -50,7 +50,7 @@ func _profile(c: VBoxContainer) -> void:
 	left.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	# Name
 	_name_edit = LineEdit.new()
-	_name_edit.text = String(P.d.name)
+	_name_edit.text = String(P.d.name) if String(P.d.name) != "Kommandant" else preload("res://src/i18n.gd").t("Kommandant")     # Paket S: Vorgabename in der Sprache
 	_name_edit.max_length = 16
 	_name_edit.custom_minimum_size = Vector2(0, 70)
 	_name_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL

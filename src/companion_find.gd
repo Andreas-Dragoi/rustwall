@@ -26,6 +26,7 @@ var open_k := 0.0
 var _snd_t := 0.0
 var _t := 0.0
 var _gone_t := -1.0
+var guards := 6                  # Wachen um den Käfig (in der Landezone weniger)
 
 
 ## Legt (höchstens) einen Fund-Ort in die Expedition, wenn es dort noch einen Begleiter zu finden gibt.
@@ -38,12 +39,21 @@ static func place(ex: Node3D) -> Node3D:
 	var taken: Array = [Vector2.ZERO]
 	for q in ex.pois:
 		taken.append(q.p)
-	var at = ex._pick(D.EXP_RING_LAND + 14.0, 20.0, taken, D.EXP_RING_MID + 10.0, rng)
+	# Paket Welt: steht die Außenbasis noch nicht, liegt der Käfig in der Landezone – sonst sähe man ihn
+	# beim ersten Besuch nie (die Sperren fallen erst nach dem Großangriff).
+	var first: bool = P.outpost_level(String(ex.adef.key)) < 1
+	var at = null
+	if first:
+		at = ex._pick(16.0, 10.0, taken + [ex.outpost.C], D.EXP_RING_LAND - 6.0, rng)
+	if at == null:
+		first = false
+		at = ex._pick(D.EXP_RING_LAND + 14.0, 20.0, taken, D.EXP_RING_MID + 10.0, rng)
 	if at == null:
 		at = ex._pick(D.EXP_RING_LAND + 8.0, 10.0, taken, 999.0, rng)
 	if at == null:
 		return null
 	var f = load("res://src/companion_find.gd").new()
+	f.guards = 3 if first else 6
 	ex.add_child(f)
 	f.setup(ex, String(keys[rng.randi() % keys.size()]), at)
 	ex.pois.append(f)
@@ -64,7 +74,7 @@ func setup(world: Node3D, key: String, pos: Vector2) -> void:
 		pet = Models.glb("comp_" + key)
 		add_child(pet)
 		pet.rotation.y = 0.6
-	w.group(pos, 6, 7.0)
+	w.group(pos, guards, 7.0)
 
 
 func status_text() -> String:

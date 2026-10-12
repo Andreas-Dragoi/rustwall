@@ -1,0 +1,89 @@
+{
+ "key": "magma_lavamutter",
+ "kind": "vat",
+ "role": "brood",
+ "verts": 612,
+ "tris": 636,
+ "width": 612,
+ "rows": 81,
+ "rpf": 1,
+ "fps": 10,
+ "bounds_min": [
+  -1.0851417044216574,
+  -1.815081936322928,
+  -1.330000081062318
+ ],
+ "bounds_size": [
+  2.654226720223939,
+  4.295154400717475,
+  3.447545432756389
+ ],
+ "height": 2.0499998331069946,
+ "radius": 1.4214623829560578,
+ "clips": {
+  "idle": {
+   "row": 0,
+   "n": 14,
+   "dur": 1.4,
+   "loop": true,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "walk": {
+   "row": 14,
+   "n": 10,
+   "dur": 1.0,
+   "loop": true,
+   "stride": 1.3,
+   "hit": -1.0
+  },
+  "attack": {
+   "row": 24,
+   "n": 9,
+   "dur": 0.8,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.43333333333333335
+  },
+  "hit": {
+   "row": 33,
+   "n": 4,
+   "dur": 0.3,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "death": {
+   "row": 37,
+   "n": 13,
+   "dur": 1.2,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "brood": {
+   "row": 50,
+   "n": 11,
+   "dur": 1.0,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.6
+  },
+  "steam": {
+   "row": 61,
+   "n": 11,
+   "dur": 1.0,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "spawn": {
+   "row": 72,
+   "n": 9,
+   "dur": 0.8,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  }
+ }
+}

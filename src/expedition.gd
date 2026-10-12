@@ -14,6 +14,9 @@ const Poi = preload("res://src/poi.gd")
 const Backpack = preload("res://src/backpack.gd")
 const CD = preload("res://src/companion_data.gd")
 const CompanionFind = preload("res://src/companion_find.gd")
+const ExpWorld = preload("res://src/exp_world.gd")
+const DW = preload("res://src/data_welt.gd")
+const WS = preload("res://src/welt_state.gd")
 
 const N := 120                   # Kartenfelder je Seite (240 m)
 const HALFM := 120.0
@@ -62,6 +65,9 @@ var fog := PackedByteArray()
 var fog_n := 24
 var pack: Node3D                 # Rückenstapel, Ladekreis, abgeworfene Haufen (backpack.gd)
 var mining = null                # ResNode, an dem gearbeitet wird
+var welt: Node3D                 # Tageslauf, Wetter, Ereignisse, Wahrzeichen, Karawane, Nebenquest (exp_world.gd, Paket Welt)
+var vulkan: Node3D               # Paket Z: Lavaströme und Hitze-Leiste der Vulkaninsel (exp_vulkan.gd), sonst null
+var water_mesh: MeshInstance3D
 
 var _fixed := RandomNumberGenerator.new()
 var _reach: Array = []
@@ -75,6 +81,7 @@ var _chunk_mesh: BoxMesh
 var _dead_t := -1.0
 var _nav: RefCounted
 var _nav_goal := Vector2(9999, 9999)
+var _nav_rb := -1                  # Testbot: Stand des Wegfelds, für den _nav gilt
 var _bot_t := 0.0
 var _bot_target = null
 var _bot_skill_t := 0.0
@@ -110,7 +117,9 @@ func _ready() -> void:
 	hp_mult = (1.0 + 0.14 * (lvl - 1)) * float(D.DIFFS[diff].hp)
 	dp_mult = (1.0 + 0.05 * (lvl - 1)) * (1.0 + 0.3 * diff)
 	loot_bonus = float(D.DIFFS[diff].loot)
+	preload("res://src/liveops.gd").apply_nightmare(self)    # Paket L: Albtraum+ (Modifikatoren, mehr Beute)
 	setup_common(adef, Vector2(-HALFM, -HALFM), N, N, 2.0)
+	field.slice_us = 1000                     # Paket G2: Wegfeld in Scheiben neu rechnen (keine 10-ms-Ruckler)
 	_fixed.seed = hash("rustwall-outpost|%s" % String(adef.key))
 	_rng.seed = hash("%d|%d|%d" % [area, diff, P.day_index()])
 	if G.arg("seed") != "":
@@ -147,7 +156,9 @@ func _ready() -> void:
 		_start_siege()
 	running = true
 	_sun0 = sun.light_energy
-	Sfx.loop("amb", Sfx.ambience(adef), -20.0)
+	welt.setup()                     # Umgebungsklang je Gebiet und Tageszeit kommt von dort
+	if vulkan != null:
+		vulkan.setup()
 	Music.set_mood("battle")
 	_reveal(hero.pos2())
 	state_changed.emit()
@@ -206,10 +217,17 @@ func _generate(open: bool) -> void:
 			entry.n = place_model(bname, Vector3(bp.x, 0, bp.y), atan2(-t.y, t.x))
 		barriers.append(entry)
 	_ring_decor()
+	welt = ExpWorld.new()
+	add_child(welt)
+	welt.pre_generate(self)          # Platz für das Wahrzeichen
+	if String(adef.key) == "vulkan":
+		vulkan = preload("res://src/exp_vulkan.gd").new()
+		add_child(vulkan)
+		vulkan.pre_generate(self)    # Lavaströme sperren ihre Felder, bevor Bäume und Felsen verteilt werden
 	# ---- Hindernisse und Wasser außerhalb der Landezone (neu je Besuch), wenige in der Landezone (fest)
 	var kind: String = adef.tree
 	var tree_n: int = 3 if kind == "pine" else 2
-	var rock_m := "p_rock_snow" if area == 5 else "p_rock"
+	var rock_m := "p_rock_snow" if area == 5 else ("p_rock_lava" if area == 7 else "p_rock")
 	var rock_n := 2 if area == 5 else 3
 	if adef.water:
 		for i in 9:
@@ -242,6 +260,7 @@ func _generate(open: bool) -> void:
 		if maxf(absf(q2.x), absf(q2.y)) > HALFM - 3.0:
 			scatter_var("p_tree_" + kind, tree_n, Vector3(q2.x, 0, q2.y), _rng, 0.9, 1.5)
 	field.clear_rect(oc - Vector2(11, 11), oc + Vector2(11, 11))
+	welt.post_generate()
 	_compute_reach()
 	# ---- Boden mit Wegen: Start – Tor, Start – Durchgänge – Außenring
 	var gate := oc - odir * 11.0
@@ -269,7 +288,10 @@ func _generate(open: bool) -> void:
 			wmat.set_shader_parameter("col_light", Color("9ADB5A"))
 		wm.material_override = wmat
 		wm.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		water_mesh = wm
 	_decor()
+	if vulkan != null:
+		vulkan.decor()
 	scatter_commit()
 	make_ambient(String(adef.key))
 	place_model("p_flag_exit", Vector3(START.x + 3.0, 0, START.y + 2.0))
@@ -313,7 +335,7 @@ func _near_passage(p: Vector2, w: float) -> bool:
 func _ring_decor() -> void:
 	var kind: String = adef.tree
 	var lush: bool = area in [0, 1, 3]
-	var rock_m := "p_rock_snow" if area == 5 else "p_rock"
+	var rock_m := "p_rock_snow" if area == 5 else ("p_rock_lava" if area == 7 else "p_rock")
 	var rock_n := 2 if area == 5 else 3
 	for row in 2:
 		var r := D.EXP_RING_LAND + 0.9 + row * 2.2
@@ -356,7 +378,7 @@ func _decor() -> void:
 				scatter("p_mushroom_1", p3, _rng.randf() * TAU, _rng.randf_range(0.7, 1.2))
 		elif area == 3 and k < 0.3:
 			scatter_var("p_grass", 2, p3, _rng, 0.8, 1.2)
-		elif k > 0.93:
+		elif k > 0.93 and area != 7:            # Vulkaninsel: eigene Kulissen (exp_vulkan.gd)
 			scatter("p_log_1" if area != 5 else "p_stump_1", p3, _rng.randf() * TAU)
 
 
@@ -614,6 +636,7 @@ func spawn_boss_at(p: Vector2):
 	e.home = p
 	e.leash = 12.0
 	e.coins = int(60 * factor)
+	preload("res://src/liveops.gd").on_boss(self, e, p)       # Paket L: Albtraum+ „Doppelte Bosse“
 	return e
 
 
@@ -749,7 +772,7 @@ func _on_built(key: String) -> void:
 		_start_siege()
 	# Ausbau: alle Plätze der nächsten Stufe bezahlt?
 	var lv := P.outpost_level(String(adef.key))
-	if lv >= 1 and int(pd.get("level", 1)) == lv + 1 and outpost.upgrade_done(lv + 1):
+	if lv >= 1 and int(pd.get("level", 1)) == lv + 1 and outpost.upgrade_done(lv + 1) and not preload("res://src/liveops.gd").outpost_gate(self, lv + 1, key):     # Paket L: Stufe 4/5 erst nach dem Gebietsboss
 		var nl := P.outpost_set_level(String(adef.key), lv + 1)
 		Sfx.play("outpost_level", -2.0)
 		fx.confetti(Vector3(outpost.C.x, 2.0, outpost.C.y), 8)
@@ -988,6 +1011,10 @@ func poi_done(poi, text: String) -> void:
 		"nest":
 			chests_found += 1
 			P.add_hero_xp(hero.key, D.EXP_XP.nest)
+			if _rng.randf() < DW.EGG_NEST_P and WS.eggs().size() < DW.EGG_MAX:      # Paket Welt: im Nest lag ein Ei
+				WS.add_egg("nest", "", _rng)
+				Sfx.play("egg_found", -3.0)
+				text += " Und ein Begleiter-Ei!"
 		"bounty":
 			bounty_done = true
 			P.add_hero_xp(hero.key, D.EXP_XP.bounty)
@@ -1045,11 +1072,21 @@ func _mmss(t: float) -> String:
 ## Nebenaufgaben für die Liste links.
 func side_quests() -> Array:
 	var out: Array = []
-	if phase != "explore":
-		return out
-	for p in pois:
-		out.append([p.status_text(), p.done])
+	if phase == "explore":
+		for p in pois:
+			out.append([p.status_text(), p.done])
+	else:
+		for p in pois:
+			if p.kind == "pet":
+				out.append([p.status_text(), p.done])
+	if welt != null:
+		out.append_array(welt.quest_lines())
 	return out
+
+
+## Gebietseigene Quelle, für die das Werkzeug fehlt? (Paket Welt)
+func node_locked(n) -> bool:
+	return welt != null and welt.tool_missing(n) != ""
 
 
 ## Pfeil am Bildrand: [Weltpunkt, Farbe] oder [].
@@ -1080,7 +1117,7 @@ func _nearest_node(r: String, pp: Vector2):
 	var best = null
 	var bd := 1.0e9
 	for n in nodes:
-		if n.gone or n.res != r or _bot_bad.has(n):
+		if n.gone or n.res != r or _bot_bad.has(n) or node_locked(n):
 			continue
 		if not _barriers_open() and n.ring > 0:
 			continue
@@ -1102,15 +1139,16 @@ func map_points() -> Array:
 	for b in barriers:
 		if b.n != null:
 			out.append([b.p, "barrier"])
-	if phase == "explore":
-		for p in pois:
-			if not p.done and (_seen(p.p) or p.kind == "bounty"):
-				out.append([p.target(), "goal"])
+	for p in pois:
+		if not p.done and (phase == "explore" or p.kind == "pet") and (_seen(p.p) or p.kind == "bounty"):
+			out.append([p.target(), "goal"])
 	if raid_warn > 0.0:
 		out.append([raid_from, "raid"])
 	var vp = hero.vehicle_pos()
 	if vp != null:
 		out.append([Vector2(vp.x, vp.z), "vehicle"])
+	if welt != null:
+		welt.map_points(out)
 	return out
 
 
@@ -1121,7 +1159,7 @@ func _seen(p: Vector2) -> bool:
 
 
 func _reveal(pp: Vector2) -> void:
-	var r := D.EXP_FOG_RADIUS * CD.scout_k()
+	var r: float = D.EXP_FOG_RADIUS * CD.scout_k() * (welt.reveal_k() if welt != null else 1.0)
 	var x0 := clampi(int((pp.x - r + HALFM) / D.EXP_FOG_CELL), 0, fog_n - 1)
 	var x1 := clampi(int((pp.x + r + HALFM) / D.EXP_FOG_CELL), 0, fog_n - 1)
 	var z0 := clampi(int((pp.y - r + HALFM) / D.EXP_FOG_CELL), 0, fog_n - 1)
@@ -1234,6 +1272,13 @@ func _physics_process(dt: float) -> void:
 			_tick_relief(dt)
 		"explore":
 			_tick_explore(dt, pp)
+	welt.tick(dt, pp)
+	if vulkan != null:
+		vulkan.tick(dt, pp)
+	if phase != "explore":           # Paket Welt: gefangene Begleiter in der Landezone gibt es in jeder Phase
+		for p in pois:
+			if p.kind == "pet" and not p.done:
+				p.tick(dt, pp)
 	if _show_t >= 0.0:
 		_show_t += dt
 		if _show_i < barriers.size():
@@ -1269,6 +1314,10 @@ func _tick_mining(dt: float, pp: Vector2) -> void:
 		var best = _mine_target(pp)
 		if pack != null:
 			pack.show_ring(best, clampf(_still / D.EXP_MINE_IDLE, 0.0, 1.0), false)
+		if best == null and _still >= D.EXP_MINE_IDLE:
+			var lk = _mine_target(pp, true)     # gebietseigene Quelle ohne Werkzeug: Hinweis
+			if lk != null:
+				welt.tool_hint(lk)
 		if best == null or _still < D.EXP_MINE_IDLE:
 			return
 		if room_for(best.res) < 1.0:
@@ -1294,21 +1343,23 @@ func _tick_mining(dt: float, pp: Vector2) -> void:
 		var amt: float = mining.hit()
 		amt *= 1.0 + float(hero.m.get("carry", 0.0)) * 0.5
 		amt *= 1.0 + D.EXP_DUSK_LOOT * dusk
+		amt *= welt.yield_k(String(mining.res))
+		welt.on_hit(mining)
 		_spawn_chunks(mining, amt)
 		var rare := String(mining.def.get("rare", ""))
 		if rare != "" and _rng.randf() < float(mining.def.rare_p) / float(mining.hits) * CD.luck():
 			_chunks.append({"n": _chunk(), "a": Vector3(mining.p.x, 1.0, mining.p.y), "h": Vector3(mining.p.x, 2.6, mining.p.y), "t": 0.0, "res": rare, "amt": 1.0, "home": true})
 			fx.float_text(Vector3(mining.p.x, 2.6, mining.p.y), "+1 %s" % D.RES_NAME[rare], D.C_GOLD)
-		Sfx.play_at("hit_" + String(mining.def.clip), Vector3(mining.p.x, 0.5, mining.p.y), -6.0, 1.0, 0.12)
+		Sfx.play_at(String(mining.def.get("snd", "hit_" + String(mining.def.clip))), Vector3(mining.p.x, 0.5, mining.p.y), -6.0, 1.0, 0.12)
 		fx.puff(Vector3(mining.p.x, 0.9, mining.p.y), D.RES_COLOR.get(mining.res, Color.WHITE).lightened(0.2), 5, 1.0)
 
 
-## Nächste Quelle in Reichweite (oder null).
-func _mine_target(pp: Vector2):
+## Nächste Quelle in Reichweite (oder null). locked: nur Quellen, für die das Werkzeug fehlt.
+func _mine_target(pp: Vector2, locked := false):
 	var best = null
 	var bd := 1.0e9
 	for n in nodes:
-		if n.gone:
+		if n.gone or node_locked(n) != locked:
 			continue
 		var d: float = n.p.distance_to(pp)
 		if d < n.reach() and d < bd:
@@ -1448,8 +1499,7 @@ func _tick_explore(dt: float, pp: Vector2) -> void:
 			dusk = dk
 			Sfx.play("dusk_bell", -4.0)
 			P.toast.emit("Es wird dunkel: Gegner +%d %%, Beute +%d %%" % [int(D.EXP_DUSK_POWER * 100 * dusk), int(D.EXP_DUSK_LOOT * 100 * dusk)])
-	var dark := clampf((explore_t - D.EXP_DUSK_AFTER + 30.0) / 120.0, 0.0, 0.65)
-	sun.light_energy = _sun0 * (1.0 - dark)
+	# Licht der Dämmerung: Tageslauf in exp_world.gd (Abend, Nacht)
 	# streunende Gruppen außerhalb der Landezone
 	_roam_t -= dt
 	if _roam_t <= 0.0:
@@ -1473,6 +1523,14 @@ func admin_pay(key: String) -> void:
 		else:
 			P.outpost_pay(String(adef.key), key, String(r), float(due[r]))
 	outpost.complete_pad(key)
+
+
+## Admin/Test: Gebiets-Ereignis sofort starten (oder beenden, wenn eines läuft).
+func admin_event() -> void:
+	if welt.event_active():
+		welt.end_event()
+	else:
+		welt.start_event()
 
 
 func admin_skip_phase() -> void:
@@ -1540,28 +1598,41 @@ func bot_goal():
 	var target = _bot_target
 	if target == null:
 		return null
+	# wie ein Mensch: angekündigten Einschlägen (rote Ringe, Bodenmarker) und brennendem Boden ausweichen
+	var dg: Vector2 = horde.ai.dodge(pp) if horde.ai != null else Vector2.ZERO
+	for e in horde.in_radius(pp, 11.5):
+		# große Brecher (Wächter, Yeti), die kämpfen: nie in Hammer- oder Wurfreichweite kommen (ruhende Wachen nicht)
+		if e.r > 0.8 and not e.stat and (e.chase or e.st == 1 or e.leash <= 0.0):
+			var keep: float = 7.5 + e.r if e.rng <= 0.0 else e.rng + 1.5
+			var aw: Vector2 = pp - e.p
+			if aw.length() < keep:
+				dg += aw.normalized() * maxf(0.5, keep - aw.length()) * 2.0
+	if dg != Vector2.ZERO:
+		var q0 = _bot_escape(pp, dg, clampf(dg.length() + 1.5, 3.0, 5.0))
+		if q0 != null:
+			return q0
 	# wie ein Mensch: Abstand halten, wenn es eng wird
 	var near: Array = horde.in_radius(pp, 5.0 if hero.hp > hero.max_hp * 0.5 else 8.0)
 	var crowd := 0
 	var cen := Vector2.ZERO
 	for e in near:
 		if not e.stat:
-			crowd += 3 if e.r > 0.8 else 1
+			crowd += 4 if e.r > 0.8 else 1         # große Brecher (Wächter, Yeti) nie im Nahkampf stehen lassen
 			cen += e.p
 	if hero.hp < hero.max_hp * 0.35 and near.size() > 0:
 		crowd = maxi(crowd, 4)                 # wenig Leben: jedem Gegner ausweichen
 	if crowd >= 4 and near.size() > 0 and (mining == null or hero.hp < hero.max_hp * 0.35):
 		cen /= near.size()
-		var away := (pp - cen).normalized()
-		var q := pp + away * 4.0
-		if not field.blocks_player(q, false):
+		var q = _bot_escape(pp, pp - cen, 4.0)       # in der Ecke: seitlich heraus statt stehen zu bleiben
+		if q != null:
 			return q
 	if pp.distance_to(target) < 0.7:
 		return target
 	if _nav == null:
 		_nav = Field.new(Vector2(-HALFM, -HALFM), N, N, 2.0)
-	if target.distance_to(_nav_goal) > 1.5 or field.dirty:
+	if target.distance_to(_nav_goal) > 1.5 or field.rebuilds != _nav_rb:
 		_nav_goal = target
+		_nav_rb = field.rebuilds
 		_nav.solid = field.solid.duplicate()
 		for ci in field.cells:
 			var s = field.cells[ci]
@@ -1575,6 +1646,17 @@ func bot_goal():
 	return pp + _nav.dir_at(pp) * 3.0
 
 
+## Ausweichpunkt in Richtung dir (bei Mauer/Fels schrittweise seitlich gedreht); null, wenn alles zu ist.
+func _bot_escape(pp: Vector2, dir: Vector2, dist: float):
+	var d := dir.normalized() if dir.length_squared() > 0.0001 else Vector2.RIGHT
+	for k in 7:
+		var a := ceilf(k / 2.0) * 0.55 * (1.0 if k % 2 == 1 else -1.0)
+		var q := pp + d.rotated(a) * dist
+		if not field.blocks_player(q, false) and not field.blocks_player(pp + d.rotated(a) * dist * 0.5, false):
+			return q
+	return null
+
+
 var _bot_pick = null              # gewählte Quelle (bleibt, bis sie leer ist; sonst pendelt der Bot)
 var _bot_pick_t := 0.0
 var _bot_bad := {}
@@ -1586,7 +1668,7 @@ var _bot_detour_t := 0.0
 
 
 func _bot_keep(n) -> bool:
-	return n != null and not n.gone and room_for(n.res) >= 1.0 and not _bot_bad.has(n)
+	return n != null and not n.gone and room_for(n.res) >= 1.0 and not _bot_bad.has(n) and not node_locked(n)
 
 
 func _bot_choose(n, pp: Vector2):
@@ -1601,6 +1683,10 @@ func _bot_choose(n, pp: Vector2):
 func _bot_decide(pp: Vector2):
 	if hero.mounted:
 		hero.dismount()
+	if vulkan != null and phase == "explore":
+		var cool = vulkan.bot_cool(pp)       # Vulkaninsel: zu heiß -> erst abkühlen
+		if cool != null:
+			return cool
 	if mining != null and not mining.gone and room_for(mining.res) >= 1.0:
 		_bot_pick_t = 0.0
 		return pp
@@ -1613,6 +1699,10 @@ func _bot_decide(pp: Vector2):
 			var z = outpost.zentrale
 			if z != null and z.alive:
 				return field.center(field.idx(z.mid - outpost.s * 5.5))    # hinter der Zentrale, geschützt von Mauern und Türmen
+			if elite != null and elite.st != 2:
+				# Zentrale gefallen: der Elitegegner kommt nicht mehr von selbst – auf Schussweite heran (wie ein Spieler)
+				var away: Vector2 = pp - elite.p
+				return elite.p + (away.normalized() if away.length_squared() > 0.01 else Vector2.RIGHT) * 9.0
 			return respawn_point()
 		"explore":
 			if loads >= 2:
@@ -1661,7 +1751,7 @@ func _bot_node_any(pp: Vector2, outer: bool):
 	var best = null
 	var bd := 1.0e9
 	for n in nodes:
-		if n.gone or room_for(n.res) < 1.0 or _bot_bad.has(n):
+		if n.gone or room_for(n.res) < 1.0 or _bot_bad.has(n) or node_locked(n):
 			continue
 		if not _barriers_open() and n.ring > 0:
 			continue

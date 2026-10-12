@@ -1,0 +1,56 @@
+# Rustwall – Wortfilter für Bunkernamen, Clan-Namen und Clan-Chat.
+# Eine Zeile = ein Wort (klein geschrieben). Zeilen mit # sind Kommentare.
+# Wörter mit "*" am Ende sperren auch alles, was damit anfängt (z. B. "fick*" sperrt "ficken").
+# Wörter mit "~" am Anfang werden auch MITTEN in anderen Wörtern gefunden (nur für eindeutige, längere Wörter benutzen).
+# Kurze Wörter ohne Zeichen werden nur als ganzes Wort gefunden – so bleibt z. B. "Dicker Hamster" erlaubt.
+# Vor der Prüfung wird umgewandelt: Großbuchstaben -> klein, 0->o 1->i 3->e 4->a 5->s 7->t @->a $->s, ß->ss.
+# Die Liste ist ein Anfang. Bitte nach Bedarf ergänzen (der Server liest sie beim Start).
+~arschloch
+arsch*
+~wichser
+wixer
+~fotze
+~hurensohn
+hure*
+nutte*
+schlampe*
+fick*
+gefickt
+~scheisse
+scheiss*
+~spast
+spasti
+~missgeburt
+mongo
+behindi
+schwuchtel
+~kanake
+~neger
+~nigger
+nigga
+~hitler
+nazi*
+heil hitler
+sieg heil
+kkk
+~holocaust
+vergas*
+penis*
+~vagina
+porno*
+~pornhub
+titten*
+fuck*
+shit*
+~bitch
+~cunt
+~asshole
+bastard
+~retard
+whore
+slut
+~motherfucker
+kill yourself
+kys
+~selbstmord
+umbringen

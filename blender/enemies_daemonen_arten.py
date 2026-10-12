@@ -330,12 +330,19 @@ def daemonen_feuerspeier():
         c.wave("belly", scale=(0.05, 0.0, -0.05), n=2)
         c.wave("arm_l", rot=(0, 0, 15), phase=0.5)
         c.wave("arm_r", rot=(0, 0, -15))
-    with rig.clip("attack", 42, hit=30) as c:                      # bläht sich auf, der Bauch glüht hell – spuckt den Feuerball
+    full = dict(body=dict(scale=(1.3, 1.3, 1.22), rot=(-16, 0, 0)), belly=dict(scale=1.5), head=R(-30, 0, 0), arm_l=R(0, 0, -40), arm_r=R(0, 0, 40))
+    # Paket G2: „puff“ = bläht sich auf (vor jedem Schuss), „attack“ spuckt aus der aufgeblähten Haltung
+    with rig.clip("puff", 27) as c:
         c.key(0, **rest)
-        c.key(14, body=dict(scale=(1.15, 1.15, 1.1), rot=(-12, 0, 0)), belly=dict(scale=1.25), head=R(-25, 0, 0), arm_l=R(0, 0, -40), arm_r=R(0, 0, 40))
-        c.key(26, body=dict(scale=(1.3, 1.3, 1.22), rot=(-16, 0, 0)), belly=dict(scale=1.5), head=R(-30, 0, 0))
-        c.key(30, body=dict(scale=(0.9, 0.9, 0.95), rot=(16, 0, 0)), belly=dict(scale=0.9), head=R(20, 0, 0), arm_l=R(-40, 0, 0), arm_r=R(-40, 0, 0), _i="LINEAR")
-        c.key(42, **rest)
+        c.key(12, body=dict(scale=(1.15, 1.15, 1.1), rot=(-12, 0, 0)), belly=dict(scale=1.25), head=R(-25, 0, 0), arm_l=R(0, 0, -40), arm_r=R(0, 0, 40))
+        c.key(18, body=dict(scale=(1.22, 1.22, 1.15), rot=(-14, 0, 0)), belly=dict(scale=1.35))
+        c.key(24, **full)
+        c.key(27, **full)
+    with rig.clip("attack", 24, hit=6) as c:                       # spuckt den Feuerball aus dem glühenden Bauch
+        c.key(0, **full)
+        c.key(4, body=dict(scale=(1.34, 1.34, 1.26), rot=(-18, 0, 0)), belly=dict(scale=1.6))
+        c.key(6, body=dict(scale=(0.9, 0.9, 0.95), rot=(16, 0, 0)), belly=dict(scale=0.9), head=R(20, 0, 0), arm_l=R(-40, 0, 0), arm_r=R(-40, 0, 0), _i="LINEAR")
+        c.key(24, **rest)
     with rig.clip("hit", 9) as c:
         c.key(0, **rest)
         c.key(3, body=dict(scale=(1.15, 1.15, 0.85), rot=(-10, 0, 8)), belly=dict(scale=1.3))

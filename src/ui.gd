@@ -50,6 +50,9 @@ static var fresh := false
 static func font(bold := true) -> Font:
 	if _font == null:
 		var base: Font = load("res://fonts/fredoka.ttf")
+		var sym = load("res://fonts/rustwall_symbols.ttf")   # Pfeile, Haken, Sterne … fehlen in Fredoka (Untermenge von DejaVu Sans, siehe fonts/rustwall_symbols_LICENSE.txt)
+		if sym is Font and base.fallbacks.is_empty():
+			base.fallbacks = [sym]
 		var ts := TextServerManager.get_primary_interface()
 		var a := FontVariation.new()
 		a.base_font = base

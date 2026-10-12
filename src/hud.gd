@@ -5,6 +5,10 @@ extends CanvasLayer
 
 const D = preload("res://src/data.gd")
 const UI = preload("res://src/ui.gd")
+const HudGuide = preload("res://src/hud_guide.gd")     # Paket F: Tutorial, Ziele-Leiste, Rückkehr, Akku
+const Guide = preload("res://src/guide.gd")
+const DF = preload("res://src/data_fuehrung.gd")
+const LOU = preload("res://src/liveops_ui.gd")         # Paket L: Ereignis-Banner, Saison-Knopf
 
 var root: Control
 var world: Node3D
@@ -74,9 +78,13 @@ var _fly: Control
 var _xp_hero: ProgressBar
 var _hero_lv: Label
 var _gem_label: Label
+var guide: Control                  # Paket F: Ebene mit Tutorial und Zeigefinger (hud_guide.gd)
+var _goal: Control                  # Ziele-Leiste
+var _tip_panel: Control
+var _sel_last_id := ""
 
 const MENU_ICON := {"heroes": "ui_helmet", "chests": "ui_chest", "quests": "ui_quest", "workshop": "ui_hammer", "garage": "ui_garage",
-	"social": "ui_mail", "clan": "ui_clan", "settings": "ui_gear", "begleiter": "comp_kistenbein"}
+	"social": "ui_mail", "clan": "ui_clan", "settings": "ui_gear", "begleiter": "comp_kistenbein", "hilfe": "ui_help", "saison": "ui_season", "garderobe": "ui_wardrobe"}
 const CAT_ICON := {"def": "ui_target", "wall": "ui_shield", "trap": "ui_alarm", "prod": "ui_gear", "special": "ui_star", "deco": "ui_flag"}
 const GLASS := Color(0.07, 0.19, 0.37, 0.94)
 
@@ -94,6 +102,7 @@ func _ready() -> void:
 	_flash.color = Color(1, 0.1, 0.1, 0.0)
 	_flash.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(_flash)
+	_flash.set_meta("fill_screen", true)
 	_toasts = UI.vbox(8)
 	_toasts.set_anchors_preset(Control.PRESET_CENTER_TOP)
 	_toasts.position = Vector2(-400, 132)
@@ -107,6 +116,8 @@ func _ready() -> void:
 	P.changed.connect(func(): _sel_sig = "")
 	G.pause_pressed.connect(_on_pause)
 	_make_zoom()
+	guide = HudGuide.new(self)
+	root.add_child(guide)
 
 
 func modal_open() -> bool:
@@ -267,12 +278,14 @@ func _build_peace() -> void:
 	_tip.custom_minimum_size = Vector2(400, 0)
 	var tp := UI.panel(UI.hbox(12, [UI.pic("ui_info", 40, "", UI.GOLD), _tip]), GLASS, Color(UI.EDGE, 0.8), 20, 12)
 	UI.ignore_mouse(tp)
+	_tip_panel = tp
+	_goal = HudGuide.GoalBox.new()
 	# Außenbasen: Zahl der stehenden, Antippen zeigt alle wirksamen Vorteile
 	var sieged := P.outpost_besieged() != ""
 	_outpost_btn = UI.button("Außenbasen %d/%d%s" % [P.outpost_count(), D.AREAS.size(), " · belagert!" if sieged else ""], _show_outposts, "red" if sieged else "dark", 22, "ui_flag")
 	_outpost_btn.custom_minimum_size = Vector2(0, 56)
 	_outpost_btn.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
-	var left := UI.vbox(12, [pp, _outpost_btn, wk, _jobs_box, tp])
+	var left := UI.vbox(12, [pp, _outpost_btn, wk, _jobs_box, _goal, tp])
 	_peace.add_child(left)
 	_anchor(left, Control.PRESET_TOP_LEFT, Vector2(24, 24))
 	# ---- oben Mitte: Rohstoffe mit Bildern
@@ -299,6 +312,7 @@ func _build_peace() -> void:
 	(rp.get_theme_stylebox("panel") as StyleBox).content_margin_right = 22
 	_peace.add_child(rp)
 	_anchor(rp, Control.PRESET_CENTER_TOP, Vector2(0, 24))
+	LOU.hud_banner(self, _peace)                              # Paket L: Ereignis der Woche unter den Rohstoffen
 	# ---- rechts: Menü als Knöpfe mit Bild und Namen
 	var col := UI.vbox(6)
 	_quest_btn = _menu_btn("Aufträge", "quests", "")
@@ -307,12 +321,17 @@ func _build_peace() -> void:
 	col.add_child(_menu_btn("Helden", "heroes", "quartier"))
 	col.add_child(_chest_btn)
 	col.add_child(_quest_btn)
+	col.add_child(LOU.season_button(self))                   # Paket L: Saison, Ereignis, Garderobe
 	col.add_child(_menu_btn("Werkstatt", "workshop", "werkstatt"))
 	col.add_child(_menu_btn("Garage", "garage", "garage"))
 	col.add_child(_menu_btn("Begleiter", "begleiter", ""))
 	col.add_child(_mail_btn)
 	col.add_child(_menu_btn("Clan", "clan", "clanhalle"))
+	col.add_child(_menu_btn("Hilfe", "hilfe", ""))
 	col.add_child(_menu_btn("Optionen", "settings", ""))
+	if HudGuide.compact():
+		HudGuide.compact_menu(self, col)        # kleine Handys: ein Knopf „Menü“ statt zehn (Paket F)
+		_outpost_btn.visible = P.outpost_count() > 0
 	_peace.add_child(col)
 	_anchor(col, Control.PRESET_TOP_RIGHT, Vector2(-24, 24))
 	# ---- unten: große Knöpfe mit Bild
@@ -323,8 +342,11 @@ func _build_peace() -> void:
 	var exp := UI.button("Expedition", func(): _open("expedition"), "green", 34, "ui_expedition")
 	exp.custom_minimum_size = Vector2(320, 96)
 	var bh := UI.hbox(16, [build, exp, _flood_btn])
-	# "Alles einsammeln": erscheint ab Bunker 4, sobald drei Sammelblasen offen sind
-	_all_btn = UI.button("Alles einsammeln", func():
+	build.set_meta("guide", "bauen")
+	exp.set_meta("guide", "expedition")
+	_flood_btn.set_meta("guide", "flood")
+	# "Alle abholen": erscheint, sobald zwei Sammelblasen oder Abholungen offen sind (Paket F)
+	_all_btn = UI.button("Alle abholen", func():
 		UI.sfx("ui_claim", "", -6.0)
 		world.collect_all(), "gold", 26, "ui_crate")
 	_all_btn.custom_minimum_size = Vector2(0, 70)
@@ -486,9 +508,12 @@ func _update_peace() -> void:
 		UI.btn_text(_flood_btn, "Übungsalarm")
 		UI.disable(_flood_btn, not P.practice_available())
 		_flood_btn.modulate = Color.WHITE
+		if Guide.tut_flood_open() and not Guide.quiet():
+			UI.btn_text(_flood_btn, "Übungsflut")          # Tutorial-Flut am ersten Tag (Paket F)
+			UI.disable(_flood_btn, false)
 	_drone_label.text = "Baudrohnen frei: %d von %d" % [maxi(0, P.drones_total() - P.drones_busy()), P.drones_total()]
 	_update_jobs()
-	_all_btn.visible = world.bubbles_open >= 3 and P.bunker_level() >= 4 and not world.editing() and _build_box == null
+	_all_btn.visible = world.bubbles_open + P.d.pickups.size() >= 2 and not world.editing() and _build_box == null
 	_warn.visible = world.enclosed and _build_box == null
 	var cc := P.chest_count()
 	UI.btn_text(_chest_btn, "Kisten (%d)" % cc if cc > 0 else "Kisten")
@@ -498,6 +523,10 @@ func _update_peace() -> void:
 	UI.btn_kind(_mail_btn, "gold" if mc > 0 else "dark")
 	UI.btn_kind(_quest_btn, "green" if P.quests_done() and not bool(P.d.quests.claimed) else "dark")
 	_tip.text = _tip_text()
+	if _goal != null and is_instance_valid(_goal):
+		_goal.update()
+		# Tipps nur noch, wenn sie dringend sind; sonst führt die Ziele-Leiste
+		_tip_panel.visible = world.enclosed or ((P.has_pickup("daily") or P.chest_count() > 0) and not HudGuide.compact())
 	if _sel_timer != null and is_instance_valid(_sel_timer):
 		var b: Dictionary = world.selected()
 		if not b.is_empty() and P.is_building(b):
@@ -521,12 +550,16 @@ func _update_selection() -> void:
 	var b: Dictionary = world.selected()
 	_sel_sig = ""
 	if b.is_empty() or world.editing():
+		_sel_last_id = ""
 		return
 	var id := int(b.id)
 	_sel_sig = _sig_of(b)
 	_sel_box = _sel_window(b)
 	_peace.add_child(_sel_box)
 	_anchor(_sel_box, Control.PRESET_BOTTOM_LEFT, Vector2(24, -24))
+	if _sel_sig.get_slice("|", 0) != _sel_last_id:
+		_sel_last_id = _sel_sig.get_slice("|", 0)
+		UI.pop_in(_sel_box, 0.94, 0.14)          # Paket F: kleiner Übergang beim Öffnen
 	if _build_box:
 		_sel_box.visible = false
 
@@ -601,10 +634,15 @@ func _sel_window(b: Dictionary) -> Control:
 			stats.add_child(UI.hbox(14, [UI.pic("ui_lock", 36.0, "", UI.GOLD), UI.text("Stufe %d schaltet frei: %s" % [lv + 1, D.BUNKER_UNLOCK_TEXT[lv]], 21, UI.GOLD)]))
 	if stats.get_child_count() > 0:
 		v.add_child(UI.card(stats, UI.NAVY, 14, Color(UI.EDGE, 0.7)))
+	if def.has("tower") and not busy:
+		v.add_child(_aim_row(id, b))
 	# ---- Bauzeit oder Ausbau
 	var btns := UI.hbox(10)
 	if key == "training" and not (busy and not b.get("up", false)):
 		v.add_child(_trainee_row())
+		var tb := UI.button("Waffen testen (Übungsplatz)", func(): G.main.start_training(), "gold", 24, "ui_target")   # Paket Welt
+		tb.custom_minimum_size = Vector2(0, 60)
+		v.add_child(tb)
 	if busy:
 		_sel_timer = UI.gold("", 28)
 		var what := "Wird weggeräumt …" if b.get("clear", false) else ("Wird verbessert – arbeitet weiter" if b.get("up", false) else "Baudrohne arbeitet …")
@@ -626,6 +664,11 @@ func _sel_window(b: Dictionary) -> Control:
 				var why := P.can_upgrade(id)
 				var up := UI.hbox(14, [UI.pic("ui_up", 40.0), UI.label("Stufe %d:" % (lv + 1), 24), UI.cost_row(cost, 24), UI.spacer(true), UI.icon("clock", 30, UI.WHITE), UI.label(UI.time_text(P.time_for(key, lv + 1)), 22, UI.TEXT)])
 				var ubox := UI.vbox(4, [up])
+				# Vorschau der Werte: vorher → nachher (Paket F)
+				for pr in Guide.upgrade_preview(key, lv):
+					var nl := UI.label(String(pr[1]), 20, UI.TEXT, false)
+					nl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+					ubox.add_child(UI.hbox(10, [UI.pic(String(pr[0]), 30.0), nl, UI.label(String(pr[2]), 20, UI.GREY), UI.label("→", 20, UI.WHITE), UI.label(String(pr[3]), 21, UI.GREEN)]))
 				if why != "":
 					ubox.add_child(UI.label(why, 20, UI.RED))
 				v.add_child(UI.card(ubox, UI.NAVY_L, 12))
@@ -635,11 +678,37 @@ func _sel_window(b: Dictionary) -> Control:
 				UI.disable(ub, why != "")
 				ub.tooltip_text = why
 				btns.add_child(ub)
+				if (why == "Alle Baudrohnen sind beschäftigt" or why.begins_with("Es fehl")) and key != "wall":
+					var queued := Guide.queued_upgrade(id)
+					var qb := UI.button("Vorgemerkt" if queued else "Vormerken", func():
+						var w2 := Guide.queue_upgrade(id)
+						if w2 != "":
+							toast(w2)
+						else:
+							toast("Vorgemerkt – startet von selbst")
+						_sel_sig = "", "gold", 25, "ui_queue")
+					UI.disable(qb, queued)
+					qb.tooltip_text = "Startet von selbst, sobald eine Drohne frei ist und die Rohstoffe reichen"
+					btns.add_child(qb)
 			else:
 				v.add_child(UI.info_box("Für die nächste Stufe erst den Bunker ausbauen.", 21, "ui_lock"))
 		elif def.cat == "wall" and lv < 3:
 			v.add_child(UI.info_box("%s ab Bunker-Stufe %d." % ["Stein" if lv == 1 else "Metall", 4 if lv == 1 else 7], 21, "ui_lock"))
 		if key == "wall":
+			var row_list: Array = Guide.wall_row(id)
+			var rp: Dictionary = Guide.wall_row_preview(row_list)
+			if row_list.size() > 1 and bool(rp.get("ok", false)):
+				var rtxt := UI.hbox(10, [UI.pic("ui_up", 30.0), UI.label("Reihe (%d Stück) → %s:" % [int(rp.n), String(rp.name1)], 20), UI.cost_row(rp.cost, 20),
+					UI.label("Haltbarkeit %d → %d" % [int(rp.hp0), int(rp.hp1)], 20, UI.GREEN)])
+				v.add_child(UI.card(rtxt, UI.NAVY_L, 10))
+				var rb := UI.button("Reihe verbessern (%d)" % row_list.size(), func():
+					var n := Guide.upgrade_wall_list(Guide.wall_row(id))
+					if n > 0:
+						UI.sfx("ui_upgrade", "build", -4.0)
+						toast("%d Mauerstücke der Reihe werden verbessert" % n)
+					else:
+						UI.sfx("ui_error", "error", -6.0), "green", 24, "ui_up")
+				btns.add_child(rb)
 			var nw := P.upgradable_walls().size()
 			if nw > 1:
 				var ab := UI.button("Alle verbessern (%d)" % nw, func():
@@ -693,9 +762,32 @@ func _sel_window(b: Dictionary) -> Control:
 	return win
 
 
+## Turmziel je Turm (Paket F): automatisch, nächster, stärkster, fliegend, Boss.
+func _aim_row(id: int, b: Dictionary) -> Control:
+	var row := UI.hbox(6, [UI.label("Ziel:", 21, UI.TEXT)])
+	var cur := String(b.get("aim", ""))
+	for a in DF.TOWER_AIMS:
+		var ak := String(a[0])
+		var on := ak == cur
+		var cb := UI.button(String(a[1]), func():
+			if ak == "":
+				b.erase("aim")
+			else:
+				b["aim"] = ak
+			var s: Node3D = world.nodes.get(id)
+			if s != null and s.tower != null:
+				s.tower.aim = ak
+			P.mark()
+			UI.sfx("ui_select", "", -8.0)
+			_sel_sig = "", "tab_on" if on else "tab", 18)
+		cb.custom_minimum_size = Vector2(0, 52)
+		row.add_child(cb)
+	return row
+
+
 func _sig_of(b: Dictionary) -> String:
 	var id := int(b.id)
-	return "%d|%d|%s|%s|%d|%s|%d" % [id, int(b.level), P.is_building(b), P.can_upgrade(id) == "", P.speed_cost(id), P.trainee(), P.drones_total()]
+	return "%d|%d|%s|%s|%d|%s|%d|%s|%s" % [id, int(b.level), P.is_building(b), P.can_upgrade(id) == "", P.speed_cost(id), P.trainee(), P.drones_total(), String(b.get("aim", "")), Guide.queued_upgrade(id)]
 
 
 ## Knopf zum Fertigstellen: unter einer Minute gratis, sonst für Juwelen.
@@ -746,8 +838,8 @@ func _ask(text: String, yes_text: String, yes: Callable, icon_name := "ui_info")
 	_show_modal(UI.vbox(24, [t, row]), 0.55, UI.GOLD)
 
 
-## Alle Drohnen beschäftigt: warten oder einen laufenden Bau beschleunigen.
-func _ask_drones() -> void:
+## Alle Drohnen beschäftigt: warten, einen laufenden Bau beschleunigen oder (Paket F) den Bau vormerken.
+func _ask_drones(key := "") -> void:
 	var v := UI.vbox(14)
 	var t := UI.label("Alle Drohnen beschäftigt", 44, UI.GOLD)
 	t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -773,6 +865,13 @@ func _ask_drones() -> void:
 		var db := UI.button("Weitere Drohne  %d" % dp, func(): _buy_drone(dp), "gold", 26, "res_gems")
 		db.custom_minimum_size = Vector2(360, 80)
 		row.add_child(db)
+	if key != "":
+		var qb := UI.button("Vormerken", func():
+			_close_modal()
+			world.begin_place(key, true), "green", 28, "ui_queue")
+		qb.custom_minimum_size = Vector2(280, 80)
+		qb.tooltip_text = "Platz wählen – der Bau startet von selbst, sobald eine Drohne frei ist"
+		row.add_child(qb)
 	v.add_child(row)
 	_show_modal(v)
 
@@ -806,13 +905,16 @@ func _update_jobs() -> void:
 	var sg := ""
 	for j in jobs:
 		sg += "%d:%d:%d," % [int(j.id), int(j.count), 1 if float(j.end) - P.now() <= D.GEM_FREE_SECONDS else 0]
+	for q in Guide.queue():
+		sg += "q%s;" % Guide.queue_name(q)
 	if sg != _jobs_sig:
 		_jobs_sig = sg
 		_job_rows.clear()
 		UI.clear(_jobs_box)
 		var shown := 0
+		var first_speed := true
 		for j in jobs:
-			if shown >= 4:
+			if shown >= (2 if HudGuide.compact() else 4):
 				_jobs_box.add_child(UI.label("… und %d weitere" % (jobs.size() - shown), 18, UI.TEXT))
 				break
 			shown += 1
@@ -831,8 +933,27 @@ func _update_jobs() -> void:
 			var sb := UI.button("Gratis" if free else "", func(): _speed_up(jid), "green" if free else "gold", 18, "" if free else "res_gems")
 			sb.custom_minimum_size = Vector2(86 if free else 56, 54)
 			sb.tooltip_text = "Sofort fertigstellen"
+			if first_speed:
+				sb.set_meta("guide", "speed")
+				first_speed = false
 			_jobs_box.add_child(UI.hbox(6, [rb, sb]))
 			_job_rows.append([tl, bar, j])
+		# vorgemerkte Aufträge (Paket F): starten von selbst
+		var qi := 0
+		for q in Guide.queue():
+			var qn := UI.label(Guide.queue_name(q), 19, UI.GOLD)
+			qn.clip_text = true
+			qn.custom_minimum_size = Vector2(214, 0)
+			var idx := qi
+			var xb := UI.button("", func():
+				Guide.queue_remove(idx)
+				UI.sfx("ui_close", "", -8.0), "dark", 16, "ui_close")
+			xb.custom_minimum_size = Vector2(56, 44)
+			xb.tooltip_text = "Vormerkung löschen"
+			var qrow := UI.panel(UI.hbox(8, [UI.pic("ui_queue", 36.0), UI.vbox(-4, [UI.label("Vorgemerkt", 15, UI.SKY), qn])]), Color(0.07, 0.19, 0.37, 0.8), Color(UI.GOLD, 0.5), 14, 4)
+			qrow.custom_minimum_size = Vector2(330, 0)
+			_jobs_box.add_child(UI.hbox(6, [qrow, xb]))
+			qi += 1
 	for r in _job_rows:
 		if not is_instance_valid(r[0]):
 			continue
@@ -921,6 +1042,7 @@ func _show_build() -> void:
 				UI.sfx("ui_tab", "", -8.0)
 			_build_cat = ck
 			_show_build(), 24)
+		tb.set_meta("guide", "tab_" + ck)
 		tabs.add_child(tb)
 	tabs.add_child(UI.spacer(true))
 	var x := UI.button("", _close_build, "red", 24, "ui_close")
@@ -931,6 +1053,8 @@ func _show_build() -> void:
 		var def: Dictionary = D.BUILDINGS[key]
 		if def.cat != _build_cat:
 			continue
+		if def.has("trophy") and P.max_count(key) <= 0:
+			continue                                          # Boss-Trophäe erst nach dem ersten Sieg
 		var locked: bool = int(def.unlock) > P.bunker_level() and not G.ch("nolimit")
 		var why := P.can_build(key)
 		var have := P.count(key)
@@ -964,9 +1088,10 @@ func _show_build() -> void:
 		var card := UI.row_button(false, func():
 			_close_build()
 			if P.can_build(k) == "Alle Baudrohnen sind beschäftigt":
-				_ask_drones()
+				_ask_drones(k)
 			else:
 				world.begin_place(k), v, 228.0)
+		card.set_meta("guide", "build_" + k)
 		card.custom_minimum_size = Vector2(250, 228)
 		card.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 		card.tooltip_text = String(def.desc) + ("\n" + why if why != "" else "")
@@ -995,6 +1120,8 @@ func _show_edit_bar() -> void:
 	var hint := "Klicke auf ein freies Feld. R dreht, Rechtsklick beendet." if not G.is_touch else "Tippe auf ein Feld, dann „Hier bauen“. Der Stick bewegt die Kamera."
 	if key == "wall" and not G.is_touch:
 		hint = "Klicken und ziehen, um Mauern zu setzen. Rechtsklick beendet."
+	elif key == "wall" and world.move_id < 0:
+		hint = "Mit dem Finger über die Felder ziehen setzt eine ganze Mauer."
 	var h := UI.hbox(14)
 	h.add_child(UI.building_pic(key, 64.0))
 	var etxt := UI.vbox(-2, [UI.label(D.BUILDINGS[key].name, 28), UI.label(hint, 20, UI.TEXT, false)])
@@ -1003,6 +1130,10 @@ func _show_edit_bar() -> void:
 	h.add_child(etxt)
 	var b1 := UI.button("Drehen", world.rotate_ghost, "dark", 26, "ui_recycle")
 	var b2 := UI.button("Hier bauen" if world.move_id < 0 else "Hierhin", world.confirm_edit, "green", 26, "ui_check")
+	b2.set_meta("guide", "confirm")
+	if world.queue_mode:
+		UI.btn_text(b2, "Vormerken")
+		etxt.add_child(UI.label("Startet von selbst, sobald eine Drohne frei ist.", 20, UI.GOLD))
 	var b3 := UI.button("Fertig", world.cancel_edit, "red", 26, "ui_close")
 	_edit_box = UI.panel(h, GLASS, UI.EDGE, 24, 12)
 	# die Leiste selbst lässt Klicks durch (man kann auch dahinter bauen); nur die Knöpfe fangen sie ab
@@ -1029,6 +1160,7 @@ func _show_modal(inner: Control, dim := 0.55, border := UI.EDGE) -> void:
 	bg.color = Color(0.02, 0.05, 0.12, dim)
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_modal.add_child(bg)
+	UI.fade_in(bg, 0.0, 0.15)
 	var cc := CenterContainer.new()
 	cc.set_anchors_preset(Control.PRESET_FULL_RECT)
 	var win := UI.panel(inner, UI.NAVY, border, 30, 32)
@@ -1039,38 +1171,71 @@ func _show_modal(inner: Control, dim := 0.55, border := UI.EDGE) -> void:
 
 
 func _ask_flood() -> void:
+	# Paket F: Tutorial-Flut am ersten Tag (leicht, ohne Verlust), Wellen-Vorschau, Schwierigkeit gegen Beute
+	var tut := Guide.tut_flood_open() and not Guide.quiet()
 	var practice := not P.flood_available()
-	if practice and not P.practice_available():
+	if practice and not P.practice_available() and not tut:
 		return
-	var fd: Dictionary = world.flood_preview(practice)
+	var fd: Dictionary = world.flood_preview(practice, tut)
 	var dirs: Array = P.d.week.dirs
-	var v := UI.vbox(14)
-	var t := UI.label("Übungsalarm" if practice else "Die Flut – Woche %d" % int(P.d.week.number), 50, UI.GOLD)
+	var v := UI.vbox(12)
+	var title := "Übungsalarm" if practice else "Die Flut – Woche %d" % int(P.d.week.number)
+	if tut:
+		title = "Übungsflut"
+	var t := UI.label(title, 50, UI.GOLD)
 	t.add_theme_constant_override("outline_size", 12)
 	var head := UI.hbox(16, [UI.pic("ui_alarm" if practice else "ui_flood", 76.0), t])
 	head.alignment = BoxContainer.ALIGNMENT_CENTER
 	v.add_child(head)
-	var stats := UI.vbox(10)
-	stats.add_child(UI.stat_row("ui_flag", "Wellen", str(int(fd.waves)), 27))
-	stats.add_child(UI.stat_row("e_0", "Schleimlinge", "etwa %d" % int(fd.total), 27))
-	stats.add_child(UI.stat_row("ui_map", "Sie kommen aus", "%s und %s" % [world.DIR_NAME[int(dirs[0])], world.DIR_NAME[int(dirs[1])]], 27, UI.ORANGE))
+	var stats := UI.vbox(8)
+	stats.add_child(UI.stat_row("ui_flag", "Wellen", str(int(fd.waves)), 26))
+	stats.add_child(UI.stat_row("e_0", "Schleimlinge", "etwa %d" % int(fd.total), 26))
+	stats.add_child(UI.stat_row("ui_map", "Sie kommen aus", "%s und %s" % [world.DIR_NAME[int(dirs[0])], world.DIR_NAME[int(dirs[1])]], 26, UI.ORANGE))
 	if String(fd.get("guest_text", "")) != "":
-		stats.add_child(UI.stat_row("ui_alarm", String(fd.guest_text), "", 27, UI.ORANGE))
+		stats.add_child(UI.stat_row("ui_alarm", String(fd.guest_text), "", 26, UI.ORANGE))
 	if fd.boss:
-		stats.add_child(UI.hbox(14, [UI.enemy_pic(D.E_BOSS, 52.0), UI.label("In der letzten Welle kommt ein Boss!", 27, UI.RED)]))
-	var sc := UI.card(stats, UI.NAVY_L, 18)
-	sc.custom_minimum_size = Vector2(700, 0)
+		stats.add_child(UI.hbox(14, [UI.enemy_pic(D.E_BOSS, 52.0), UI.label("In der letzten Welle kommt ein Boss!", 26, UI.RED)]))
+	# Wellen-Vorschau: gleiche Wellen zusammengefasst
+	var wv := UI.vbox(0, [UI.label("Wellen-Vorschau", 21, UI.SKY)])
+	var n := int(fd.waves)
+	var i := 1
+	while i <= n:
+		var txt := Guide.wave_text(fd, i, n)
+		var j := i
+		while j < n and Guide.wave_text(fd, j + 1, n) == txt:
+			j += 1
+		var lab := ("Welle %d" % i) if i == j else ("Welle %d–%d" % [i, j])
+		wv.add_child(UI.label("%s: %s" % [lab, txt], 19, UI.TEXT, false))
+		i = j + 1
+	stats.add_child(wv)
+	var sc := UI.card(stats, UI.NAVY_L, 16)
+	sc.custom_minimum_size = Vector2(720, 0)
 	v.add_child(sc)
-	if practice:
-		v.add_child(UI.info_box("Die Übung ist schwächer als die echte Flut. Du verlierst nichts und bekommst Münzen und Erfahrung.", 23))
+	if not practice:
+		var cur := Guide.flood_diff()
+		var drow := UI.hbox(8, [UI.label("Schwierigkeit:", 22, UI.TEXT)])
+		for k in DF.FLOOD_DIFFS.size():
+			var kk: int = k
+			var db := UI.button(String(DF.FLOOD_DIFFS[k].name), func():
+				Guide.set_flood_diff(kk)
+				UI.sfx("ui_select", "", -8.0)
+				_ask_flood(), "tab_on" if k == cur else "tab", 22)
+			db.custom_minimum_size = Vector2(0, 58)
+			drow.add_child(db)
+		v.add_child(drow)
+		v.add_child(UI.label(String(DF.FLOOD_DIFFS[cur].text), 20, UI.GOLD if cur > 0 else UI.GREY, false))
+	if tut:
+		v.add_child(UI.info_box("Eine leichte Übungsflut für den Anfang: Du verlierst nichts und bekommst %s." % Guide.reward_text(DF.TUT_FLOOD_REWARD), 22))
+	elif practice:
+		v.add_child(UI.info_box("Die Übung ist schwächer als die echte Flut. Du verlierst nichts und bekommst Münzen und Erfahrung.", 22))
 	else:
-		v.add_child(UI.info_box("Hält der Bunker, gibt es eine Flutkiste. Fällt er, gehen bis zu 20 % der gelagerten Rohstoffe verloren – Gebäude bleiben erhalten.", 23))
+		v.add_child(UI.info_box("Hält der Bunker, gibt es eine Flutkiste. Fällt er, gehen bis zu 20 % der gelagerten Rohstoffe verloren – Gebäude bleiben erhalten.", 22))
 	var go := UI.button("Los!", func():
 		_close_modal()
-		world.start_flood(practice), "red", 38, "ui_play")
-	go.custom_minimum_size = Vector2(300, 92)
+		world.start_flood(practice, tut), "red", 38, "ui_play")
+	go.custom_minimum_size = Vector2(300, 88)
 	var back := UI.button("Noch nicht", _close_modal, "dark", 30)
-	back.custom_minimum_size = Vector2(260, 92)
+	back.custom_minimum_size = Vector2(260, 88)
 	var hb := UI.hbox(18, [back, go])
 	hb.alignment = BoxContainer.ALIGNMENT_CENTER
 	v.add_child(hb)
@@ -1257,6 +1422,15 @@ func _update_battle() -> void:
 	if _veh_bar:
 		_smooth[_veh_bar] = hero.veh_hp / maxf(hero.veh_max, 1.0)
 	var horde = world.horde
+	var bb = horde.boss if horde.boss != null else (horde.mini if horde.get("mini") != null and horde.mini.st != 2 else null)
+	if bb != null and int(_boss_box.get_meta("t", D.E_BOSS)) != bb.t:     # Bild der Boss-/Miniboss-Art nachziehen
+		_boss_box.set_meta("t", bb.t)
+		var hb0: Node = _boss_label.get_parent().get_parent()
+		var old0: Node = hb0.get_child(0)
+		hb0.remove_child(old0)
+		old0.queue_free()
+		hb0.add_child(UI.enemy_pic(bb.t, 76.0))
+		hb0.move_child(hb0.get_child(hb0.get_child_count() - 1), 0)
 	if horde.boss != null:
 		_boss_box.visible = true
 		_boss_label.text = horde.boss_name
@@ -1269,6 +1443,11 @@ func _update_battle() -> void:
 			hb.add_child(UI.enemy_pic(horde.boss.t, 76.0))
 			hb.move_child(hb.get_child(hb.get_child_count() - 1), 0)
 		_smooth[_boss_bar] = horde.boss.hp / horde.boss.mhp
+	elif horde.get("mini") != null and horde.mini.st != 2:
+		# Paket G2: Miniboss mit eigener Leiste (gleiche Anzeige wie der Boss)
+		_boss_box.visible = true
+		_boss_label.text = "Miniboss: " + String(D.ENEMIES[horde.mini.t].name)
+		_smooth[_boss_bar] = horde.mini.hp / horde.mini.mhp
 	else:
 		_boss_box.visible = false
 	if world.mode == "exp":
@@ -1302,7 +1481,7 @@ func _update_battle() -> void:
 		_smooth[_bunker_bar] = bk.hp / bk.max_hp
 		_break_box.visible = world.break_left > 0.0 and not world.ended
 		if _break_box.visible:
-			_break_label.text = "Welle geschafft! Nächste in %d s" % int(ceil(world.break_left))
+			_break_label.text = "Welle geschafft! Nächste in %d s\nNächste Welle: %s" % [int(ceil(world.break_left)), Guide.wave_text(world.flood, world.wave_idx + 1, world.wave_count)]
 		_respawn_label.visible = not hero.alive and not world.ended
 		if _respawn_label.visible:
 			_respawn_label.text = "Zurück in %d …" % int(ceil(hero.respawn_left()))
@@ -1319,6 +1498,7 @@ func _show_result() -> void:
 	var title := "Geschafft!" if win else ("Zurück zur Basis" if exp else "Der Bunker ist gefallen")
 	if practice:
 		title = "Übung bestanden!" if win else "Übung verloren"
+	title = String(r.get("title", title))                     # Paket L: Weltboss-Angriff
 	var t := UI.label(title, 62, UI.GOLD if win else UI.RED)
 	t.add_theme_constant_override("outline_size", 14)
 	t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -1390,6 +1570,9 @@ func _show_result() -> void:
 	elif practice:
 		body.add_child(_loot_row({"coins": int(r.coins)}, UI.GOLD))
 		body.add_child(_xp_row(int(r.xp), 0))
+		if r.has("bonus"):
+			body.add_child(UI.label("Belohnung der Übungsflut", 23, UI.SKY))
+			body.add_child(_loot_row(r.bonus, UI.GOLD))
 	else:
 		var cn := UI.label(String(D.CHESTS[r.chest].name), 28, UI.GOLD)
 		cn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -1397,6 +1580,9 @@ func _show_result() -> void:
 		UI.count_up(pl, float(r.points), 1.0, func(n: int) -> String: return "%s Ranglistenpunkte" % UI.fmt(n), 0.3)
 		body.add_child(UI.hbox(14, [UI.chest_pic(String(r.chest), 84.0), cn, pl]))
 		body.add_child(_xp_row(int(r.xp), 0))
+		if r.has("bonus"):
+			body.add_child(UI.label("Zusatzbeute (%s)" % String(DF.FLOOD_DIFFS[int(r.get("diff", 1))].name), 23, UI.SKY))
+			body.add_child(_loot_row(r.bonus, UI.GOLD))
 		var lost: Dictionary = r.lost
 		if lost.size() > 0:
 			body.add_child(UI.sep(false, Color(UI.RED, 0.5)))

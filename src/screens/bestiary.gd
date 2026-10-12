@@ -186,7 +186,12 @@ func _detail(i: int, fd: Dictionary) -> Control:
 			sr.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			st.add_child(sr)
 		v.add_child(UI.card(st, UI.NAVY, 14, Color(UI.EDGE, 0.8)))
-		v.add_child(UI.hbox(12, [UI.pic("ui_info", 34.0, "", UI.ORANGE), UI.text("Schwäche: " + String(fd.weak_text), 23, UI.ORANGE)]))
+		v.add_child(_weak_row(fd))
+		if def.has("counter"):
+			v.add_child(UI.hbox(12, [UI.pic("ui_info", 34.0, "", UI.ORANGE), UI.text("Tipp: " + String(def.counter), 22, UI.ORANGE)]))
+	# Fundorte (auch für unbekannte Arten: man weiß, wo man suchen muss)
+	var places: Array = D.enemy_places(key)
+	v.add_child(UI.hbox(12, [UI.pic("ui_map", 34.0, "", UI.SKY), UI.text("Fundort: " + " · ".join(places), 21, UI.SKY)]))
 	# Zähler und Belohnungen
 	var kills := int(en.kills)
 	var claimed := int(en.claimed)
@@ -218,3 +223,21 @@ func _detail(i: int, fd: Dictionary) -> Control:
 	v.add_child(UI.hbox(12, [UI.enemy_pic(i, 44.0), UI.label("Besiegt: %s" % UI.fmt(float(kills)), 26, UI.GOLD), bar]))
 	v.add_child(rw)
 	return UI.panel(v, UI.NAVY, UI.EDGE, 22, 18)
+
+
+## Paket G2: Schwächen als Symbole (Element + Faktor), grün = verwundbar, rot = widerstandsfähig.
+func _weak_row(fd: Dictionary) -> Control:
+	var row := UI.hbox(10, [UI.label("Schwäche:", 22, UI.ORANGE)])
+	var wk: Dictionary = fd.get("weak", {})
+	if wk.is_empty():
+		row.add_child(UI.label("keine", 22, UI.GREY))
+	for el in wk:
+		var k := float(wk[el])
+		var txt := "immun" if k <= 0.0 else ("%+d %%" % int(round((k - 1.0) * 100.0)))
+		var col: Color = UI.GREEN if k > 1.0 else UI.RED
+		var chip := UI.hbox(4, [UI.pic(String(D.ELEMENT_ICON.get(el, "ui_target")), 34.0, "", col), UI.label(txt, 21, col)])
+		chip.tooltip_text = String(D.ELEMENT_NAME.get(el, el))
+		row.add_child(UI.pill(chip, 8, 3))
+	if fd.has("slow"):
+		row.add_child(UI.pill(UI.hbox(4, [UI.pic("ui_snow", 30.0, "", UI.RED), UI.label("Bremsen halb", 20, UI.RED)]), 8, 3))
+	return row

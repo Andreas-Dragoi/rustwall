@@ -1,4 +1,4 @@
-# Rustwall (Version 2)
+# Rustwall (Version 5)
 
 Umsetzung des Spielkonzepts „Rustwall_Spielkonzept_V2.pdf“ in Godot 4.6 (GDScript, Mobile-Renderer).
 
@@ -80,6 +80,21 @@ Klicken und Ziehen „malen“. Im Baumodus bewegt WASD / der Stick die Kamera.
 - **Detailreichere Gebäude, Türme, Mauern** und **36 Gegnerarten in 7 Familien + 7 Bosse** mit eigenen Modellen
   und Animationen (Schleim, Untote, Waldgeister, Wüstenmonster, Mutanten, Eiswesen, Dämonen).
 
+### Neu in Version 5 (Umsetzung der PDF „Was dem Spiel noch fehlt“)
+- **Online-Grundlage:** Konto, Cloud-Spielstand, Serverzeit, Freunde/Clans/Post über einen Server (`src/net*.gd`,
+  Nakama-Modul und Test-Server in `server/`), Rechtstexte und Einwilligung, Store-Texte (`docs/`), iOS/Android-Exporte.
+- **Spielerführung:** Tutorial mit Zeigefinger, Tutorial-Flut, Ziele-Leiste, Rückkehr-Zusammenfassung, Hilfe/Wiki,
+  Bau-Warteschlange, Mauern ziehen, Turmziele, Wellen-Vorschau, Akku-Sparmodus. Juwelen gelten kontoweit.
+- **Gegner:** 21 neue Rollen-Arten (Heiler, Schildträger, Tunnelgräber, Turmstörer, Dieb, Brutmutter), 7 Minibosse,
+  Elite mit Krone, Bosse mit Phasen/Intro/Schwachstelle, Weltboss Schleim-Leviathan, 5 neue Fallen, 12 Deko-Teile.
+- **Welt:** Musik je Gebiet mit Gefahr-Lage, Umgebungston, Wahrzeichen, Tag/Nacht und Wetter in Expeditionen,
+  Gebiets-Ereignisse, Werkzeug-Quellen, Tagebuch, Karawane, Nebenquests, Übungsplatz, Begleiter-Köder und -Eier,
+  Tagesablauf der Bewohner.
+- **Gebiet 8 „Vulkaninsel“** mit Lavaströmen, Hitze-Leiste, Ausbruch und der Familie Magma-Wesen.
+- **Live-Betrieb:** Wochen-Ereignisse, Feiertage, Saison 1 mit Pass (bezahlte Spur nur als Testkauf), Garderobe und
+  Kosmetik-Shop, Wochenaufgaben, 28-Tage-Kalender, Nachrichten, Prestige, Außenbasis Stufe 4–5, Albtraum+.
+- **Englisch** als zweite Sprache (`locale/en.po`, Wahl in den Optionen).
+
 ## Wichtig: Was (noch) nicht echt ist
 
 - **Mitspieler sind simuliert.** Freunde, Clans, Ranglisten und Post laufen über `src/social.gd` mit erfundenen
@@ -91,8 +106,9 @@ Klicken und Ziehen „malen“. Im Baumodus bewegt WASD / der Stick die Kamera.
   Zum Ändern: Skript in `blender/` anpassen und ausführen (siehe `blender/README.md`) oder die `.glb` ersetzen.
 - **Die beiden Folge-Musikstücke und alle Töne sind am Rechner erzeugt** (Skripte in `tools/`) und nicht von
   Menschen abgehört worden – austauschbar durch Dateien mit gleichem Namen.
-- Nicht umgesetzt aus dem Konzept: gemeinsame Kämpfe (Koop, Clan-Flut),
-  Sprachausgabe, Übersetzungen (alles ist deutsch).
+- **Server:** Ohne laufenden Nakama-Server (siehe `server/README.md`) bleiben Mitspieler simuliert; echte Käufe
+  (App Store / Google Play) sind vorbereitet, aber nur als Testkauf aktiv.
+- Nicht umgesetzt: gemeinsame Kämpfe (Koop, Clan-Flut), weitere Sprachen außer Englisch.
 
 ## Testmodus (Optionen → Testmodus)
 
@@ -136,6 +152,24 @@ Dinge bleiben im Spielstand. Vor einer Veröffentlichung in `src/main.gd` die Ze
 | `anim.gd` | Daueranimationen der Blender-Modelle (Namen `spin_`, `bob_`, `sway_`, `pulse_`, `fx_`) |
 | `admin.gd` | Admin-Menü |
 | `tests.gd`, `ui_test.gd` | automatische Tests |
+
+## Sprachen (Deutsch / English)
+
+- **Wahl:** Optionen → Ton und Grafik → Sprache. Beim ersten Start gilt die Systemsprache (Deutsch für deutsche Geräte,
+  sonst Englisch); die Wahl wird auf dem Gerät gemerkt (`user://rustwall_lang.txt`) und gilt für alle Städte.
+  Umschalten wirkt sofort, offene Menüs werden neu gebaut. Zum Testen: `--lang=en`.
+- **Quelle ist der deutsche Text** im Code (msgid = deutscher Text); Englisch steht in `locale/en.po`
+  (in `project.godot` angemeldet, Rückfallsprache Deutsch). Labels und Knöpfe übersetzen sich selbst.
+  `src/i18n.gd` übersetzt zusätzlich zusammengesetzte Texte über Vorlagen aus `en.po` („Stufe %d“ erkennt „Stufe 7“),
+  Texte aus mehreren Teilen (Zeilen, „ · “, Sätze, BBCode, „Zitate“), Zahlen (5,5 → 5.5) und „1 gems“ → „1 gem“.
+- **Neue Texte übersetzen:** `python3 tools/i18n_extract.py --missing` findet alle Texte, schreibt
+  `locale/rustwall.pot` + `locale/en.po` (vorhandene Übersetzungen bleiben) und listet, was fehlt. Übersetzungen direkt
+  in `locale/en.po` eintragen (oder `--set datei.json` mit `{"deutsch": "english"}`). Hilfsvorlagen für Teilstücke stehen in
+  `tools/i18n_extra.json`. Gezeichnete Texte (`draw_string`) brauchen `I18N.t(text)`.
+- **Rechtstexte** haben eine eigene englische Fassung in `docs/legal/en/` (→ `python3 tools/legal_to_gd.py`),
+  Store-Texte englisch in `docs/store/description_en.md`. Das Admin-Menü bleibt deutsch.
+- **Prüfen:** `--autotest=sprache` (Abdeckung, Platzhalter, Umschalten, alle Bildschirme in Englisch);
+  `--lang=en --i18n_log=<datei>` schreibt beim Beenden alle Texte, die deutsch geblieben sind.
 
 ## Automatische Tests
 

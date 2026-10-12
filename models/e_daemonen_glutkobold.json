@@ -1,0 +1,81 @@
+{
+ "key": "daemonen_glutkobold",
+ "kind": "vat",
+ "role": "jammer",
+ "verts": 672,
+ "tris": 754,
+ "width": 672,
+ "rows": 64,
+ "rpf": 1,
+ "fps": 10,
+ "bounds_min": [
+  -0.7220299437819133,
+  -1.4560001113414762,
+  -0.8864875703074164
+ ],
+ "bounds_size": [
+  1.2890805127619882,
+  3.287351654707582,
+  1.7649867890623419
+ ],
+ "height": 1.6118296384811401,
+ "radius": 0.7751962087263944,
+ "clips": {
+  "idle": {
+   "row": 0,
+   "n": 14,
+   "dur": 1.4,
+   "loop": true,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "walk": {
+   "row": 14,
+   "n": 6,
+   "dur": 0.6,
+   "loop": true,
+   "stride": 1.44,
+   "hit": -1.0
+  },
+  "attack": {
+   "row": 20,
+   "n": 9,
+   "dur": 0.8,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.4
+  },
+  "hit": {
+   "row": 29,
+   "n": 4,
+   "dur": 0.3,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "death": {
+   "row": 33,
+   "n": 12,
+   "dur": 1.1,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "jam": {
+   "row": 45,
+   "n": 10,
+   "dur": 0.9,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.5666666666666667
+  },
+  "spawn": {
+   "row": 55,
+   "n": 9,
+   "dur": 0.8,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  }
+ }
+}

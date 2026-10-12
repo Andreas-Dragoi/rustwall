@@ -190,105 +190,180 @@ func dir_at(p: Vector2) -> Vector2:
 
 
 func update_if_dirty() -> void:
-	if dirty and has_goal:
-		rebuild()
-	dirty = false
+	if slice_us <= 0:
+		if dirty and has_goal:
+			rebuild()
+		dirty = false
+		return
+	# in Scheiben (Paket G2: keine Ruckler von 10–90 ms beim Freigeben abgebauter Quellen oder fallenden Mauern):
+	# bis die neue Rechnung fertig ist, lesen die Gegner weiter das alte Feld; Änderungen währenddessen
+	# lassen dirty stehen und werden mit der nächsten Rechnung übernommen
+	if _job.is_empty() and dirty and has_goal:
+		dirty = false
+		_job_start()
+	if not _job.is_empty():
+		_job_step(slice_us)
+
+
+var slice_us := 0                     # > 0: update_if_dirty() rechnet höchstens so viele µs je Aufruf (Expedition)
+var _job := {}
+const _NX := [1, -1, 0, 0, 1, 1, -1, -1]
+const _NZ := [0, 0, 1, -1, 1, -1, 1, -1]
 
 
 func rebuild() -> void:
 	dirty = false
-	rebuilds += 1
+	_job_start()
+	if not _job.is_empty():
+		_job_step(0)
+
+
+func _job_start() -> void:
 	var n := w * h
-	for i in n:
-		dist[i] = BIG
-	var cost := PackedFloat32Array()
-	cost.resize(n)
-	for i in n:
-		cost[i] = BIG if solid[i] == 1 else base[i]
-	for i in cells:
-		var s = cells[i]
-		if s.alive and solid[i] == 0:
-			cost[i] = s.cost
-	var hc := PackedFloat32Array()
-	var hi := PackedInt32Array()
 	var gi := idx(goal)
 	if gi < 0:
+		_job = {}
+		var nd0 := PackedFloat32Array()
+		nd0.resize(n)
+		nd0.fill(BIG)
+		dist = nd0                            # Ziel außerhalb: alles unerreichbar (wie bisher)
+		rebuilds += 1
 		return
-	dist[gi] = 0.0
-	hc.append(0.0)
-	hi.append(gi)
-	var nx := [1, -1, 0, 0, 1, 1, -1, -1]
-	var nz := [0, 0, 1, -1, 1, -1, 1, -1]
-	while hc.size() > 0:
-		var c0 := hc[0]
-		var i0 := hi[0]
-		var last := hc.size() - 1
-		hc[0] = hc[last]
-		hi[0] = hi[last]
-		hc.resize(last)
-		hi.resize(last)
-		var k := 0
-		while true:
-			var l := k * 2 + 1
-			if l >= last:
-				break
-			var r := l + 1
-			var m := l
-			if r < last and hc[r] < hc[l]:
-				m = r
-			if hc[m] >= hc[k]:
-				break
-			var tc := hc[k]
-			hc[k] = hc[m]
-			hc[m] = tc
-			var ti := hi[k]
-			hi[k] = hi[m]
-			hi[m] = ti
-			k = m
-		if c0 > dist[i0] + 0.0005:
-			continue
-		var cx := i0 % w
-		var cz := int(i0 / w)
-		for j in 8:
-			var x: int = cx + nx[j]
-			var z: int = cz + nz[j]
-			if x < 0 or z < 0 or x >= w or z >= h:
+	var nd := PackedFloat32Array()
+	nd.resize(n)
+	nd.fill(BIG)
+	var cost := PackedFloat32Array()
+	cost.resize(n)
+	# Kosten werden in _job_step zeilenweise aufgebaut ("c" = nächste Zeile), danach läuft die Wegsuche ("z" = -1)
+	_job = {"nd": nd, "cost": cost, "hc": PackedFloat32Array(), "hi": PackedInt32Array(), "c": 0, "z": -1, "dirs": PackedVector2Array(), "gi": gi}
+
+
+## Rechnet am laufenden Auftrag weiter; budget_us = 0: bis zum Ende.
+func _job_step(budget_us: int) -> void:
+	var t_end := Time.get_ticks_usec() + budget_us
+	var dist2: PackedFloat32Array = _job.nd
+	var cost: PackedFloat32Array = _job.cost
+	var hc: PackedFloat32Array = _job.hc
+	var hi: PackedInt32Array = _job.hi
+	_job.nd = PackedFloat32Array()          # Kopien vermeiden (Copy-on-Write), am Ende zurück
+	_job.hc = PackedFloat32Array()
+	_job.hi = PackedInt32Array()
+	var nx := _NX
+	var nz := _NZ
+	var cnt := 0
+	if int(_job.c) >= 0:
+		var c0r: int = int(_job.c)
+		for z in range(c0r, h):
+			if budget_us > 0 and z > c0r and Time.get_ticks_usec() > t_end:
+				_job.c = z
+				_job.nd = dist2
+				_job.cost = cost
+				_job.hc = hc
+				_job.hi = hi
+				return
+			var r0 := z * w
+			for x in w:
+				var i := r0 + x
+				cost[i] = BIG if solid[i] == 1 else base[i]
+		for i in cells:
+			var s = cells[i]
+			if s.alive and solid[i] == 0:
+				cost[i] = s.cost
+		_job.c = -1
+		var gi: int = int(_job.gi)
+		dist2[gi] = 0.0
+		hc.append(0.0)
+		hi.append(gi)
+		_job.cost = cost
+	if int(_job.z) < 0:
+		while hc.size() > 0:
+			cnt += 1
+			if budget_us > 0 and cnt & 31 == 0 and Time.get_ticks_usec() > t_end:
+				_job.nd = dist2
+				_job.hc = hc
+				_job.hi = hi
+				return
+			var c0 := hc[0]
+			var i0 := hi[0]
+			var last := hc.size() - 1
+			hc[0] = hc[last]
+			hi[0] = hi[last]
+			hc.resize(last)
+			hi.resize(last)
+			var k := 0
+			while true:
+				var l := k * 2 + 1
+				if l >= last:
+					break
+				var r := l + 1
+				var m := l
+				if r < last and hc[r] < hc[l]:
+					m = r
+				if hc[m] >= hc[k]:
+					break
+				var tc := hc[k]
+				hc[k] = hc[m]
+				hc[m] = tc
+				var ti := hi[k]
+				hi[k] = hi[m]
+				hi[m] = ti
+				k = m
+			if c0 > dist2[i0] + 0.0005:
 				continue
-			var ni := x + z * w
-			var cc := cost[ni]
-			if cc >= BIG:
-				continue
-			var step := 1.0
-			if j >= 4:
-				# nicht diagonal um Ecken von Hindernissen schneiden
-				if cost[cx + nx[j] + cz * w] >= 20.0 or cost[cx + (cz + nz[j]) * w] >= 20.0:
+			var cx := i0 % w
+			var cz := int(i0 / w)
+			for j in 8:
+				var x: int = cx + nx[j]
+				var z: int = cz + nz[j]
+				if x < 0 or z < 0 or x >= w or z >= h:
 					continue
-				step = 1.4142
-			var nd := c0 + cc * step
-			if nd < dist[ni] - 0.001:
-				dist[ni] = nd
-				hc.append(nd)
-				hi.append(ni)
-				var q := hc.size() - 1
-				while q > 0:
-					var par := (q - 1) >> 1
-					if hc[par] <= hc[q]:
-						break
-					var tc2 := hc[q]
-					hc[q] = hc[par]
-					hc[par] = tc2
-					var ti2 := hi[q]
-					hi[q] = hi[par]
-					hi[par] = ti2
-					q = par
-	for z in h:
+				var ni := x + z * w
+				var cc := cost[ni]
+				if cc >= BIG:
+					continue
+				var step := 1.0
+				if j >= 4:
+					# nicht diagonal um Ecken von Hindernissen schneiden
+					if cost[cx + nx[j] + cz * w] >= 20.0 or cost[cx + (cz + nz[j]) * w] >= 20.0:
+						continue
+					step = 1.4142
+				var nd := c0 + cc * step
+				if nd < dist2[ni] - 0.001:
+					dist2[ni] = nd
+					hc.append(nd)
+					hi.append(ni)
+					var q := hc.size() - 1
+					while q > 0:
+						var par := (q - 1) >> 1
+						if hc[par] <= hc[q]:
+							break
+						var tc2 := hc[q]
+						hc[q] = hc[par]
+						hc[par] = tc2
+						var ti2 := hi[q]
+						hi[q] = hi[par]
+						hi[par] = ti2
+						q = par
+		_job.z = 0
+		var d0 := PackedVector2Array()
+		d0.resize(w * h)
+		_job.dirs = d0
+	var nd_dirs: PackedVector2Array = _job.dirs
+	_job.dirs = PackedVector2Array()
+	var z0: int = int(_job.z)
+	for z in range(z0, h):
+		if budget_us > 0 and z > z0 and Time.get_ticks_usec() > t_end:
+			_job.z = z
+			_job.nd = dist2
+			_job.dirs = nd_dirs
+			return
 		for x in w:
 			var i := x + z * w
 			var here := Vector2(ox + (x + 0.5) * cs, oz + (z + 0.5) * cs)
-			if dist[i] >= BIG:
-				dirs[i] = (goal - here).normalized()
+			if dist2[i] >= BIG:
+				nd_dirs[i] = (goal - here).normalized()
 				continue
-			var best := dist[i]
+			var best := dist2[i]
 			var bd := Vector2.ZERO
 			for j in 8:
 				var x2: int = x + nx[j]
@@ -297,8 +372,12 @@ func rebuild() -> void:
 					continue
 				if j >= 4 and (cost[x2 + z * w] >= 20.0 or cost[x + z2 * w] >= 20.0):
 					continue
-				var dd := dist[x2 + z2 * w]
+				var dd := dist2[x2 + z2 * w]
 				if dd < best:
 					best = dd
 					bd = Vector2(nx[j], nz[j])
-			dirs[i] = bd.normalized() if bd != Vector2.ZERO else (goal - here).normalized()
+			nd_dirs[i] = bd.normalized() if bd != Vector2.ZERO else (goal - here).normalized()
+	dist = dist2
+	dirs = nd_dirs
+	rebuilds += 1
+	_job = {}

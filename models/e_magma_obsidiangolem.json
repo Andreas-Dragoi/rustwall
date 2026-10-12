@@ -1,0 +1,81 @@
+{
+ "key": "magma_obsidiangolem",
+ "kind": "vat",
+ "role": "tank",
+ "verts": 664,
+ "tris": 756,
+ "width": 664,
+ "rows": 66,
+ "rpf": 1,
+ "fps": 10,
+ "bounds_min": [
+  -1.8280947603816282,
+  -2.7999999904632578,
+  -0.9862048046395204
+ ],
+ "bounds_size": [
+  3.8544060495536296,
+  6.687889846513702,
+  2.8391761401613587
+ ],
+ "height": 3.0749998092651367,
+ "radius": 1.4904026989188577,
+ "clips": {
+  "idle": {
+   "row": 0,
+   "n": 14,
+   "dur": 1.4,
+   "loop": true,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "walk": {
+   "row": 14,
+   "n": 10,
+   "dur": 1.0,
+   "loop": true,
+   "stride": 1.2,
+   "hit": -1.0
+  },
+  "attack": {
+   "row": 24,
+   "n": 9,
+   "dur": 0.8,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.4
+  },
+  "hit": {
+   "row": 33,
+   "n": 4,
+   "dur": 0.3,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "death": {
+   "row": 37,
+   "n": 12,
+   "dur": 1.1,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "spawn": {
+   "row": 49,
+   "n": 9,
+   "dur": 0.8,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "harden": {
+   "row": 58,
+   "n": 8,
+   "dur": 0.8,
+   "loop": true,
+   "stride": 0.0,
+   "hit": -1.0
+  }
+ }
+}

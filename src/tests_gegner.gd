@@ -71,7 +71,7 @@ func _data() -> void:
 		T._check(list.size() == 6 and roles.size() == 6, "%s: sechs Arten, sechs Rollen" % fam)
 		var bd: Dictionary = D.enemy(String(D.AREA_BOSS[ai]))
 		T._check(bd.role == "boss" and bd.family == fam and String(bd.name) == String(D.BOSSES[ai].name), "%s: Boss %s" % [fam, bd.name])
-	T._check(total == 36, "36 neue Arten (%d)" % total)
+	T._check(total == 36 + 6 * (D.AREA_FAMILY.size() - 7), "36 neue Arten, je weiterer Familie sechs (%d)" % total)
 	# Leben und Tempo aus den Tabellen (Stichproben über alle Familien)
 	var want := {"wald_pilzling": [12, 2.2], "wald_dornenwolf": [14, 5.0], "wald_baumhueter": [220, 1.3], "wald_zapfenwerfer": [26, 2.4], "wald_irrlicht": [14, 3.0], "wald_wurzelkriecher": [40, 2.6],
 		"wueste_schrottkaefer": [16, 2.2], "wueste_staubteufel": [10, 5.2], "wueste_rostbulle": [240, 1.5], "wueste_kaktusschuetze": [28, 2.0], "wueste_geier": [14, 3.6], "wueste_sandwurm": [70, 3.0],
@@ -97,7 +97,8 @@ func _data() -> void:
 
 # ---------------------------------------------------------------- Modelle mit Animations-Textur
 func _models() -> void:
-	var limit := {"mass": 900, "fast": 900, "ranged": 1600, "air": 1600, "special": 1600, "tank": 2800, "object": 1600}
+	var limit := {"mass": 900, "fast": 900, "ranged": 1600, "air": 1600, "special": 1600, "tank": 2800, "object": 1600,
+		"healer": 1600, "shield": 1600, "digger": 1600, "jammer": 1600, "thief": 1600, "brood": 1600, "miniboss": 2800}
 	var n := 0
 	for def in D.ENEMIES:
 		var key := String(def.key)

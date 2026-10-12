@@ -12,6 +12,7 @@ signal expedition_requested(area: int, mission: String, diff: int)
 const D = preload("res://src/data.gd")
 const UI = preload("res://src/ui.gd")
 const Preview = preload("res://src/screens/preview.gd")
+const ScreenFit = preload("res://src/screen_fit.gd")      # Paket F: sichere Ränder, größere Menüs auf kleinen Handys
 
 const BUILDERS := {
 	"heroes": preload("res://src/screens/heroes.gd"),
@@ -28,9 +29,14 @@ const BUILDERS := {
 	"erfolge": preload("res://src/screens/erfolge.gd"),
 	"bestiary": preload("res://src/screens/bestiary.gd"),
 	"begleiter": preload("res://src/screens/begleiter.gd"),
+	"hilfe": preload("res://src/screens/hilfe.gd"),
+	"legal": preload("res://src/screens/legal.gd"),
+	"tagebuch": preload("res://src/screens/tagebuch.gd"),
+	"saison": preload("res://src/screens/saison.gd"),           # Paket L: Ereignis, Saison-Pass, Aufgaben, Kalender, Rangliste, Neuigkeiten, Endspiel
+	"garderobe": preload("res://src/screens/garderobe.gd"),     # Paket L: Kosmetik und Kosmetik-Shop
 }
 const TITLES := {"heroes": "Helden", "chests": "Beutekisten", "workshop": "Werkstatt", "garage": "Garage", "social": "Funkturm",
-	"clan": "Clan", "profile": "Profil", "quests": "Aufträge und Flut", "expedition": "Expedition", "settings": "Einstellungen", "shop": "Laden", "erfolge": "Erfolge", "bestiary": "Monsterbuch", "begleiter": "Begleiter"}
+	"clan": "Clan", "profile": "Profil", "quests": "Aufträge und Flut", "expedition": "Expedition", "settings": "Einstellungen", "shop": "Laden", "erfolge": "Erfolge", "bestiary": "Monsterbuch", "begleiter": "Begleiter", "hilfe": "Hilfe", "legal": "Rechtliches", "tagebuch": "Tagebuch", "saison": "Saison und Ereignisse", "garderobe": "Garderobe"}
 ## Kopfzeile: Münzen, Bauteile, Sternsplitter und dazu alles, was der Bildschirm ausgibt.
 const STRIP_BASE := ["coins", "parts", "shards", "gems"]
 const STRIP_EXTRA := {"heroes": ["fuel"], "garage": ["metal", "fuel", "cells"], "social": ["wood", "stone", "metal", "fuel"],
@@ -39,7 +45,7 @@ const STRIP_EXTRA := {"heroes": ["fuel"], "garage": ["metal", "fuel", "cells"], 
 const PANEL_MAX_W := 2040.0
 ## Bildzeichen in der Kopfzeile
 const HEAD_ICON := {"heroes": "ui_helmet", "chests": "ui_chest", "workshop": "ui_hammer", "garage": "ui_garage", "social": "ui_mail",
-	"clan": "ui_clan", "profile": "ui_badge", "quests": "ui_quest", "expedition": "ui_expedition", "settings": "ui_gear", "shop": "res_gems", "erfolge": "ui_trophy", "bestiary": "e_0", "begleiter": "comp_kistenbein"}
+	"clan": "ui_clan", "profile": "ui_badge", "quests": "ui_quest", "expedition": "ui_expedition", "settings": "ui_gear", "shop": "res_gems", "erfolge": "ui_trophy", "bestiary": "e_0", "begleiter": "comp_kistenbein", "hilfe": "ui_help", "legal": "ui_shield", "tagebuch": "p_journal", "saison": "ui_season", "garderobe": "ui_wardrobe"}
 const SIM_NOTICE := "Mitspieler sind in dieser Version simuliert. Für echtes Online-Spiel wird ein Server benötigt."
 
 var screen := ""
@@ -94,6 +100,7 @@ func open(screen_name: String, arg = null) -> void:
 	_fresh_next = true
 	_do_refresh()
 	UI.pop_in(_frame, 0.95, 0.18)
+	UI.fade_in(_root.get_child(0), 0.0, 0.14)        # Paket F: Hintergrund blendet weich ein
 
 
 func close() -> void:
@@ -161,6 +168,8 @@ func _build_shell() -> void:
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
 	bg.mouse_filter = Control.MOUSE_FILTER_STOP
 	_root.add_child(bg)
+	bg.set_meta("fill_screen", true)
+	ScreenFit.fit(_root, ScreenFit.screen_scale())
 
 	_frame = UI.vbox(0)
 	_frame.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -463,6 +472,8 @@ func kv(k: String, v: String, size := 24, vcol := UI.GOLD) -> HBoxContainer:
 
 
 func notice_sim() -> Control:
+	if P.social.online():                 # Paket O: echter Server verbunden
+		return UI.card(UI.hbox(12, [UI.pic("ui_check", 30.0, "", UI.GREEN), UI.text("Mit dem Server verbunden: Mitspieler, Post und Ranglisten sind echt.", 20, Color("CFF7B8"))]), Color("1F4A2A"), 8, Color(UI.GREEN, 0.6))
 	var l := UI.text(SIM_NOTICE, 20, Color("FFE2A8"))
 	return UI.card(UI.hbox(12, [UI.pic("ui_info", 30.0, "", UI.ORANGE), l]), Color("4A3A1C"), 8, Color(UI.ORANGE, 0.7))
 
@@ -547,7 +558,7 @@ func preview_hero(key: String) -> Control:
 	var it: Dictionary = P.item(int(h.weapon))
 	if not it.is_empty():
 		wk = String(it.key)
-	var sig := "hero:%s:%d:%s" % [key, tier, wk]
+	var sig := "hero:%s:%d:%s:%s" % [key, tier, wk, _lo_sig(key)]
 	var pv := _get_preview(sig)
 	if pv.sig != sig:
 		pv.show_hero(key, tier, wk)
@@ -558,10 +569,31 @@ func preview_hero(key: String) -> Control:
 ## Wie preview_hero(), aber der Held hält eine bestimmte Waffe (Werkstatt).
 func preview_hero_with(key: String, weapon_key: String) -> Control:
 	var tier := clampi(int(int(P.hero(key).level) / 10), 0, 3)
-	var sig := "hero:%s:%d:%s" % [key, tier, weapon_key]
+	var sig := "hero:%s:%d:%s:%s" % [key, tier, weapon_key, _lo_sig(key)]
 	var pv := _get_preview(sig)
 	if pv.sig != sig:
 		pv.show_hero(key, tier, weapon_key)
+		pv.sig = sig
+	return pv
+
+
+## Paket L: Kennung des angelegten Helden- und Waffen-Skins (Vorschau neu bauen, wenn er wechselt).
+func _lo_sig(key: String) -> String:
+	var LO = load("res://src/liveops.gd")
+	return "%s/%s" % [LO.hero_skin(key), LO.equipped("wskin")]
+
+
+## Paket L (Garderobe): Held mit einem bestimmten Skin und Waffen-Skin.
+func preview_skin(key: String, skin: String, wskin: String) -> Control:
+	var tier := clampi(int(int(P.hero(key).level) / 10), 0, 3)
+	var wk := ""
+	var it: Dictionary = P.item(int(P.hero(key).weapon))
+	if not it.is_empty():
+		wk = String(it.key)
+	var sig := "skin:%s:%s:%s:%s" % [key, skin, wskin, wk]
+	var pv := _get_preview(sig)
+	if pv.sig != sig:
+		pv.show_hero(key, tier, wk, skin, wskin)
 		pv.sig = sig
 	return pv
 

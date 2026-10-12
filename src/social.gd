@@ -6,17 +6,75 @@ extends RefCounted
 ## Sie ist bewusst als eine abgeschlossene Schicht gebaut: Für den echten Online-Betrieb
 ## werden die Funktionen hier durch Server-Anfragen (z. B. Nakama) ersetzt; die Oberfläche
 ## und der Rest des Spiels bleiben unverändert.
+##
+## Paket O: Ist ein Server verbunden (net.gd, Einstellungen → Online), leitet jede Funktion an
+## net_social.gd weiter (gleiche Namen, gleiche Rückgaben). Ohne Server bleibt alles wie oben beschrieben.
 
 const D = preload("res://src/data.gd")
+const NetNode = preload("res://src/net.gd")
+const NetSocial = preload("res://src/net_social.gd")
 
 var p: Node                       # Profil (Autoload P)
 var s: Dictionary                 # p.d.social
 var _rng := RandomNumberGenerator.new()
+var net: Node                     # Online-Anbindung (Knoten "Net" unter P, bleibt bei Stadtwechsel bestehen)
+var o: RefCounted                 # Server-Umsetzung der Funktionen (net_social.gd)
 
 
 func _init(profile: Node) -> void:
 	p = profile
 	_rng.randomize()
+	net = p.get_node_or_null("Net")
+	if net == null:
+		net = NetNode.new()
+		net.name = "Net"
+		p.add_child(net)
+	o = NetSocial.new(self, net)
+
+
+## Ist ein Server verbunden? Dann gelten die Server-Fassungen der Funktionen.
+func online() -> bool:
+	return net != null and net.online()
+
+
+## Ist ein Server eingestellt (auch wenn gerade keine Verbindung besteht)?
+func server_set() -> bool:
+	return net != null and net.enabled()
+
+
+## Alles vom Server neu laden (net.gd ruft das regelmäßig auf).
+func net_refresh() -> void:
+	if online():
+		o.refresh()
+		o.load_board("flood")
+
+
+## Paket O: Juwelen/Kisten erst nach Serverbestätigung gutschreiben. Rückgabe true = zurückgehalten.
+func hold(kind: String, n: int, why: String) -> bool:
+	return net != null and net.hold(kind, n, why)
+
+
+## Paket O: ausgegebene Juwelen für den Abgleich mit dem Server merken.
+func note_spend(n: int) -> void:
+	if net != null:
+		net.note_spend(n)
+
+
+## Paket O: vom Server gezogene Zufallszahl für die nächste Kiste dieser Art (-1 = keine).
+func chest_seed(type: String) -> int:
+	return net.take_chest_seed(type) if net != null and net.enabled() else -1
+
+
+## Paket O: Telemetrie-Ereignis (nur mit Einwilligung), z. B. track("tutorial", {"step": 3}).
+func track(event: String, props := {}) -> void:
+	if net != null and net.tel != null:
+		net.tel.track(event, props)
+
+
+## Paket O: Bunker melden und auf Wunsch sperren (nur mit Server).
+func report(code: String, reason: String, block_too := true) -> void:
+	if online():
+		o.report(code, reason, block_too)
 
 
 func ensure() -> void:
@@ -66,8 +124,14 @@ func tick(t: float) -> void:
 	# Wochenwechsel der Ranglisten
 	var w := abs_week()
 	if int(s.week) != w:
-		_week_rollover()
+		if not server_set():
+			_week_rollover()
+		else:
+			s.points = {"flood": 0, "explorer": 0}       # Abrechnung macht der Server (kommt als Post)
 		s.week = w
+	if server_set():
+		_expire_mail(t)
+		return
 	var last := float(s.last_tick)
 	if last <= 0.0:
 		s.last_tick = t
@@ -79,11 +143,14 @@ func tick(t: float) -> void:
 	var steps := mini(int(dt / 600.0) + 1, 60)
 	for i in steps:
 		_simulate_step()
-	# abgelaufene Post entfernen
+	_expire_mail(t)
+	p.mark()
+
+
+func _expire_mail(t: float) -> void:
 	for i in range(s.mail.size() - 1, -1, -1):
 		if float(s.mail[i].expire) < t:
 			s.mail.remove_at(i)
-	p.mark()
 
 
 ## Ein Simulationsschritt entspricht etwa zehn Minuten.
@@ -134,6 +201,8 @@ func mail_count() -> int:
 
 
 func mail_claim(id: int) -> bool:
+	if online():
+		return o.mail_claim(id)
 	for i in s.mail.size():
 		var m: Dictionary = s.mail[i]
 		if int(m.id) == id:
@@ -148,6 +217,8 @@ func mail_claim(id: int) -> bool:
 
 
 func mail_claim_all() -> int:
+	if online():
+		return o.mail_claim_all()
 	var n := 0
 	while s.mail.size() > 0:
 		mail_claim(int(s.mail[0].id))
@@ -161,6 +232,8 @@ func friend_code() -> String:
 
 
 func add_friend(code: String) -> String:
+	if online():
+		return o.add_friend(code)
 	code = code.strip_edges().to_upper()
 	if code.length() != 8:
 		return "Ein Freundescode hat acht Zeichen."
@@ -179,6 +252,8 @@ func add_friend(code: String) -> String:
 
 
 func suggestions() -> Array:
+	if online():
+		return o.suggestions()
 	var out: Array = []
 	for i in 5:
 		var code := _make_code(int(s.seed) * 13 + i * 977 + p.day_index())
@@ -200,6 +275,8 @@ func bot_bunker(h: int) -> String:
 ## Bunker suchen: nach Name (Teil reicht) oder genauem Freundescode.
 ## Ohne Server werden die simulierten Mitspieler durchsucht (immer dieselben 400 Bunker).
 func find_bases(query: String) -> Array:
+	if online():
+		return o.find_bases(query)
 	var q := query.strip_edges().to_lower()
 	var out: Array = []
 	if q.length() < 2:
@@ -218,6 +295,9 @@ func find_bases(query: String) -> Array:
 
 
 func remove_friend(code: String) -> void:
+	if online():
+		o.remove_friend(code)
+		return
 	for i in s.friends.size():
 		if s.friends[i].code == code:
 			s.friends.remove_at(i)
@@ -226,10 +306,14 @@ func remove_friend(code: String) -> void:
 
 
 func friend_score(f: Dictionary) -> int:
+	if f.has("score"):
+		return int(f.score)
 	return _bot_score(int(f.seed), int(f.level), "flood")
 
 
 func sends_left() -> int:
+	if online():
+		return int(o.meta.sends_left)
 	if int(s.send_day) != p.day_index():
 		return D.SEND_PER_DAY
 	return maxi(0, D.SEND_PER_DAY - int(s.send_count))
@@ -241,6 +325,8 @@ func send_amount(r: String) -> int:
 
 ## Schickt 5 % des eigenen Bestands eines Rohstoffs. Rückgabe: "" oder Grund für die Ablehnung.
 func send_resource(target_name: String, r: String) -> String:
+	if online():
+		return o.send_resource(target_name, r)
 	if not r in D.SENDABLE:
 		return "Das lässt sich nicht verschicken."
 	if sends_left() <= 0:
@@ -262,6 +348,8 @@ func send_resource(target_name: String, r: String) -> String:
 
 
 func can_send_item(f: Dictionary) -> String:
+	if online() and int(o.meta.item_left) <= 0:
+		return "Heute wurde schon ein Stück verschickt."
 	if p.day_index() - int(f.since) < 7:
 		return "Erst nach 7 Tagen Freundschaft."
 	if int(s.item_day) == p.day_index():
@@ -273,6 +361,8 @@ func send_item(f: Dictionary, item_id: int) -> String:
 	var why := can_send_item(f)
 	if why != "":
 		return why
+	if online():
+		return o.send_item(f, item_id)
 	var it: Dictionary = p.item(item_id)
 	if it.is_empty() or int(it.rarity) > 1:
 		return "Nur gewöhnliche und seltene Stücke lassen sich verschicken."
@@ -285,10 +375,14 @@ func send_item(f: Dictionary, item_id: int) -> String:
 
 
 func can_send_giftbox() -> bool:
+	if online():
+		return int(o.meta.giftbox_left) > 0
 	return int(s.giftbox_week) != abs_week()
 
 
 func send_giftbox(target_name: String) -> bool:
+	if online():
+		return o.send_giftbox(target_name)
 	if not can_send_giftbox():
 		return false
 	s.giftbox_week = abs_week()
@@ -300,12 +394,16 @@ func send_giftbox(target_name: String) -> bool:
 
 
 func helps_left() -> int:
+	if online():
+		return int(o.meta.helps_left)
 	if int(s.help_day) != p.day_index():
 		return 5
 	return maxi(0, 5 - int(s.help_count))
 
 
 func help_friend(_f: Dictionary) -> bool:
+	if online():
+		return o.help_friend(_f)
 	if helps_left() <= 0:
 		return false
 	if int(s.help_day) != p.day_index():
@@ -324,6 +422,8 @@ func has_clan() -> bool:
 
 
 func clan_list() -> Array:
+	if online():
+		return o.clan_list()
 	var out: Array = []
 	for i in D.CLAN_NAMES.size():
 		var seed_val := int(s.seed) + i * 131
@@ -343,6 +443,8 @@ func _make_members(seed_val: int, n: int, avg_level: int) -> Array:
 
 
 func join_clan(entry: Dictionary) -> String:
+	if online():
+		return o.join_clan(entry)
 	if int(p.d.level) < D.CLAN_MIN_LEVEL:
 		return "Clans gibt es ab Spielerstufe %d." % D.CLAN_MIN_LEVEL
 	if int(p.d.level) < int(entry.min_level):
@@ -355,6 +457,8 @@ func join_clan(entry: Dictionary) -> String:
 
 
 func create_clan(clan_name: String) -> String:
+	if online():
+		return o.create_clan(clan_name)
 	clan_name = clan_name.strip_edges()
 	if int(p.d.level) < D.CLAN_MIN_LEVEL:
 		return "Clans gibt es ab Spielerstufe %d." % D.CLAN_MIN_LEVEL
@@ -370,6 +474,9 @@ func create_clan(clan_name: String) -> String:
 
 
 func leave_clan() -> void:
+	if online():
+		o.leave_clan()
+		return
 	s.clan = {}
 	s.request = {}
 	p.mark()
@@ -391,12 +498,17 @@ func clan_goal() -> int:
 
 
 func add_clan_points(n: int) -> void:
+	if online():
+		o.add_clan_points(n)
+		return
 	if has_clan():
 		s.clan.my_points = int(s.clan.my_points) + n
 		_check_clan_goal()
 
 
 func _check_clan_goal() -> void:
+	if server_set():
+		return                      # Wochenziel und Clankiste vergibt der Server
 	var c: Dictionary = s.clan
 	if int(c.chest_week) != abs_week() and clan_points() >= clan_goal():
 		c.chest_week = abs_week()
@@ -411,6 +523,8 @@ func clan_bonus() -> float:
 
 
 func donate(index: int) -> String:
+	if online():
+		return o.donate(index)
 	if not has_clan() or index >= s.clan.asks.size():
 		return "?"
 	var a: Dictionary = s.clan.asks[index]
@@ -428,10 +542,14 @@ func donate(index: int) -> String:
 
 
 func can_request() -> bool:
+	if online():
+		return o.can_request()
 	return has_clan() and (s.request.is_empty() or p.now() - float(s.request.get("at", 0.0)) > 8 * 3600.0)
 
 
 func request(r: String) -> bool:
+	if online():
+		return o.request(r)
 	if not can_request():
 		return false
 	s.request = {"res": r, "amount": 80 + 20 * p.bunker_level(), "filled": 0, "at": p.now()}
@@ -447,6 +565,9 @@ func shout_add(who: String, text: String) -> void:
 
 
 func shout(index: int) -> void:
+	if online():
+		o.shout_text(D.SHOUTS[index])
+		return
 	if has_clan():
 		shout_add(String(p.d.name), D.SHOUTS[index])
 		p.mark()
@@ -455,6 +576,9 @@ func shout(index: int) -> void:
 # ================================================================= Ranglisten
 func add_points(board: String, n: int) -> void:
 	s.points[board] = int(s.points.get(board, 0)) + n
+	_track_points(board, n)
+	if online():
+		o.add_points(board, n)
 	p.mark()
 
 
@@ -472,6 +596,8 @@ func _bot_score(seed_val: int, level: int, board: String) -> int:
 
 ## Rangliste als sortierte Liste von {name, score, me}.
 func board(kind: String) -> Array:
+	if online():
+		return o.board(kind)
 	var out: Array = []
 	if kind == "friends":
 		for f in s.friends:
@@ -539,6 +665,8 @@ func _week_rollover() -> void:
 
 
 func submit_time(area: int, t: float) -> void:
+	if online():
+		o.submit_time(area, t)
 	var k := str(area)
 	if not s.times.has(k) or t < float(s.times[k]):
 		s.times[k] = t
@@ -546,6 +674,8 @@ func submit_time(area: int, t: float) -> void:
 
 
 func best_times(area: int) -> Array:
+	if online():
+		return o.best_times(area)
 	var out: Array = []
 	for i in 9:
 		var sd := int(s.seed) + i * 59 + area * 401
@@ -556,3 +686,12 @@ func best_times(area: int) -> Array:
 		out.append({"name": p.d.name, "score": float(s.times[str(area)]), "me": true})
 	out.sort_custom(func(a, b): return float(a.score) < float(b.score))
 	return out
+
+
+## Paket O: Telemetrie zu Flut und Expedition (die Punkte kommen genau dann hier an).
+func _track_points(board: String, n: int) -> void:
+	if board == "flood":
+		var last: Dictionary = p.d.get("week", {}).get("last", {})
+		track("flood", {"win": bool(last.get("win", false)), "stars": int(last.get("stars", 0)), "week": int(p.d.week.get("number", 0)), "points": n})
+	elif board == "explorer":
+		track("expedition", {"points": n, "level": int(p.d.level)})

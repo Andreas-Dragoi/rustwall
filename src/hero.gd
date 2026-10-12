@@ -5,6 +5,7 @@ extends Node3D
 const D = preload("res://src/data.gd")
 const MK = preload("res://src/mk.gd")
 const Humanoid = preload("res://src/humanoid.gd")
+const LO = preload("res://src/liveops.gd")                 # Paket L: Skins, Albtraum+
 const Models = preload("res://src/models.gd")
 const Skills = preload("res://src/skills.gd")
 const Tower = preload("res://src/tower.gd")
@@ -115,7 +116,7 @@ func setup(hero_key: String) -> void:
 	dodge_n = dodge_max
 	body = Humanoid.new()
 	add_child(body)
-	body.build({"helm": def.color, "suit": def.suit, "kind": key, "tier": clampi(int(level / 8), 0, 3)})
+	body.build({"helm": def.color, "suit": def.suit, "kind": key, "tier": clampi(int(level / 8), 0, 3), "skin": LO.hero_skin(key)})     # Paket L: Helden-Skin
 	body.scale = Vector3.ONE * D.CHAR_SCALE
 	body.footstep.connect(_on_footstep)
 	arsenal = Arsenal.new()
@@ -152,7 +153,7 @@ func set_weapon(it: Dictionary) -> void:
 	if arsenal != null:
 		arsenal.beam_off()
 		arsenal.charge_glow(0.0, Color.WHITE)
-	body.set_weapon(Models.weapon(weapon_key), weapon.len)
+	body.set_weapon(LO.tint_weapon(Models.weapon(weapon_key)), weapon.len)      # Paket L: Waffen-Skin
 	body.set_pose(weapon_key)
 	body.two_handed = true
 	if _flame:
@@ -332,7 +333,7 @@ func _physics_process(dt: float) -> void:
 			for e in G.horde.in_radius(pos2(), 3.5):
 				e.burn = maxf(e.burn, 3.0)
 			G.fx.ring(global_position, 3.5, Color(1.0, 0.5, 0.1), 0.4)
-	if _since_hit > 5.0 and hp < max_hp:
+	if _since_hit > 5.0 and hp < max_hp and not LO.nm_noheal:      # Paket L: Albtraum+ „Keine Heilung“
 		hp = minf(max_hp, hp + max_hp * 0.03 * dt)
 	if hp < max_hp * 0.3:                # leiser Herzschlag bei wenig Leben
 		_heart_t -= dt
@@ -885,7 +886,7 @@ func hurt(d: float, from = null) -> void:
 
 
 func heal(v: float) -> void:
-	if alive and hp < max_hp:
+	if alive and hp < max_hp and not LO.nm_noheal:            # Paket L: Albtraum+ „Keine Heilung“
 		hp = minf(max_hp, hp + v)
 
 

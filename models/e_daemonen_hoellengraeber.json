@@ -1,0 +1,97 @@
+{
+ "key": "daemonen_hoellengraeber",
+ "kind": "vat",
+ "role": "digger",
+ "verts": 676,
+ "tris": 884,
+ "width": 676,
+ "rows": 77,
+ "rpf": 1,
+ "fps": 10,
+ "bounds_min": [
+  -1.1566497351075198,
+  -2.0000000691413877,
+  -0.8521874344348908
+ ],
+ "bounds_size": [
+  2.122477427889708,
+  4.677808924971682,
+  2.4411218774260592
+ ],
+ "height": 1.7699999809265137,
+ "radius": 0.8108816425194906,
+ "clips": {
+  "idle": {
+   "row": 0,
+   "n": 14,
+   "dur": 1.4,
+   "loop": true,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "walk": {
+   "row": 14,
+   "n": 6,
+   "dur": 0.6,
+   "loop": true,
+   "stride": 1.56,
+   "hit": -1.0
+  },
+  "attack": {
+   "row": 20,
+   "n": 9,
+   "dur": 0.8,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.4
+  },
+  "hit": {
+   "row": 29,
+   "n": 4,
+   "dur": 0.3,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "death": {
+   "row": 33,
+   "n": 12,
+   "dur": 1.1,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "dig": {
+   "row": 45,
+   "n": 7,
+   "dur": 0.6,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "under": {
+   "row": 52,
+   "n": 8,
+   "dur": 0.8,
+   "loop": true,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "rise": {
+   "row": 60,
+   "n": 8,
+   "dur": 0.7,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "spawn": {
+   "row": 68,
+   "n": 9,
+   "dur": 0.8,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  }
+ }
+}

@@ -254,12 +254,13 @@ def eis_yeti():
         c.key(0, **rest)
         c.key(3, body=R(-6, 0, 8), head=R(-22, 0, 8), arm_l=R(0, 0, 20))
         c.key(9, **rest)
-    with rig.clip("death", 45) as c:                               # brüllt, fällt rücklings in den Schnee
+    with rig.clip("death", 45) as c:                               # brüllt, kippt seitlich in den Schnee
         c.key(0, **rest)
         c.key(10, head=R(-30, 0, 0), arm_l=R(-150, 0, -30), arm_r=R(-150, 0, 30))
-        c.key(28, root=dict(rot=(-86, 0, 0), loc=(0, 0, 0.55)), arm_l=R(-170, 0, -60), arm_r=R(-170, 0, 60), leg_l=R(-30, 0, 0), _i="LINEAR")
-        c.key(32, root=dict(rot=(-80, 0, 0), loc=(0, 0, 0.65)))
-        c.key(45, root=dict(rot=(-88, 0, 0), loc=(0, 0, 0.55)), leg_l=R(0, 0, 10))
+        # zur Seite, aber um die Mitte: der liegende Körper bleibt auf seinem Platz (Paket G2: blieb sonst außerhalb des Bildes)
+        c.key(28, root=dict(rot=(0, 86, 0), loc=(-1.35, 0, 0.6)), arm_l=R(-60, 0, -40), arm_r=R(-90, 0, 50), leg_l=R(-30, 0, 0), _i="LINEAR")
+        c.key(32, root=dict(rot=(0, 80, 0), loc=(-1.3, 0, 0.7)))
+        c.key(45, root=dict(rot=(0, 88, 0), loc=(-1.35, 0, 0.6)), arm_l=R(-40, 0, -30), arm_r=R(-80, 0, 40), leg_l=R(0, 0, 10))
     rig.finish(icon_yaw=-28, icon_pitch=12)
 
 
@@ -326,11 +327,12 @@ def eis_kristallschuetze():
         c.key(0, **rest)
         c.key(3, body=R(-14, 0, 10), head=R(-20, 0, 0), eyes=dict(scale=1.6))
         c.key(9, **rest)
-    with rig.clip("death", 30) as c:                               # zerspringt: Glieder fallen auseinander
+    with rig.clip("death", 30) as c:                               # bekommt Risse, sinkt auf die Knie und kippt vornüber (bleibt in der Mitte liegen)
         c.key(0, **rest)
-        c.key(6, body=R(-10, 0, 0), eyes=dict(scale=2.0))
-        c.key(14, hips=dict(loc=(0, 0, -0.4)), head=dict(rot=(60, 0, 40), loc=(0.3, -0.3, -0.6)), arm_l=dict(rot=(0, 90, 0), loc=(0.3, 0, -0.9)), arm_r=dict(rot=(0, -90, 0), loc=(-0.3, 0, -0.9)), _i="LINEAR")
-        c.key(30, hips=dict(loc=(0, 0, -0.6)), body=R(80, 0, 0), head=dict(rot=(90, 0, 60), loc=(0.4, -0.5, -1.3)), eyes=dict(scale=0.05), arm_l=dict(rot=(0, 90, 0), loc=(0.4, 0, -1.1)), arm_r=dict(rot=(0, -90, 0), loc=(-0.4, 0, -1.1)), leg_l=R(0, 0, 40), leg_r=R(0, 0, -40))
+        c.key(6, body=R(-10, 0, 0), head=R(-16, 0, 0), eyes=dict(scale=2.0))
+        c.key(15, hips=dict(loc=(0, 0, -0.42)), leg_l=R(-80, 0, 0), leg_r=R(-80, 0, 0), body=R(12, 0, 0), arm_l=R(0, 0, 30), arm_r=R(0, 0, -30), _i="LINEAR")
+        c.key(24, root=dict(rot=(84, 0, 0), loc=(0, 0.85, 0.1)), arm_l=R(-150, 0, 20), arm_r=R(-150, 0, -20), _i="LINEAR")
+        c.key(30, root=dict(rot=(82, 0, 0), loc=(0, 0.85, 0.12)), hips=dict(loc=(0, 0, -0.42)), leg_l=R(-80, 0, 0), leg_r=R(-80, 0, 0), eyes=dict(scale=0.05))
     spawn_clip(rig, 1.8)
     rig.finish()
 
@@ -524,8 +526,8 @@ def boss_eis():
         c.key(0, **rest)
         c.key(12, torso=R(-10, 0, 0), head=R(-20, 0, 0), core=dict(scale=1.6), eyes=dict(scale=1.6))
         c.key(26, hips=dict(loc=(0, 0, -0.75)), leg_l=R(-80, 0, 0), leg_r=R(-80, 0, 0), torso=R(14, 0, 0), arm_l=R(-30, 0, 20), arm_r=R(-30, 0, -20), core=dict(scale=0.8), _i="LINEAR")
-        c.key(44, root=dict(rot=(78, 0, 0), loc=(0, 0, 0.0)), hips=dict(loc=(0, 0, -0.75)), torso=R(10, 0, 0), arm_l=R(-160, 0, 20), arm_r=R(-160, 0, -20), _i="LINEAR")
-        c.key(60, root=dict(rot=(80, 0, 0), loc=(0, 0, 0.0)), hips=dict(loc=(0, 0, -0.75)), core=dict(scale=0.1), eyes=dict(scale=0.05))
+        c.key(44, root=dict(rot=(78, 0, 0), loc=(0, 1.8, 0.0)), hips=dict(loc=(0, 0, -0.75)), torso=R(10, 0, 0), arm_l=R(-160, 0, 20), arm_r=R(-160, 0, -20), _i="LINEAR")
+        c.key(60, root=dict(rot=(80, 0, 0), loc=(0, 1.8, 0.0)), hips=dict(loc=(0, 0, -0.75)), core=dict(scale=0.1), eyes=dict(scale=0.05))
     with rig.clip("special", 45, hit=24) as c:                     # Boden einfrieren: kniet, beide Fäuste auf den Boden, die Krone gleißt
         c.key(0, **rest)
         c.key(12, arm_l=R(-150, 0, -10), arm_r=R(-150, 0, 10), torso=R(-12, 0, 0), core=dict(scale=1.5), eyes=dict(scale=1.5))

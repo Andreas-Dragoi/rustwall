@@ -116,6 +116,9 @@ var _bot_t := 0.0
 var _cam_pan := Vector3.ZERO
 var _last_paint := Vector2i(-1, -1)
 var _wall_tier := -1
+const Guide = preload("res://src/guide.gd")     # Paket F: Warteschlange, Tutorial-Flut, Schwierigkeit, Gebäudeschaden
+var queue_mode := false          # Platz wählen für einen vorgemerkten Bau (alle Drohnen beschäftigt)
+var tutorial_flood := false      # laufende Flut ist die leichte Tutorial-Flut (ohne Verlust)
 
 
 func _ready() -> void:
@@ -173,6 +176,7 @@ func _on_built(id: int) -> void:
 	var s: Node3D = nodes.get(id)
 	if s != null and fx != null:
 		fx.confetti(Vector3(s.mid.x, 1.0, s.mid.y))
+		load("res://src/build_fx.gd").play(s)              # Paket G2: Teile fliegen ein, Staub
 	if s != null and npc_board != null:
 		npc_board.cheer_near(s.mid, 10.0, 1.5)
 
@@ -360,6 +364,8 @@ func _sync() -> void:
 			s.setup(b, b.key, int(b.level), size, rect_center(int(b.x), int(b.y), size), int(b.rot), first)
 			if building and not first:
 				s._make_site()
+			if not first:
+				Guide.apply_damage(s, b)
 			s.sig = sg
 			nodes[id] = s
 		if b.key == "bunker":
@@ -531,10 +537,12 @@ func _update_selection() -> void:
 	_sel_ring.visible = true
 
 
-func begin_place(key: String) -> void:
+func begin_place(key: String, queue := false) -> void:
 	if mode != "peace":
 		return
 	var why := P.can_build(key)
+	if queue and (why == "Alle Baudrohnen sind beschäftigt" or why.begins_with("Es fehl")):
+		why = ""
 	if why != "":
 		P.toast.emit(why)
 		Sfx.play("error", -6.0)
@@ -542,6 +550,7 @@ func begin_place(key: String) -> void:
 	cancel_edit()
 	select(-1)
 	place_key = key
+	queue_mode = queue
 	ghost_rot = 0
 	var c := world_to_cell(hero.pos2() + Vector2(0, 5))
 	_start_edit(c)
@@ -633,6 +642,15 @@ func confirm_edit() -> bool:
 		select(id)
 		return true
 	var key := place_key
+	if queue_mode:
+		var qw := Guide.queue_build(key, ghost_cell.x, ghost_cell.y, ghost_rot)
+		if qw != "":
+			P.toast.emit(qw)
+			Sfx.play("error", -6.0)
+			return false
+		P.toast.emit("%s vorgemerkt – startet, sobald eine Drohne frei ist" % String(D.BUILDINGS[key].name))
+		cancel_edit()
+		return true
 	var b := P.place(key, ghost_cell.x, ghost_cell.y, ghost_rot)
 	if b.is_empty():
 		Sfx.play("error", -6.0)
@@ -653,11 +671,40 @@ func confirm_edit() -> bool:
 	return true
 
 
+## Mauer ziehen: setzt die Felder zwischen zwei Malpunkten (Bresenham), ohne Ecken zu überspringen.
+func _paint_line(a: Vector2i, b: Vector2i) -> void:
+	var d := b - a
+	var steps := maxi(absi(d.x), absi(d.y))
+	if steps <= 1:
+		return
+	var last := a
+	for i in range(1, steps):
+		var c := Vector2i(a.x + int(round(float(d.x) * i / steps)), a.y + int(round(float(d.y) * i / steps)))
+		if c == last:
+			continue
+		# keine diagonalen Sprünge: erst waagerecht auffüllen
+		if c.x != last.x and c.y != last.y:
+			_paint_cell(Vector2i(c.x, last.y))
+		_paint_cell(c)
+		last = c
+	if b.x != last.x and b.y != last.y:
+		_paint_cell(Vector2i(b.x, last.y))
+
+
+func _paint_cell(c: Vector2i) -> void:
+	if not editing() or place_key != "wall":
+		return
+	set_ghost(c)
+	if ghost_ok:
+		confirm_edit()
+
+
 func cancel_edit() -> void:
 	if not editing():
 		return
 	place_key = ""
 	move_id = -1
+	queue_mode = false
 	if _ghost != null:
 		_ghost.queue_free()
 		_ghost = null
@@ -677,8 +724,12 @@ func _pointer(sp: Vector2, pressed: bool, drag: bool) -> void:
 		var size := P.size_of(key, ghost_rot)
 		var target := c - Vector2i(int(size.x / 2), int(size.y / 2))
 		set_ghost(target)
-		# am PC setzt ein Klick sofort; Mauern lassen sich durch Ziehen "malen"
-		if not G.is_touch and (pressed or (drag and key == "wall" and place_key != "")) and ghost_cell != _last_paint:
+		# am PC setzt ein Klick sofort; Mauern lassen sich durch Ziehen "malen" (Paket F: auch mit dem Finger,
+		# Felder dazwischen werden aufgefüllt, damit schnelles Ziehen keine Lücken lässt)
+		var paint: bool = drag and key == "wall" and place_key != "" and not queue_mode
+		if (paint or (pressed and not G.is_touch)) and ghost_cell != _last_paint:
+			if paint and _last_paint != Vector2i(-1, -1):
+				_paint_line(_last_paint, ghost_cell)
 			_last_paint = ghost_cell
 			if ghost_ok or pressed:
 				confirm_edit()
@@ -709,9 +760,12 @@ func _unhandled_input(event: InputEvent) -> void:
 			if event.pressed:
 				_press_pos = event.position
 				_press_t = time
+				_last_paint = Vector2i(-1, -1)
 			elif event.position.distance_to(_press_pos) < 28.0 and time - _press_t < 0.4:
 				_pointer(event.position, true, false)
 		elif event is InputEventScreenDrag and editing() and event.position.x > get_viewport().get_visible_rect().size.x * 0.45:
+			if place_key == "wall" and _last_paint == Vector2i(-1, -1) and _press_pos.distance_to(event.position) < 80.0:
+				_pointer(_press_pos, false, true)          # Mauer ziehen: das Startfeld zählt mit
 			_pointer(event.position, false, true)
 	else:
 		if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
@@ -780,6 +834,11 @@ func collect_all() -> void:
 		var s: Node3D = nodes[id]
 		if s.bubble != null and s.bubble.visible:
 			_collect(s.b, s)
+	# Paket F: auch Geschenke und Lieferungen abholen
+	for id in nodes.keys():
+		var s2: Node3D = nodes.get(id)
+		if s2 != null and s2.gift != null and s2.gift.visible:
+			_claim(s2)
 	_check_production()
 
 
@@ -869,7 +928,7 @@ func focus(id: int) -> void:
 
 
 # ---------------------------------------------------------------- Flut
-func flood_preview(practice: bool) -> Dictionary:
+func flood_preview(practice: bool, tutorial := false) -> Dictionary:
 	var wk := int(P.d.week.number)
 	var fd := D.flood_def(wk, P.bunker_level())
 	if practice:
@@ -884,16 +943,20 @@ func flood_preview(practice: bool) -> Dictionary:
 		fd["guests"] = Array(G.arg("guest").split(","))
 	fd["guest_share"] = D.flood_guest_share(wk) if not fd.guests.is_empty() else 0.0
 	fd["guest_text"] = P.flood_guest_text()
+	Guide.apply_flood(fd, practice, tutorial)
 	return fd
 
 
-func start_flood(practice: bool) -> void:
+func start_flood(practice: bool, tutorial := false) -> void:
 	if mode != "peace" or bunker_node == null:
 		return
 	cancel_edit()
 	select(-1)
+	tutorial_flood = tutorial
+	if tutorial:
+		practice = true
 	mode = "practice" if practice else "flood"
-	flood = flood_preview(practice)
+	flood = flood_preview(practice, tutorial)
 	flood["mix"] = D.flood_mix(int(P.d.week.number))
 	flood["dirs"] = P.d.week.dirs
 	wave_count = int(flood.waves)
@@ -925,6 +988,7 @@ func start_flood(practice: bool) -> void:
 				for o in structures:
 					if o.mid.distance_to(s.mid) < 16.0:
 						o.shielded = true
+	load("res://src/traps2.gd").arm(self)                 # Paket G2: Teergrube, Federbrett, Lockköder, Elektrozaun, Eisfalle
 	_update_selection()
 	_check_production()
 	_sync_pickups()
@@ -968,6 +1032,7 @@ func _next_wave() -> void:
 			_queue.append(t)
 	while _queue.size() < n:
 		_queue.append(D.E_SLIME)
+	horde.plan_wave(_queue, int(P.d.week.number), wave_idx, wave_count, n, guests)     # Paket G2: neue Rollen, Elite, Miniboss
 	_queue.shuffle()
 	if wave_idx == wave_count and flood.boss:
 		_queue.append(D.E_BOSS)
@@ -1007,6 +1072,9 @@ func _spawn_one() -> void:
 		Sfx.play("boss_arrive", -2.0)
 		Music.set_mood("boss")
 		cam.shake(0.3)
+		return
+	if t >= 1000:
+		horde.spawn_planned(t, p, float(flood.hp), float(flood.dmg))       # Elite (+1000) oder Miniboss (+2000)
 		return
 	horde.spawn(t, p, float(flood.hp), float(flood.dmg), float(flood.dmg))
 
@@ -1060,13 +1128,22 @@ func _finish(win: bool) -> void:
 	coins.collect_all()
 	var ratio: float = bunker_node.hp / bunker_node.max_hp if win else 0.0
 	var k: int = horde.kills
-	if mode == "practice":
+	if tutorial_flood:
+		# Tutorial-Flut: kein Verlust, verbraucht nicht den Übungsalarm des Tages
+		result = {"win": win, "coins": 0, "xp": 20}
+		P.add_xp(20)
+		P.d.stats.kills = int(P.d.stats.kills) + k
+		result["practice"] = true
+	elif flood.has("raid"):
+		result = preload("res://src/liveops.gd").raid_result(win, k)     # Paket L: Weltboss-Angriff (eigene Abrechnung)
+	elif mode == "practice":
 		result = P.practice_done(win, k)
 		result["practice"] = true
 	else:
 		result = P.flood_result(win, ratio, false, k)
 		result["practice"] = false
 	result["kills"] = k
+	Guide.flood_end(result, mode, win, tutorial_flood)
 	result["waves"] = wave_idx if win else wave_idx - 1
 	result["hp_ratio"] = ratio
 	P.add_hero_xp(hero.key, (40.0 + 25.0 * wave_idx) * (1.0 if win else 0.5) * (0.5 if mode == "practice" else 1.0))
@@ -1102,6 +1179,7 @@ func back_to_peace() -> void:
 	mode = "peace"
 	running = false
 	ended = false
+	tutorial_flood = false
 	Music.set_mood("peace")
 	if not hero.alive:
 		hero._do_respawn()

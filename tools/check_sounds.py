@@ -11,19 +11,19 @@ UI = ["click", "ui_open", "ui_close", "ui_tab", "ui_select", "ui_equip", "ui_upg
       "ui_claim", "ui_error", "ui_toggle", "ui_slider", "ui_toast", "chest_open", "chest_item_0", "chest_item_1", "chest_item_2",
       "chest_item_3", "level_up"]
 
-files = {os.path.basename(p)[:-4] for p in glob.glob(os.path.join(SFX, "*.wav"))}
+files = {os.path.basename(p)[:-4] for p in glob.glob(os.path.join(SFX, "*.wav")) + glob.glob(os.path.join(SFX, "*.ogg"))}
 sfx_src = open(os.path.join(ROOT, "src", "sfx.gd")).read()
 alias = dict(re.findall(r'"(\w+)": "(\w+)"', sfx_src[sfx_src.index("const ALIAS"):sfx_src.index("const WARM")]))
 
 
 def resolve(name, depth=0):
     if name in files:
-        return name + ".wav"
+        return name + (".wav" if os.path.exists(os.path.join(SFX, name + ".wav")) else ".ogg")
     if name + "_1" in files:
         n = 1
         while "%s_%d" % (name, n + 1) in files:
             n += 1
-        return "%s_1..%d.wav" % (name, n)
+        return "%s_1..%d" % (name, n)
     if name in alias and alias[name] != name and depth < 3:
         r = resolve(alias[name], depth + 1)
         return ("-> " + r) if r else None
@@ -102,5 +102,5 @@ for name in sorted(used):
 unused = sorted(f for f in files if not any(resolve(n) and (f == n or re.fullmatch(re.escape(n) + r"_\d", f) or (n in alias and (f == alias[n] or re.fullmatch(re.escape(alias[n]) + r"_\d", f)))) for n in used))
 print("%d Namen benutzt, %d Dateien, %d fehlen%s" % (len(used), len(files), len(missing), (": " + ", ".join(missing)) if missing else ""))
 print("Dateien ohne Aufruf im Code (%d): %s" % (len(unused), ", ".join(unused)))
-print("Größe audio/sfx: %.2f MB" % (sum(os.path.getsize(p) for p in glob.glob(os.path.join(SFX, "*.wav"))) / 1e6))
+print("Größe audio/sfx: %.2f MB" % (sum(os.path.getsize(p) for p in glob.glob(os.path.join(SFX, "*.wav")) + glob.glob(os.path.join(SFX, "*.ogg"))) / 1e6))
 sys.exit(1 if missing else 0)

@@ -1,0 +1,81 @@
+{
+ "key": "magma_feuerkaefer",
+ "kind": "vat",
+ "role": "fast",
+ "verts": 844,
+ "tris": 720,
+ "width": 844,
+ "rows": 54,
+ "rpf": 1,
+ "fps": 10,
+ "bounds_min": [
+  -0.8356407659386373,
+  -0.8080890795588493,
+  -0.9787973419589078
+ ],
+ "bounds_size": [
+  1.6097813865516166,
+  2.2471630774934677,
+  2.7900860640403526
+ ],
+ "height": 0.8350228443741798,
+ "radius": 1.0355704823952248,
+ "clips": {
+  "idle": {
+   "row": 0,
+   "n": 12,
+   "dur": 1.2,
+   "loop": true,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "walk": {
+   "row": 12,
+   "n": 4,
+   "dur": 0.4,
+   "loop": true,
+   "stride": 2.0,
+   "hit": -1.0
+  },
+  "attack": {
+   "row": 16,
+   "n": 8,
+   "dur": 0.7,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.36666666666666664
+  },
+  "hit": {
+   "row": 24,
+   "n": 4,
+   "dur": 0.3,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "death": {
+   "row": 28,
+   "n": 11,
+   "dur": 1.0,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "spawn": {
+   "row": 39,
+   "n": 9,
+   "dur": 0.8,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "pounce": {
+   "row": 48,
+   "n": 6,
+   "dur": 0.5,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  }
+ }
+}

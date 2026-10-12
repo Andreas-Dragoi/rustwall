@@ -467,16 +467,22 @@ def untote_kanonier():
         c.key(18, hips=dict(loc=(0, 0, 0.05)), thigh_r=dict(rot=(-14, 0, 0)), shin_r=dict(rot=(4, 0, 0)), thigh_l=dict(rot=(8, 0, 0)), shin_l=dict(rot=(40, 0, 0)), cannon=dict(rot=(3, 0, 0)), jaw=dict(rot=(0, 0, 0)))
     # Schuss: kniet nieder, richtet das Rohr nach oben, feuert (Rückstoß wirft ihn fast um), steht wieder auf
     kneel = dict(hips=dict(loc=(0, 0.05, -0.42)), thigh_l=dict(rot=(-88, 0, 0)), shin_l=dict(rot=(86, 0, 0)), thigh_r=dict(rot=(6, 0, 0)), shin_r=dict(rot=(84, 0, 0)))
-    with rig.clip("attack", 48, hit=24) as c:
+    aim = dict(chest=dict(rot=(14, 0, 0)), skull=dict(rot=(-8, 0, 0)), arm_l=dict(rot=(-70, 0, -20)), fore_l=dict(rot=(-50, 0, 0)), **kneel)
+    # Paket G2: „kneel“ = kniet zum Schuss (wird vor jedem Schuss gespielt), „attack“ beginnt kniend
+    with rig.clip("kneel", 15) as c:
         c.key(0, **rest)
-        c.key(11, chest=dict(rot=(14, 0, 0)), skull=dict(rot=(-8, 0, 0)), arm_l=dict(rot=(-70, 0, -20)), fore_l=dict(rot=(-50, 0, 0)), **kneel)
-        c.key(20, chest=dict(rot=(-6, 0, 0)), cannon=dict(rot=(-18, 0, 0), loc=(0, 0, 0), scale=1.0), skull=dict(rot=(2, 0, -10)), jaw=dict(rot=(0, 0, 0)), fuse=dict(scale=2.2))
-        c.key(23, cannon=dict(rot=(-18, 0, 0), loc=(0, 0, 0), scale=(1.0, 1.0, 1.0)))
-        c.key(25, chest=dict(rot=(-24, 0, 0)), cannon=dict(rot=(-30, 0, 0), loc=(0, 0.22, 0.02), scale=(1.25, 0.9, 1.25)), skull=dict(rot=(-16, 0, 0)), jaw=dict(rot=(30, 0, 0)), hat=dict(loc=(0, 0, 0.12)),
+        c.key(6, hips=dict(loc=(0, 0.03, -0.2)), thigh_l=dict(rot=(-50, 0, 0)), shin_l=dict(rot=(50, 0, 0)), chest=dict(rot=(10, 0, 0)))
+        c.key(12, **aim)
+        c.key(15, **aim)
+    with rig.clip("attack", 39, hit=13) as c:
+        c.key(0, **aim)
+        c.key(9, chest=dict(rot=(-6, 0, 0)), cannon=dict(rot=(-18, 0, 0), loc=(0, 0, 0), scale=1.0), skull=dict(rot=(2, 0, -10)), jaw=dict(rot=(0, 0, 0)), fuse=dict(scale=2.2))
+        c.key(12, cannon=dict(rot=(-18, 0, 0), loc=(0, 0, 0), scale=(1.0, 1.0, 1.0)))
+        c.key(14, chest=dict(rot=(-24, 0, 0)), cannon=dict(rot=(-30, 0, 0), loc=(0, 0.22, 0.02), scale=(1.25, 0.9, 1.25)), skull=dict(rot=(-16, 0, 0)), jaw=dict(rot=(30, 0, 0)), hat=dict(loc=(0, 0, 0.12)),
               arm_l=dict(rot=(-20, 0, 30)), coat=dict(rot=(-30, 0, 0)), fuse=dict(scale=0.3), hips=dict(loc=(0, 0.14, -0.42)), _i="LINEAR")
-        c.key(31, chest=dict(rot=(2, 0, 0)), cannon=dict(rot=(-6, 0, 0), loc=(0, 0, 0), scale=1.0), skull=dict(rot=(4, 0, 0)), jaw=dict(rot=(0, 0, 0)), hat=dict(loc=(0, 0, 0)), coat=dict(rot=(10, 0, 0)), **kneel)
-        c.key(36, **kneel)
-        c.key(48, **rest)
+        c.key(20, chest=dict(rot=(2, 0, 0)), cannon=dict(rot=(-6, 0, 0), loc=(0, 0, 0), scale=1.0), skull=dict(rot=(4, 0, 0)), jaw=dict(rot=(0, 0, 0)), hat=dict(loc=(0, 0, 0)), coat=dict(rot=(10, 0, 0)), **kneel)
+        c.key(26, **kneel)
+        c.key(39, **rest)
     with rig.clip("hit", 9) as c:                                    # der Schädel dreht sich einmal um sich selbst
         c.key(0, **rest)
         c.key(3, chest=dict(rot=(-12, 0, 6)), skull=dict(rot=(0, 0, 120)), jaw=dict(rot=(24, 0, 0)), hat=dict(loc=(0, 0, 0.1)), arm_l=dict(rot=(-30, 0, 30)), hips=dict(loc=(0, 0.06, 0)), _i="LINEAR")

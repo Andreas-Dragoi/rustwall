@@ -1,5 +1,5 @@
 extends RefCounted
-## Bildschirm "Expedition" (V3): Weltkarte mit den sieben Gebieten. Je Gebiet: Zustand der Außenbasis
+## Bildschirm "Expedition" (V3): Weltkarte mit den acht Gebieten. Je Gebiet: Zustand der Außenbasis
 ## (nicht gebaut / Stufe 1–5 / belagert), empfohlene Heldenstufe, Treibstoff, Vorteil und Preis der nächsten Stufe.
 ## Schwierigkeit bleibt wählbar. Eine belagerte Außenbasis blinkt rot; Los startet dann die Befreiung.
 
@@ -7,7 +7,7 @@ const D = preload("res://src/data.gd")
 const UI = preload("res://src/ui.gd")
 
 ## Lage der Gebiete auf der Karte (Anteile der Kartenfläche), von unten links nach oben rechts.
-const MAP_POS := [Vector2(0.15, 0.86), Vector2(0.45, 0.74), Vector2(0.18, 0.54), Vector2(0.50, 0.42), Vector2(0.82, 0.56), Vector2(0.80, 0.24), Vector2(0.42, 0.11)]
+const MAP_POS := [Vector2(0.15, 0.86), Vector2(0.45, 0.74), Vector2(0.18, 0.54), Vector2(0.50, 0.42), Vector2(0.82, 0.56), Vector2(0.80, 0.24), Vector2(0.42, 0.11), Vector2(0.12, 0.25)]
 const MAP_SIZE := Vector2(760, 860)
 const NODE := Vector2(176, 156)
 
@@ -74,6 +74,10 @@ func build() -> Control:
 	for r in D.EXP_AREAS[area].mats:
 		rr.add_child(UI.icon(String(r), 34.0))
 	facts.add_child(UI.pill(rr))
+	var WS = preload("res://src/welt_state.gd")         # Paket Welt: Tagebuch des Gebiets
+	var jb := UI.button("Tagebuch %d/%d" % [WS.pages(ak).size(), preload("res://src/data_welt.gd").JOURNAL[ak].size()], func(): S.open("tagebuch", {"tab": area}), "dark", 20, "p_journal")
+	jb.custom_minimum_size = Vector2(0, 52)
+	facts.add_child(jb)
 	v.add_child(facts)
 	v.add_child(UI.hbox(10, [UI.enemy_pic(0, 44.0), UI.label("%s – %s" % [String(fam.name), String(fam.weak_text)], 21, UI.TEXT, false)]))
 	# ---- Außenbasis
@@ -92,6 +96,8 @@ func build() -> Control:
 	for e in D.OUTPOSTS[ak].effects:
 		ob.add_child(UI.label("• " + P.outpost_effect_text(e, show_lv), 21, UI.GOLD if lv >= 1 and not sieged else UI.WHITE))
 	var next_cost := _next_cost(area, lv)
+	if lv >= 3:
+		ob.add_child(UI.label(preload("res://src/liveops.gd").challenge_text(ak), 19, Color("FFB0A0"), false))     # Paket L: Gebietsboss-Herausforderung
 	if lv < D.OUTPOST_MAX_LEVEL:
 		ob.add_child(UI.hbox(8, [UI.label("Preis %s:" % ("Aufbau" if lv < 1 else "Stufe %d" % (lv + 1)), 20, UI.TEXT, false), UI.cost_row(next_cost, 21, false)]))
 		ob.add_child(S.hint("Bezahlt wird vor Ort aus dem Rucksack; Teilzahlungen bleiben erhalten.", 18))
@@ -116,6 +122,7 @@ func build() -> Control:
 	var dinfo: Dictionary = D.DIFFS[diff]
 	df.add_child(UI.pill(UI.label(("Gegner ×%.1f · Beute ×%.1f" % [float(dinfo.hp), float(dinfo.loot)]).replace(".", ","), 20, UI.GOLD)))
 	v.add_child(df)
+	v.add_child(preload("res://src/liveops_ui.gd").nightmare_box(S, area, diff))     # Paket L: Albtraum+
 	# ---- Aufstellung und Start (bleibt unten stehen)
 	var hk := String(P.d.hero_sel)
 	var vk: String = P.vehicle_sel()
@@ -221,9 +228,11 @@ class MapBack extends Control:
 		var s := size
 		draw_style_box(load("res://src/ui.gd").panel_style(Color("1E4D3A"), Color("3B7BD0"), 22, 0, 8), Rect2(Vector2.ZERO, s))
 		# Landschaft: Flecken für Wald, Wüste, Küste, Schnee, Krater (grob, nur zur Stimmung)
-		var cols := [Color("5E8F3A"), Color("3F6B35"), Color("C99A52"), Color("D6BE7C"), Color("55703E"), Color("BFD2E6"), Color("7FB23A")]
+		var cols := [Color("5E8F3A"), Color("3F6B35"), Color("C99A52"), Color("D6BE7C"), Color("55703E"), Color("BFD2E6"), Color("7FB23A"), Color("4A3A3A")]
+		if pts.size() > 7:                       # Vulkaninsel: Meer rund um die Insel
+			draw_circle(pts[7], 165.0, Color(0.2, 0.45, 0.75, 0.45))
 		for i in pts.size():
-			draw_circle(pts[i], 150.0, Color(cols[i], 0.45))
+			draw_circle(pts[i], 150.0 if i < 7 else 118.0, Color(cols[i % cols.size()], 0.45 if i < 7 else 0.8))
 		draw_rect(Rect2(Vector2(s.x * 0.88, 0), Vector2(s.x * 0.12, s.y)), Color(0.2, 0.45, 0.75, 0.35))
 		for i in pts.size() - 1:
 			var a: Vector2 = pts[i]

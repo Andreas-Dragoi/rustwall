@@ -101,13 +101,14 @@ func _pack(p: Dictionary, i: int) -> Control:
 	nm.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(nm)
 	var key := String(p.key)
-	var b := UI.button(String(p.price) if not Store.test_mode() else "Testkauf", S.act(func():
-		var why := Store.buy(key)
-		if why == "":
-			UI.sfx("ui_buy", "upgrade", -2.0)
-			S.toast("+%s Juwelen" % UI.fmt(float(p.gems)))
-		else:
-			S.say(why)), "green", 26)
+	var b := UI.button(String(p.price) if not Store.test_mode() else "Testkauf", func():
+		S.confirm(Store.confirm_text(p), func():                # Paket O: Kaufbestätigung (Kinder, Widerruf)
+			var why := Store.buy(key)
+			if why == "":
+				UI.sfx("ui_buy", "upgrade", -2.0)
+				S.toast("Kauf wird geprüft …" if Store.is_async() else "+%s Juwelen" % UI.fmt(float(p.gems)))
+			else:
+				S.say(why), "Kaufen"), "green", 26)
 	b.custom_minimum_size = Vector2(0, 70)
 	b.tooltip_text = "Im Laden später: %s" % String(p.price)
 	v.add_child(b)

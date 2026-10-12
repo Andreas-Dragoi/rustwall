@@ -152,7 +152,15 @@ func _friend_card(f: Dictionary) -> Control:
 	hb.disabled = int(soc.helps_left()) <= 0
 	var rb := UI.button("Entfernen", func():
 		S.confirm("%s aus der Freundesliste entfernen?" % fname, func(): soc.remove_friend(code), "Entfernen"), "dark", 21)
-	for b in [sb, gb, hb, rb]:
+	var all_b: Array = [sb, gb, hb, rb]
+	if soc.online():                    # Paket O: echte Mitspieler melden und sperren
+		var mb := UI.button("Melden", func():
+			S.confirm("%s melden (z. B. anstößiger Name) und sperren? Ihr seid dann nicht mehr befreundet." % fname, func(): soc.report(code, "Name", true), "Melden"), "dark", 21)
+		mb.set_meta("danger", true)
+		all_b.append(mb)
+		if bool(f.get("online", false)):
+			title.add_child(UI.label("● online", 19, UI.GREEN, false))
+	for b in all_b:
 		b.custom_minimum_size = Vector2(0, 64)
 		btns.add_child(b)
 	box.add_child(btns)

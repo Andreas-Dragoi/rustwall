@@ -73,6 +73,18 @@ var _markers := {}                 # Truhe -> Label3D
 var _snd_t := 0.0
 var _area_key := ""
 var _scale := 1.0
+# Paket Welt: Köder und Sammeln in der Basis
+const DW = preload("res://src/data_welt.gd")
+var lure_cd := 0.0
+var lures := 0                    # (Test) so oft gelockt
+var _lure_t := 0.0
+var _lure_to := Vector2.ZERO
+var fetches := 0                  # (Test) so viele Sammelblasen geholt
+var fetch_on := false             # in der Basis Sammelblasen holen (aus, solange Tests oder Tutorial laufen)
+var _fetch_t := 6.0
+var _fetch_id := -1
+var _fetch_to := Vector2.ZERO
+var _fetch_r := 2.4
 
 
 func setup(world: Node3D) -> void:
@@ -88,6 +100,9 @@ func setup(world: Node3D) -> void:
 	_build(CD.active())
 	if w.hero != null:
 		_place_behind(true)
+	# Paket Welt: Sammelblasen holen – nicht in Tests und erst nach dem Tutorial (dort holt der Spieler selbst)
+	var tut_done: bool = not P.d.has("tut") or int(P.d.tut.get("step", 99)) >= preload("res://src/data_fuehrung.gd").TUT_STEPS.size()
+	fetch_on = (G.autotest == "" and not G.selftest and tut_done) or G.arg("petcollect") == "1"
 	# erster Besuch der Basis mit Begleiter: kurzer Hinweis
 	if key != "" and w.mode == "peace" and not bool(CD.state().get("hello", false)) and G.autotest == "" and not G.selftest and G.shots_dir == "":
 		CD.state()["hello"] = true
@@ -265,10 +280,16 @@ func _physics_process(dt: float) -> void:
 			speed_now = 0.0
 		"mine":
 			_tick_mine(dt, hp2)
+		"lure":
+			_tick_lure(dt, hp2)
+		"fetch":
+			_tick_fetch(dt, hp2)
 		_:
 			_tick_follow(dt, hp2)
 	if st != "down":
 		_tick_abilities(dt, hp2)
+		_lure_check(dt, hp2)
+		_fetch_check(dt, hp2)
 	_tick_hurt(dt)
 	_tick_cargo(dt)
 	position = Vector3(pos.x, 0, pos.y)
@@ -745,3 +766,125 @@ func _showcase() -> void:
 	yaw = h.rotation.y
 	if G.arg("compwalk") != "":                    # Held läuft nach links aus dem Bild, der Begleiter hinterher
 		h.test_wish = -right
+
+
+# ================================================================= Köder (Paket Welt)
+## Wird es eng (viele Gegner um den Helden oder wenig Leben), läuft der Begleiter auf die andere Seite der Gegner
+## und lockt sie für DW.LURE_TIME Sekunden zu sich (horde.gd: jagende Gegner laufen zu world.lure_p). Ab Stufe 3.
+func _lure_check(dt: float, hp2: Vector2) -> void:
+	lure_cd -= dt
+	if st != "follow" or lure_cd > 0.0 or w.mode == "peace" or not w.is_running() or w.horde == null:
+		return
+	if not w.hero.alive or CD.level(key) < DW.LURE_LEVEL:
+		return
+	var near: Array = w.horde.in_radius(hp2, 7.0)
+	var low: bool = w.hero.hp < w.hero.max_hp * 0.45
+	if near.size() < 4 and not (low and near.size() >= 2):
+		return
+	start_lure(near)
+
+
+func start_lure(near: Array) -> void:
+	var hp2: Vector2 = w.hero.pos2()
+	var c := Vector2.ZERO
+	for e in near:
+		c += e.p
+	c = c / maxf(1.0, near.size()) if near.size() > 0 else hp2 + Vector2(6, 0)
+	var away := (c - hp2).normalized() if c.distance_to(hp2) > 0.3 else Vector2.RIGHT
+	var to := c + away * 9.0
+	for k in 8:                                        # freien Punkt suchen
+		if fly or not _blocked(to):
+			break
+		to = c + away.rotated(k * 0.5) * (9.0 - k * 0.6)
+	_lure_to = to
+	_lure_t = DW.LURE_TIME
+	lure_cd = DW.LURE_CD
+	lures += 1
+	st = "lure"
+	_joy = 0.6
+	w.lure_t = _lure_t
+	w.lure_p = pos
+	Sfx.play_at("comp_lure", global_position, -4.0, 1.0, 0.5)
+	if w.fx != null:
+		w.fx.ring(Vector3(pos.x, 0.2, pos.y), 3.0, Color(1.0, 0.85, 0.3), 0.6)
+		w.fx.float_text(Vector3(pos.x, 2.0, pos.y), "Hierher!", Color(1.0, 0.85, 0.3))
+
+
+func _tick_lure(dt: float, hp2: Vector2) -> void:
+	_lure_t -= dt
+	var to := _lure_to - pos
+	var d := to.length()
+	if d > 0.3:
+		speed_now = move_toward(speed_now, float(def.speed) * 1.3, dt * 20.0)
+		var np := pos + to / d * minf(speed_now * dt, d)
+		if fly or not _blocked(np):
+			pos = np
+		yaw = lerp_angle(yaw, atan2(to.x, to.y), minf(1.0, dt * 9.0))
+	else:
+		speed_now = move_toward(speed_now, 0.0, dt * 12.0)
+		_joy = maxf(_joy, 0.3)                         # hüpft und winkt
+	w.lure_p = pos
+	w.lure_t = maxf(_lure_t, 0.0)
+	if _lure_t <= 0.0 or pos.distance_to(hp2) > CD.TELEPORT_DIST * 1.6 or not w.is_running():
+		st = "follow"
+		w.lure_t = 0.0
+		trail = [hp2]
+
+
+# ================================================================= Sammelblasen holen (Paket Welt)
+## In der Basis holt der Begleiter ab und zu eine Sammelblase im Umkreis des Helden ab.
+func _fetch_check(dt: float, hp2: Vector2) -> void:
+	if st != "follow" or w.mode != "peace" or not fetch_on:
+		return
+	_fetch_t -= dt
+	if _fetch_t > 0.0:
+		return
+	_fetch_t = DW.PET_COLLECT_EVERY
+	if not w.has_method("cell_min") or P.d.pickups.is_empty() or "nodes" not in w:
+		return
+	for pk in P.d.pickups:
+		var at := String(pk.get("at", ""))
+		for id in w.nodes:
+			var s0 = w.nodes[id]
+			if s0.key == at and s0.alive and s0.mid.distance_to(hp2) < DW.PET_COLLECT_RADIUS:
+				_fetch_id = int(pk.id)
+				_fetch_to = s0.mid
+				_fetch_r = float(s0.radius) + 1.6 if "radius" in s0 else 2.4
+				st = "fetch"
+				return
+
+
+func _tick_fetch(dt: float, hp2: Vector2) -> void:
+	var to := _fetch_to - pos
+	var d := to.length()
+	var still := false
+	for pk in P.d.pickups:
+		if int(pk.id) == _fetch_id:
+			still = true
+	if not still:
+		st = "follow"
+		return
+	if d > _fetch_r:
+		speed_now = move_toward(speed_now, float(def.speed), dt * 20.0)
+		var np := pos + to / d * minf(speed_now * dt, d)
+		if fly or not _blocked(np):
+			pos = np
+		else:
+			var side := Vector2(-to.y, to.x) / d
+			var a := pos + side * speed_now * dt
+			if not _blocked(a):
+				pos = a
+			else:
+				_stuck += dt
+		yaw = lerp_angle(yaw, atan2(to.x, to.y), minf(1.0, dt * 9.0))
+		if _stuck > 2.0 or pos.distance_to(hp2) > CD.TELEPORT_DIST * 2.0:
+			_stuck = 0.0
+			st = "follow"
+		return
+	if not P.claim_pickup(_fetch_id).is_empty():
+		fetches += 1
+		_joy = 0.8
+		Sfx.play_at("comp_collect", global_position, -5.0, 1.0, 0.3)
+		if w.fx != null:
+			w.fx.float_text(Vector3(pos.x, 2.2, pos.y), "Abgeholt!", D.C_GOLD)
+	st = "follow"

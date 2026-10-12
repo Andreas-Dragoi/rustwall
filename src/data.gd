@@ -90,7 +90,7 @@ static func build_time(key: String, level: int) -> float:
 
 # ---------------------------------------------------------------- Gegnerfamilien (je Gebiet eine)
 ## weak: Schadens-Faktor je Element (kugel, feuer, wasser, eis, blitz, explosion, gift); fehlende Einträge = 1,0.
-const AREA_FAMILY := ["schleim", "wald", "wueste", "untote", "mutanten", "eis", "daemonen"]
+const AREA_FAMILY := ["schleim", "wald", "wueste", "untote", "mutanten", "eis", "daemonen", "magma"]
 const FAMILIES := {
 	"schleim": {"name": "Schleimlinge", "mood": "frech, hüpfend, grün", "weak": {}, "weak_text": "keine Schwäche"},
 	"wald": {"name": "Waldgeister und Pilzvolk", "mood": "unheimlich, moosig, leuchtende Augen", "weak": {"feuer": 1.5, "gift": 0.5}, "weak_text": "Feuer +50 % · Gift −50 %"},
@@ -99,6 +99,7 @@ const FAMILIES := {
 	"mutanten": {"name": "Mutanten und kaputte Maschinen", "mood": "giftgrün, Rohre, Blasen", "weak": {"eis": 1.4, "gift": 0.0}, "weak_text": "Eis +40 % · Gift wirkungslos"},
 	"eis": {"name": "Eiswesen", "mood": "bläulich, kristallin, Atemwolken", "weak": {"feuer": 1.5, "eis": 0.0}, "weak_text": "Feuer +50 % · Eis wirkungslos"},
 	"daemonen": {"name": "Dämonen", "mood": "rot-schwarz, Hörner, Glut", "weak": {"wasser": 1.3, "eis": 1.3, "feuer": 0.0}, "weak_text": "Wasser/Eis +30 % · Feuer wirkungslos"},
+	"magma": {"name": "Magma-Wesen", "mood": "Basalt, Glut, Asche, Obsidian", "weak": {"wasser": 1.6, "eis": 1.3, "feuer": 0.0}, "weak_text": "Wasser +60 % · Eis +30 % · Feuer wirkungslos"},
 }
 
 # ---------------------------------------------------------------- Außenbasen
@@ -111,6 +112,7 @@ const OUTPOSTS := {
 	"sumpf": {"special": "Pumpwerk", "effects": [{"stat": "prod_fuel", "base": 0.10, "step": 0.025}, {"stat": "prod_cells", "base": 0.10, "step": 0.025}, {"stat": "tower_rate", "base": 0.03, "step": 0.01}]},
 	"frost": {"special": "Bergwacht", "effects": [{"stat": "wall_hp", "base": 0.10, "step": 0.025}, {"stat": "prod_stone", "base": 0.10, "step": 0.025}]},
 	"krater": {"special": "Forschungsstation", "effects": [{"stat": "boss_dmg", "base": 0.08, "step": 0.03}, {"stat": "deliver_shards", "base": 0.5, "step": 0.375}]},
+	"vulkan": {"special": "Obsidianschmiede", "effects": [{"stat": "heat_resist", "base": 0.15, "step": 0.05}, {"stat": "deliver_cells", "base": 6.0, "step": 3.0}]},
 }
 ## Anzeige der Vorteile: Text und Art (pct = Anteil als Prozent, num = Menge, rate = je Sekunde, minus = Prozent weniger).
 const OUTPOST_STAT_TEXT := {
@@ -119,9 +121,9 @@ const OUTPOST_STAT_TEXT := {
 	"heal_ooc": ["Heilung außerhalb des Kampfes (Leben/s)", "rate"], "fuel": ["Treibstoff für Expeditionen", "minus"],
 	"vehicle_speed": ["Fahrzeugtempo", "pct"], "tower_rate": ["Feuertempo der Türme", "pct"], "wall_hp": ["Leben von Mauern und Toren", "pct"],
 	"boss_dmg": ["Schaden gegen Bosse", "pct"], "deliver_wood": ["Holz täglich", "num"], "deliver_parts": ["Bauteile täglich", "num"],
-	"deliver_shards": ["Sternsplitter täglich", "num"],
+	"deliver_shards": ["Sternsplitter täglich", "num"], "deliver_cells": ["Energiezellen täglich", "num"], "heat_resist": ["Hitzeanstieg auf der Vulkaninsel", "minus"],
 }
-const OUTPOST_DELIVER := {"deliver_wood": "wood", "deliver_parts": "parts", "deliver_shards": "shards"}
+const OUTPOST_DELIVER := {"deliver_wood": "wood", "deliver_parts": "parts", "deliver_shards": "shards", "deliver_cells": "cells"}
 const OUTPOST_MAX_LEVEL := 5
 const OUTPOST_DELIVER_DAYS := 3                     # höchstens so viele Tage Lieferung sammeln sich an
 const OUTPOST_PACK_BONUS := 0.05                    # Rucksack je Außenbasis
@@ -251,11 +253,54 @@ const BUILDINGS := {
 	"flagge": {"name": "Flagge", "cat": "deco", "size": [1, 1], "unlock": 1, "max": [4, 5, 6, 7, 8, 9, 10, 11, 12, 12], "hp": 0.0, "cost": {"coins": 40}, "time": 5, "desc": "Zeigt deine Farbe."},
 	"blumen": {"name": "Blumenbeet", "cat": "deco", "size": [1, 1], "unlock": 1, "max": [8, 10, 12, 14, 16, 18, 20, 22, 24, 26], "hp": 0.0, "cost": {"coins": 20}, "time": 5, "desc": "Macht die Basis freundlicher."},
 	"statue": {"name": "Heldenstatue", "cat": "deco", "size": [2, 2], "unlock": 4, "max": [0, 0, 0, 1, 1, 2, 2, 3, 3, 4], "hp": 0.0, "cost": {"coins": 500, "stone": 300}, "time": 120, "desc": "Zu Ehren deiner Helden."},
+	# ---- Paket G2: fünf neue Fallen (4.1)
+	"teer": {"name": "Teergrube", "cat": "trap", "size": [2, 2], "unlock": 3, "max": [0, 0, 1, 1, 2, 2, 2, 3, 3, 3], "hp": 0.0,
+		"cost": {"coins": 250, "fuel": 40}, "desc": "Zäher Teer bremst Gegner um 70 %. Läuft ein Brennender hinein, fängt die Grube Feuer."},
+	"feder": {"name": "Federbrett", "cat": "trap", "size": [1, 1], "unlock": 4, "max": [0, 0, 0, 2, 2, 3, 3, 4, 4, 4], "hp": 0.0,
+		"cost": {"coins": 300, "wood": 120, "metal": 40}, "desc": "Schleudert Gegner zurück (alle 3 s). Brocken und Bosse sind zu schwer."},
+	"koeder": {"name": "Lockköder", "cat": "trap", "size": [1, 1], "unlock": 5, "max": [0, 0, 0, 0, 1, 1, 2, 2, 2, 3], "hp": 0.0,
+		"cost": {"coins": 200, "fuel": 20}, "desc": "Lockt Gegner im Umkreis von 14 m für 8 s an – dreimal pro Flut."},
+	"zaun": {"name": "Elektrozaun", "cat": "trap", "size": [2, 1], "unlock": 6, "max": [0, 0, 0, 0, 0, 1, 2, 2, 3, 3], "hp": 0.0,
+		"cost": {"coins": 450, "metal": 100, "cells": 10}, "desc": "Schlägt alle 1,5 s Funken: Blitzschaden und kurze Betäubung. Hält 40 Entladungen pro Flut."},
+	"eisfalle": {"name": "Eisfalle", "cat": "trap", "size": [1, 1], "unlock": 7, "max": [0, 0, 0, 0, 0, 0, 1, 2, 2, 3], "hp": 0.0,
+		"cost": {"coins": 600, "metal": 150, "cells": 30}, "desc": "Friert alle Gegner im Umkreis von 2,5 m für 2,5 s ein und lädt 8 s nach. Eiswesen bleiben unberührt."},
+	# ---- Paket G2: Deko (4.1 / 7.2); deco = Deko-Punkte (Summe gibt Bewohner-Zufriedenheit → Produktion +%)
+	"bank": {"name": "Gartenbank", "cat": "deco", "size": [1, 1], "unlock": 1, "max": [4, 6, 8, 10, 12, 14, 16, 18, 20, 22], "hp": 0.0, "cost": {"coins": 60, "wood": 20}, "time": 5, "deco": 2, "desc": "Hier ruhen sich die Bewohner aus."},
+	"gartenzaun": {"name": "Gartenzaun", "cat": "deco", "size": [1, 1], "unlock": 1, "max": [12, 16, 20, 24, 28, 32, 36, 40, 44, 48], "hp": 0.0, "cost": {"coins": 15, "wood": 10}, "time": 5, "deco": 1, "desc": "Ein weißer Lattenzaun. Gegner laufen einfach durch."},
+	"platte": {"name": "Fundament-Platte", "cat": "deco", "size": [1, 1], "unlock": 1, "max": [12, 16, 20, 24, 28, 32, 36, 40, 44, 48], "hp": 0.0, "cost": {"coins": 10, "stone": 10}, "time": 5, "deco": 1, "desc": "Steinplatten für Wege und Plätze."},
+	"holzstapel": {"name": "Holzstapel", "cat": "deco", "size": [1, 1], "unlock": 1, "max": [3, 4, 5, 6, 7, 8, 9, 10, 11, 12], "hp": 0.0, "cost": {"coins": 30, "wood": 40}, "time": 5, "deco": 1, "desc": "Ordentlich gestapeltes Brennholz."},
+	"heu": {"name": "Heuballen", "cat": "deco", "size": [1, 1], "unlock": 1, "max": [3, 4, 5, 6, 7, 8, 9, 10, 11, 12], "hp": 0.0, "cost": {"coins": 25}, "time": 5, "deco": 1, "desc": "Ein runder Heuballen mit Mistgabel."},
+	"waesche": {"name": "Wäscheleine", "cat": "deco", "size": [2, 1], "unlock": 2, "max": [0, 2, 2, 3, 3, 4, 4, 5, 5, 6], "hp": 0.0, "cost": {"coins": 50, "wood": 20}, "time": 5, "deco": 2, "desc": "Frische Wäsche flattert im Wind."},
+	"beet": {"name": "Gemüsebeet", "cat": "deco", "size": [2, 1], "unlock": 2, "max": [0, 2, 3, 4, 5, 6, 7, 8, 9, 10], "hp": 0.0, "cost": {"coins": 80, "wood": 30}, "time": 10, "deco": 3, "desc": "Kohl, Möhren und Kürbisse für die Küche."},
+	"kuebel": {"name": "Blumenkübel", "cat": "deco", "size": [1, 1], "unlock": 2, "max": [0, 4, 6, 8, 10, 12, 14, 16, 18, 20], "hp": 0.0, "cost": {"coins": 40, "stone": 10}, "time": 5, "deco": 2, "desc": "Ein Steinkübel voller Blumen."},
+	"vogelhaus": {"name": "Vogelhaus", "cat": "deco", "size": [1, 1], "unlock": 3, "max": [0, 0, 2, 3, 3, 4, 4, 5, 5, 6], "hp": 0.0, "cost": {"coins": 70, "wood": 25}, "time": 10, "deco": 2, "desc": "Lockt Vögel in die Basis."},
+	"picknick": {"name": "Picknicktisch", "cat": "deco", "size": [2, 2], "unlock": 3, "max": [0, 0, 1, 2, 2, 3, 3, 4, 4, 5], "hp": 0.0, "cost": {"coins": 120, "wood": 60}, "time": 20, "deco": 4, "desc": "Tisch mit Bänken und Sonnenschirm."},
+	"windrad": {"name": "Windrad", "cat": "deco", "size": [1, 1], "unlock": 4, "max": [0, 0, 0, 1, 2, 2, 3, 3, 4, 4], "hp": 0.0, "cost": {"coins": 150, "wood": 50, "metal": 20}, "time": 30, "deco": 4, "desc": "Ein buntes Windrad, das sich im Wind dreht."},
+	"brunnen": {"name": "Brunnen", "cat": "deco", "size": [2, 2], "unlock": 3, "max": [0, 0, 1, 1, 1, 2, 2, 2, 3, 3], "hp": 0.0, "cost": {"coins": 400, "stone": 150}, "time": 60, "deco": 8, "desc": "Ein plätschernder Steinbrunnen – Mittelpunkt jedes Dorfes."},
+	# ---- Boss-Trophäen (6.5): je Boss eine, nach dem ersten Sieg baubar (boss = Schlüssel der Gegnerart)
+	"trophy_bert": {"name": "Trophäe: Dicker Bert", "cat": "deco", "size": [2, 2], "unlock": 1, "max": [1, 1, 1, 1, 1, 1, 1, 1, 1, 1], "hp": 0.0, "cost": {"coins": 100}, "time": 10, "deco": 10, "trophy": "schleim_boss", "desc": "Die Krone von Dicker Bert auf einem Sockel."},
+	"trophy_moos": {"name": "Trophäe: Mooskönigin", "cat": "deco", "size": [2, 2], "unlock": 1, "max": [1, 1, 1, 1, 1, 1, 1, 1, 1, 1], "hp": 0.0, "cost": {"coins": 100}, "time": 10, "deco": 10, "trophy": "boss_wald", "desc": "Der Pilzhut der Mooskönigin unter einer Glasglocke."},
+	"trophy_rost": {"name": "Trophäe: Rostbrocken", "cat": "deco", "size": [2, 2], "unlock": 1, "max": [1, 1, 1, 1, 1, 1, 1, 1, 1, 1], "hp": 0.0, "cost": {"coins": 100}, "time": 10, "deco": 10, "trophy": "boss_wueste", "desc": "Die Abrissbirne des Rostbrocken."},
+	"trophy_glibber": {"name": "Trophäe: Kapitän Glibber", "cat": "deco", "size": [2, 2], "unlock": 1, "max": [1, 1, 1, 1, 1, 1, 1, 1, 1, 1], "hp": 0.0, "cost": {"coins": 100}, "time": 10, "deco": 10, "trophy": "boss_untote", "desc": "Steuerrad und Dreispitz von Kapitän Glibber."},
+	"trophy_schlund": {"name": "Trophäe: Der Schlund", "cat": "deco", "size": [2, 2], "unlock": 1, "max": [1, 1, 1, 1, 1, 1, 1, 1, 1, 1], "hp": 0.0, "cost": {"coins": 100}, "time": 10, "deco": 10, "trophy": "boss_mutanten", "desc": "Ein Zahn und ein Ventilrad aus dem Schlund."},
+	"trophy_frost": {"name": "Trophäe: Frostbrocken", "cat": "deco", "size": [2, 2], "unlock": 1, "max": [1, 1, 1, 1, 1, 1, 1, 1, 1, 1], "hp": 0.0, "cost": {"coins": 100}, "time": 10, "deco": 10, "trophy": "boss_eis", "desc": "Die Kristallkrone des Frostbrocken – sie schmilzt nie."},
+	"trophy_koenig": {"name": "Trophäe: Schleimkönig", "cat": "deco", "size": [2, 2], "unlock": 1, "max": [1, 1, 1, 1, 1, 1, 1, 1, 1, 1], "hp": 0.0, "cost": {"coins": 100}, "time": 10, "deco": 10, "trophy": "boss_daemonen", "desc": "Die glühenden Hörner des Schleimkönigs."},
+	"trophy_brodel": {"name": "Trophäe: Magmafürst Brodel", "cat": "deco", "size": [2, 2], "unlock": 1, "max": [1, 1, 1, 1, 1, 1, 1, 1, 1, 1], "hp": 0.0, "cost": {"coins": 100}, "time": 10, "deco": 10, "trophy": "boss_magma", "desc": "Die Obsidiankrone des Magmafürsten – sie glüht noch."},
 	# Wildwuchs: wächst von selbst nach und wird für Juwelen weggeräumt (nicht im Baumenü)
 	"hind_busch": {"name": "Gestrüpp", "cat": "obstacle", "size": [1, 1], "unlock": 1, "max": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "hp": 0.0, "cost": {"wood": 20}, "time": 10, "prop": "p_bush_1", "gems": [1, 2], "desc": "Wildwuchs. Wegräumen bringt Juwelen."},
 	"hind_stumpf": {"name": "Baumstumpf", "cat": "obstacle", "size": [1, 1], "unlock": 1, "max": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "hp": 0.0, "cost": {"wood": 40}, "time": 30, "prop": "p_stump_1", "gems": [1, 3], "desc": "Ein alter Stumpf. Wegräumen bringt Juwelen."},
 	"hind_stein": {"name": "Findling", "cat": "obstacle", "size": [1, 1], "unlock": 1, "max": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "hp": 0.0, "cost": {"stone": 40}, "time": 60, "prop": "p_rock_1", "gems": [2, 3], "desc": "Ein großer Stein. Wegräumen bringt Juwelen."},
 }
+## Deko-Punkte der älteren Schmuck-Gebäude (die neuen tragen "deco" im Eintrag) und Bonus: je Punkt +0,2 % Produktion, höchstens +10 %.
+const DECO_POINTS_OLD := {"laterne": 1, "flagge": 1, "blumen": 2, "statue": 6}
+const DECO_BONUS_PER := 0.002
+const DECO_BONUS_MAX := 0.1
+## Fallen (Paket G2): Stellwerte
+const TRAP := {"teer": {"r": 2.0, "slow": 0.3, "burn_t": 6.0, "burn_dps": 18.0},
+	"feder": {"r": 1.2, "cd": 3.0, "push": 9.0, "dmg": 20.0},
+	"koeder": {"r": 14.0, "t": 8.0, "uses": 3, "near": 1.6},
+	"zaun": {"r": 1.8, "cd": 1.5, "dmg": 22.0, "stun": 0.7, "uses": 40},
+	"eisfalle": {"r": 2.5, "cd": 8.0, "stun": 2.5, "dmg": 12.0}}
 const BUILD_CATS := [["def", "Verteidigung"], ["wall", "Mauern"], ["trap", "Fallen"], ["prod", "Produktion"], ["special", "Besonderes"], ["deco", "Schmuck"]]
 const DRONES_BY_BUNKER := [2, 2, 2, 3, 3, 3, 4, 4, 5, 5]
 const WALL_TIERS := [{"name": "Holzzaun", "hp": 1.0}, {"name": "Steinmauer", "hp": 2.6}, {"name": "Metallmauer", "hp": 5.5}]
@@ -318,13 +363,18 @@ const E_BOSS := 8
 const E_FIRST_NEW := 9
 const AREA_HP := [1.0, 1.6, 2.5, 4.0, 6.5, 10.0, 16.0]      # Gebietsfaktor für Leben (Gebiet 1–7)
 const ROLES := ["mass", "fast", "tank", "ranged", "air", "special"]
-const ROLE_NAME := {"mass": "Masse", "fast": "Flitzer", "tank": "Brocken", "ranged": "Fernkämpfer", "air": "Flieger", "special": "Sonderling", "boss": "Boss", "object": "Objekt"}
-## Gewicht je Rolle, wenn eine Gruppe ohne Vorgabe gewürfelt wird
-const ROLE_WEIGHT := {"mass": 1.0, "fast": 0.22, "tank": 0.05, "ranged": 0.12, "air": 0.1, "special": 0.06}
+const ROLE_NAME := {"mass": "Masse", "fast": "Flitzer", "tank": "Brocken", "ranged": "Fernkämpfer", "air": "Flieger", "special": "Sonderling", "boss": "Boss", "object": "Objekt",
+	"healer": "Heiler", "shield": "Schildträger", "digger": "Tunnelgräber", "jammer": "Turmstörer", "thief": "Dieb", "brood": "Brutmutter", "miniboss": "Miniboss"}
+## Gewicht je Rolle, wenn eine Gruppe ohne Vorgabe gewürfelt wird (Minibosse nie zufällig)
+const ROLE_WEIGHT := {"mass": 1.0, "fast": 0.22, "tank": 0.05, "ranged": 0.12, "air": 0.1, "special": 0.06,
+	"healer": 0.04, "shield": 0.07, "digger": 0.04, "jammer": 0.04, "thief": 0.04, "brood": 0.025, "miniboss": 0.0}
+## Rollen aus Paket G2 (6.3): verändern das Verhalten des Spielers; je Familie drei davon plus ein Miniboss
+const ROLES_EXTRA := ["healer", "shield", "digger", "jammer", "thief", "brood"]
 ## Ersatzmodell (Schleimling dieser Rolle), solange models/e_<key>.glb fehlt, und Farbton der Familie dafür
-const ROLE_FALLBACK := {"mass": 0, "fast": 1, "tank": 3, "ranged": 4, "air": 6, "special": 7, "boss": 8, "object": 7}
+const ROLE_FALLBACK := {"mass": 0, "fast": 1, "tank": 3, "ranged": 4, "air": 6, "special": 7, "boss": 8, "object": 7,
+	"healer": 7, "shield": 5, "digger": 0, "jammer": 4, "thief": 1, "brood": 3, "miniboss": 3}
 const FAMILY_TINT := {"schleim": Color(1, 1, 1), "wald": Color(0.55, 0.8, 0.5), "wueste": Color(1.35, 0.85, 0.5), "untote": Color(0.6, 0.95, 1.1),
-	"mutanten": Color(0.85, 1.25, 0.35), "eis": Color(0.75, 1.1, 1.7), "daemonen": Color(1.7, 0.42, 0.38)}
+	"mutanten": Color(0.85, 1.25, 0.35), "eis": Color(0.75, 1.1, 1.7), "daemonen": Color(1.7, 0.42, 0.38), "magma": Color(1.6, 0.7, 0.3)}
 const ENEMIES := [
 	# ---- Grüntal: Schleimlinge (Grundlage jeder Flut)
 	{"key": "schleim_schleimling", "family": "schleim", "role": "mass", "name": "Schleimling", "hp": 10.0, "speed": 2.3, "dmg": 4.0, "interval": 1.0, "armor": 0.0, "coins": 1, "radius": 0.42, "scale": 1.0, "max": 420, "ai": [], "sound": "e_schleim",
@@ -429,7 +479,7 @@ const ENEMIES := [
 		"ai": ["pack", "pounce", "howl", "ice_slide"], "hunt": true, "swarm": [2, 4], "pounce": 4.0, "howl": 1.2, "howl_cd": 9.0, "sound": "e_eis", "anims": {"howl": "howl", "pounce": "pounce"},
 		"look": "weißer Wolf mit Kristallrücken, Atemwolke", "text": "Schlittert über Eisflächen doppelt so schnell; der Rudelführer heult (+20 % Tempo für alle)."},
 	{"key": "eis_yeti", "family": "eis", "role": "tank", "name": "Yeti", "hp": 300.0, "speed": 1.4, "dmg": 30.0, "interval": 1.5, "armor": 3.0, "coins": 8, "radius": 1.05, "scale": 2.5, "max": 30,
-		"ai": ["ranged_arc", "knockback"], "range": 10.0, "min_range": 4.0, "splash": 2.4, "siege_shot": true, "knockback": 6.0, "sound": "e_eis", "anims": {"aim": "throw"},
+		"ai": ["ranged_arc", "knockback"], "range": 10.0, "min_range": 4.0, "splash": 2.4, "siege_shot": true, "knockback": 6.0, "sound": "e_eis", "anims": {"shot": "throw"},
 		"look": "zotteliger Riese mit Eisbrocken in der Faust", "text": "Wirft Felsbrocken über Mauern (10 m); sein Nahschlag schleudert den Helden weg."},
 	{"key": "eis_kristallschuetze", "family": "eis", "role": "ranged", "name": "Kristallschütze", "hp": 26.0, "speed": 2.0, "dmg": 9.0, "interval": 1.8, "armor": 0.0, "coins": 3, "radius": 0.42, "scale": 1.3, "max": 60,
 		"ai": ["ranged_line", "double_freeze"], "range": 18.0, "freeze": 0.8, "freeze_window": 3.0, "sound": "e_eis",
@@ -481,6 +531,144 @@ const ENEMIES := [
 	# ---- Objekte der Bausteine
 	{"key": "daemonen_portal", "family": "daemonen", "role": "object", "name": "Höllenportal", "hp": 40.0, "speed": 0.0, "dmg": 0.0, "interval": 1.0, "armor": 0.0, "coins": 0, "radius": 0.8, "scale": 1.6, "max": 12,
 		"ai": [], "sound": "e_daemonen", "look": "Kreis aus Runen", "text": "Aus ihm kommen Höllenwichtel, bis es zerstört ist."},
+	# ---- Paket G2 (6.3): neue Rollen je Familie – Heiler, Schildträger, Tunnelgräber, Turmstörer, Dieb, Brutmutter – und je ein Miniboss.
+	##   healer:  heal_pct (Anteil der Lebensleiste je Puls), heal_r, heal_cd, keep (hält so viel Abstand zum Helden)
+	##   shield_front: frontaler Schild blockt alle Treffer von vorn außer Explosionen und Bogenwürfen (shield_k = Anteil, der durchgeht)
+	##   tunnel:  gräbt sich an Mauern ein und taucht erst im Inneren der Basis wieder auf (Fallen und Explosionen holen ihn heraus)
+	##   jammer:  jam (vine | emp | lava | frost), jam_t (Turm so lange aus), jam_cd, jam_r (Reichweite)
+	##   thief:   steal_amt (je Rohstoff), läuft zum Lager, flieht mit der Beute; besiegt gibt er alles zurück
+	##   brood:   brood_key ("" = Junge der eigenen Art), brood_n, brood_cd
+	##   miniboss: mini_skill (slam | roots | acid | ring | toxic | frost_ring | chain), mini_cd, mini_r – eigene Lebensleiste
+	{"key": "schleim_brutschleim", "family": "schleim", "role": "brood", "name": "Brutschleim", "hp": 70.0, "speed": 1.4, "dmg": 6.0, "interval": 1.2, "armor": 0.0, "coins": 6, "radius": 0.8, "scale": 1.8, "max": 16,
+		"ai": ["brood"], "brood_key": "schleim_schleimling", "brood_n": 3, "brood_cd": 5.0, "sound": "e_schleim", "anims": {"brood": "brood"}, "counter": "Zuerst töten – sonst wird die Horde immer größer.",
+		"look": "dicker, durchsichtiger Schleim, in dem kleine Schleimlinge schwimmen", "text": "Spuckt alle 5 s drei kleine Schleimlinge aus."},
+	{"key": "schleim_deckel", "family": "schleim", "role": "shield", "name": "Deckelschild", "hp": 26.0, "speed": 2.0, "dmg": 6.0, "interval": 1.0, "armor": 0.0, "coins": 3, "radius": 0.5, "scale": 1.1, "max": 60,
+		"ai": ["shield_front"], "shield_k": 0.0, "sound": "e_schleim", "anims": {"block": "block"}, "counter": "Von der Seite angreifen, Explosionen oder Bogenwürfe.",
+		"look": "grüner Schleim mit Mülltonnendeckel als Schild", "text": "Der Deckel fängt alle Treffer von vorn ab."},
+	{"key": "schleim_klauschleim", "family": "schleim", "role": "thief", "name": "Klauschleim", "hp": 18.0, "speed": 3.4, "dmg": 2.0, "interval": 1.0, "armor": 0.0, "coins": 4, "radius": 0.42, "scale": 0.95, "max": 30,
+		"ai": ["thief"], "steal_amt": 40.0, "sound": "e_schleim", "anims": {"grab": "grab"}, "counter": "Schnelle Türme am Lager aufstellen.",
+		"look": "kleiner Schleim mit Ganovenmaske und Beutesack", "text": "Schleicht zum Lager, klaut Rohstoffe und flieht. Besiegt gibt er die Beute zurück."},
+	{"key": "wald_druide", "family": "wald", "role": "healer", "name": "Waldgeist-Druide", "hp": 40.0, "speed": 2.0, "dmg": 4.0, "interval": 1.2, "armor": 0.0, "coins": 5, "radius": 0.46, "scale": 1.3, "max": 20,
+		"ai": ["healer"], "heal_pct": 0.06, "heal_r": 6.0, "heal_cd": 1.5, "keep": 9.0, "sound": "e_wald", "anims": {"heal": "heal"}, "counter": "Ihn zuerst ins Visier nehmen; Gift verhindert die Heilung.",
+		"look": "Moosgestalt mit Hirschgeweih und Laternenstab", "text": "Heilt alle Gegner im Umkreis von 6 m und bleibt dabei auf Abstand."},
+	{"key": "wald_spinnenmutter", "family": "wald", "role": "brood", "name": "Moosspinnen-Mutter", "hp": 90.0, "speed": 1.6, "dmg": 8.0, "interval": 1.1, "armor": 1.0, "coins": 7, "radius": 0.85, "scale": 1.8, "max": 16,
+		"ai": ["brood"], "brood_key": "", "brood_n": 4, "brood_cd": 6.0, "sound": "e_wald", "anims": {"brood": "brood"}, "counter": "Zuerst töten – die Jungen sind schwach, aber viele.",
+		"look": "große Spinne mit Moospelz und Eiersack auf dem Rücken", "text": "Lässt alle 6 s vier junge Spinnen schlüpfen."},
+	{"key": "wald_rankenwerfer", "family": "wald", "role": "jammer", "name": "Rankenschleuderer", "hp": 30.0, "speed": 2.2, "dmg": 6.0, "interval": 1.4, "armor": 0.0, "coins": 4, "radius": 0.44, "scale": 1.1, "max": 30,
+		"ai": ["jammer"], "jam": "vine", "jam_t": 3.5, "jam_cd": 7.0, "jam_r": 9.0, "sound": "e_wald", "anims": {"jam": "jam"}, "counter": "Schildgenerator halbiert die Störung; schnell töten.",
+		"look": "Kobold aus Ästen mit einer Rankenschleuder", "text": "Überwuchert einen Turm mit Ranken – er schießt 3,5 s nicht."},
+	{"key": "wueste_maulwurf", "family": "wueste", "role": "digger", "name": "Rostmaulwurf", "hp": 60.0, "speed": 2.6, "dmg": 10.0, "interval": 1.0, "armor": 1.0, "coins": 5, "radius": 0.55, "scale": 1.2, "max": 30,
+		"ai": ["tunnel"], "burrow": "tunnel", "sound": "e_wueste", "anims": {"dig": "dig", "under": "under", "rise": "rise"}, "counter": "Fallen im Inneren der Basis; Explosionen erschüttern ihn aus dem Boden.",
+		"look": "Maulwurf mit Bohrer-Nase und Schweißerbrille", "text": "Bohrt sich unter Mauern hindurch und taucht mitten in der Basis auf."},
+	{"key": "wueste_waschbaer", "family": "wueste", "role": "thief", "name": "Schrott-Waschbär", "hp": 22.0, "speed": 3.8, "dmg": 3.0, "interval": 0.9, "armor": 0.0, "coins": 3, "radius": 0.42, "scale": 1.0, "max": 40,
+		"ai": ["thief"], "swarm": [2, 3], "steal_amt": 30.0, "sound": "e_wueste", "anims": {"grab": "grab"}, "counter": "Schnelle Türme am Lager; die Bande einzeln abfangen.",
+		"look": "Waschbär mit Räubermaske, Schraubenschlüssel und Rucksack", "text": "Kommt als Bande, plündert das Lager und flieht. Besiegt gibt er die Beute zurück."},
+	{"key": "wueste_radkappe", "family": "wueste", "role": "shield", "name": "Radkappen-Schildkröte", "hp": 50.0, "speed": 1.6, "dmg": 9.0, "interval": 1.2, "armor": 1.0, "coins": 4, "radius": 0.7, "scale": 1.4, "max": 40,
+		"ai": ["shield_front"], "shield_k": 0.0, "sound": "e_wueste", "anims": {"block": "block"}, "counter": "Von der Seite angreifen, Explosionen oder Bogenwürfe.",
+		"look": "Schildkröte mit einer Radkappe als Schild vor dem Kopf", "text": "Hält eine Radkappe vor sich, die Treffer von vorn abprallen lässt."},
+	{"key": "untote_schildmatrose", "family": "untote", "role": "shield", "name": "Schildmatrose", "hp": 34.0, "speed": 1.7, "dmg": 7.0, "interval": 1.1, "armor": 0.0, "coins": 3, "radius": 0.5, "scale": 1.6, "max": 60,
+		"ai": ["shield_front"], "shield_k": 0.0, "sound": "e_untote", "anims": {"block": "block"}, "counter": "Von der Seite angreifen, Explosionen oder Bogenwürfe.",
+		"look": "Zombie-Matrose, der eine Kajütentür als Schild trägt", "text": "Die Kajütentür blockt alle Treffer von vorn."},
+	{"key": "untote_seehexe", "family": "untote", "role": "healer", "name": "Seehexe", "hp": 44.0, "speed": 1.9, "dmg": 5.0, "interval": 1.2, "armor": 0.0, "coins": 5, "radius": 0.46, "scale": 1.5, "max": 20,
+		"ai": ["healer"], "heal_pct": 0.07, "heal_r": 6.0, "heal_cd": 1.6, "keep": 9.0, "sound": "e_untote", "anims": {"heal": "heal"}, "counter": "Zuerst töten; Gift verhindert die Heilung.",
+		"look": "Hexe mit Algenhaar, Muschelkette und Laterne", "text": "Heilt Untote im Umkreis von 6 m mit ihrem Meereslicht."},
+	{"key": "untote_pluenderer", "family": "untote", "role": "thief", "name": "Plünderer", "hp": 24.0, "speed": 3.4, "dmg": 3.0, "interval": 0.9, "armor": 0.0, "coins": 5, "radius": 0.45, "scale": 1.4, "max": 30,
+		"ai": ["thief"], "steal_amt": 50.0, "sound": "e_untote", "anims": {"grab": "grab"}, "counter": "Schnelle Türme am Lager aufstellen.",
+		"look": "Skelett-Pirat mit Augenklappe und großem Beutesack", "text": "Plündert das Lager und rennt mit der Beute davon."},
+	{"key": "mutanten_maulwurf", "family": "mutanten", "role": "digger", "name": "Maulwurf-Mutant", "hp": 70.0, "speed": 2.5, "dmg": 11.0, "interval": 1.0, "armor": 1.0, "coins": 5, "radius": 0.6, "scale": 1.3, "max": 30,
+		"ai": ["tunnel"], "burrow": "tunnel", "sound": "e_mutanten", "anims": {"dig": "dig", "under": "under", "rise": "rise"}, "counter": "Fallen im Inneren der Basis; Explosionen erschüttern ihn aus dem Boden.",
+		"look": "dreiäugiger Maulwurf mit Grabklauen und leuchtenden Warzen", "text": "Gräbt sich unter Mauern hindurch bis ins Innere der Basis."},
+	{"key": "mutanten_stoerer", "family": "mutanten", "role": "jammer", "name": "EMP-Kriecher", "hp": 32.0, "speed": 2.3, "dmg": 6.0, "interval": 1.4, "armor": 0.0, "coins": 4, "radius": 0.46, "scale": 1.15, "max": 30,
+		"ai": ["jammer"], "jam": "emp", "jam_t": 4.0, "jam_cd": 8.0, "jam_r": 10.0, "sound": "e_mutanten", "anims": {"jam": "jam"}, "counter": "Schildgenerator halbiert die Störung; schnell töten.",
+		"look": "Mutant mit Satellitenschüssel auf dem Rücken", "text": "Schießt einen EMP-Ball, der einen Turm 4 s lahmlegt."},
+	{"key": "mutanten_brutkessel", "family": "mutanten", "role": "brood", "name": "Brutkessel", "hp": 110.0, "speed": 1.3, "dmg": 9.0, "interval": 1.3, "armor": 2.0, "coins": 8, "radius": 0.9, "scale": 1.9, "max": 12,
+		"ai": ["brood"], "brood_key": "mutanten_giftkroete", "brood_n": 2, "brood_cd": 6.0, "sound": "e_mutanten", "anims": {"brood": "brood"}, "counter": "Zuerst töten – sonst quellen immer mehr Kröten heraus.",
+		"look": "laufender Kessel auf Stelzbeinen, aus dem Giftkröten springen", "text": "Brütet alle 6 s zwei Giftkröten aus."},
+	{"key": "eis_schildwall", "family": "eis", "role": "shield", "name": "Eis-Schildwall", "hp": 60.0, "speed": 1.5, "dmg": 10.0, "interval": 1.3, "armor": 1.0, "coins": 4, "radius": 0.7, "scale": 1.5, "max": 40,
+		"ai": ["shield_front"], "shield_k": 0.0, "sound": "e_eis", "anims": {"block": "block"}, "counter": "Von der Seite angreifen, Explosionen; Feuer +50 %.",
+		"look": "Eiskrieger hinter einer großen Eisplatte", "text": "Seine Eisplatte hält alle Treffer von vorn ab."},
+	{"key": "eis_frostschamanin", "family": "eis", "role": "healer", "name": "Frostschamanin", "hp": 40.0, "speed": 2.0, "dmg": 4.0, "interval": 1.2, "armor": 0.0, "coins": 5, "radius": 0.44, "scale": 1.3, "max": 20,
+		"ai": ["healer"], "heal_pct": 0.06, "heal_r": 6.0, "heal_cd": 1.5, "keep": 9.0, "sound": "e_eis", "anims": {"heal": "heal"}, "counter": "Zuerst töten; Gift verhindert die Heilung.",
+		"look": "Eiswesen in Fellmantel mit Kristallstab und Eulenmaske", "text": "Heilt Eiswesen im Umkreis von 6 m."},
+	{"key": "eis_schneemutter", "family": "eis", "role": "brood", "name": "Schneemutter", "hp": 100.0, "speed": 1.4, "dmg": 8.0, "interval": 1.2, "armor": 1.0, "coins": 7, "radius": 0.85, "scale": 1.9, "max": 12,
+		"ai": ["brood"], "brood_key": "eis_frostwichtel", "brood_n": 3, "brood_cd": 6.0, "sound": "e_eis", "anims": {"brood": "brood"}, "counter": "Zuerst töten – sie rollt immer neue Frostwichtel aus.",
+		"look": "dicke Schneefrau mit Topf auf dem Kopf und Schneeball-Schürze", "text": "Formt alle 6 s drei Frostwichtel aus Schnee."},
+	{"key": "daemonen_glutkobold", "family": "daemonen", "role": "jammer", "name": "Glutkobold", "hp": 34.0, "speed": 2.4, "dmg": 7.0, "interval": 1.3, "armor": 0.0, "coins": 4, "radius": 0.44, "scale": 1.1, "max": 30,
+		"ai": ["jammer"], "jam": "lava", "jam_t": 4.0, "jam_cd": 7.0, "jam_r": 9.0, "sound": "e_daemonen", "anims": {"jam": "jam"}, "counter": "Schildgenerator halbiert die Störung; Wasser und Eis +30 %.",
+		"look": "Kobold mit Lavaeimer auf dem Rücken und Kelle", "text": "Kippt glühenden Schleim über einen Turm – er schießt 4 s nicht."},
+	{"key": "daemonen_gierteufel", "family": "daemonen", "role": "thief", "name": "Gierteufel", "hp": 30.0, "speed": 3.6, "dmg": 4.0, "interval": 0.9, "armor": 0.0, "coins": 6, "radius": 0.44, "scale": 1.1, "max": 30,
+		"ai": ["thief"], "steal_amt": 60.0, "sound": "e_daemonen", "anims": {"grab": "grab"}, "counter": "Schnelle Türme am Lager aufstellen.",
+		"look": "kleiner Teufel mit Geldsack, Zylinder und Monokel", "text": "Rafft Rohstoffe aus dem Lager und flieht. Besiegt gibt er die Beute zurück."},
+	{"key": "daemonen_hoellengraeber", "family": "daemonen", "role": "digger", "name": "Höllengräber", "hp": 80.0, "speed": 2.6, "dmg": 12.0, "interval": 1.0, "armor": 1.0, "coins": 6, "radius": 0.6, "scale": 1.3, "max": 30,
+		"ai": ["tunnel"], "burrow": "tunnel", "sound": "e_daemonen", "anims": {"dig": "dig", "under": "under", "rise": "rise"}, "counter": "Fallen im Inneren der Basis; Explosionen erschüttern ihn aus dem Boden.",
+		"look": "gehörnter Gräber mit glühender Schaufel", "text": "Wühlt sich durch die Glut unter den Mauern hindurch."},
+	# ---- Minibosse (eine je Familie): mitten in Wellen und Expeditionen, mit eigener Lebensleiste
+	{"key": "schleim_koloss", "family": "schleim", "role": "miniboss", "name": "Glibberkoloss", "hp": 700.0, "speed": 1.3, "dmg": 30.0, "interval": 1.4, "armor": 2.0, "coins": 25, "radius": 1.3, "scale": 2.5, "max": 2,
+		"ai": ["miniboss"], "mini_skill": "slam", "mini_cd": 7.0, "mini_r": 5.0, "sound": "e_schleim", "anims": {"skill": "skill"}, "counter": "Aus der roten Zone gehen; Fähigkeiten aufsparen.",
+		"look": "turmhoher Wackelpudding mit Topfhelm", "text": "Springt hoch und landet mit einer Druckwelle (rote Zone)."},
+	{"key": "wald_eichbart", "family": "wald", "role": "miniboss", "name": "Alter Eichbart", "hp": 820.0, "speed": 1.1, "dmg": 30.0, "interval": 1.5, "armor": 3.0, "coins": 25, "radius": 1.3, "scale": 3.0, "max": 2,
+		"ai": ["miniboss"], "mini_skill": "roots", "mini_cd": 8.0, "mini_r": 3.0, "sound": "e_wald", "anims": {"skill": "skill"}, "counter": "Aus der roten Zone gehen, sonst halten Wurzeln fest.",
+		"look": "knorriger Eichenriese mit Moosbart und Pilzen", "text": "Lässt Wurzeln unter dem Helden hervorbrechen, die ihn festhalten."},
+	{"key": "wueste_skorpion", "family": "wueste", "role": "miniboss", "name": "Schrottskorpion", "hp": 900.0, "speed": 1.6, "dmg": 34.0, "interval": 1.4, "armor": 4.0, "coins": 25, "radius": 1.3, "scale": 3.0, "max": 2,
+		"ai": ["miniboss"], "mini_skill": "acid", "mini_cd": 7.0, "mini_r": 3.0, "sound": "e_wueste", "anims": {"skill": "skill"}, "counter": "Säurefelder meiden; Explosionen +30 %.",
+		"look": "Skorpion aus Autoteilen mit Zapfpistolen-Stachel", "text": "Sticht Säure in den Boden, die Helden und Mauern zerfrisst."},
+	{"key": "untote_bootsmann", "family": "untote", "role": "miniboss", "name": "Bootsmann Knochenhand", "hp": 880.0, "speed": 1.3, "dmg": 32.0, "interval": 1.5, "armor": 2.0, "coins": 25, "radius": 1.3, "scale": 3.0, "max": 2,
+		"ai": ["miniboss"], "mini_skill": "ring", "mini_cd": 7.0, "mini_r": 5.5, "sound": "e_untote", "anims": {"skill": "skill"}, "counter": "Abstand halten, wenn er den Anker kreisen lässt; Blitz +50 %.",
+		"look": "riesiges Skelett mit Anker und Bootsmannspfeife", "text": "Lässt seinen Anker im Kreis sausen (rote Zone um ihn)."},
+	{"key": "mutanten_panzerkroete", "family": "mutanten", "role": "miniboss", "name": "Panzerkröte", "hp": 950.0, "speed": 1.2, "dmg": 34.0, "interval": 1.5, "armor": 3.0, "coins": 25, "radius": 1.4, "scale": 3.0, "max": 2,
+		"ai": ["miniboss"], "mini_skill": "toxic", "mini_cd": 7.5, "mini_r": 3.5, "sound": "e_mutanten", "anims": {"skill": "skill"}, "counter": "Giftfelder meiden; Eis +40 %.",
+		"look": "Riesenkröte mit Panzerplatten und Rohren auf dem Rücken", "text": "Spuckt große Giftblasen, die am Boden zu Giftfeldern zerplatzen."},
+	{"key": "eis_mammut", "family": "eis", "role": "miniboss", "name": "Frostmammut", "hp": 1000.0, "speed": 1.2, "dmg": 36.0, "interval": 1.6, "armor": 3.0, "coins": 25, "radius": 1.5, "scale": 3.2, "max": 2,
+		"ai": ["miniboss"], "mini_skill": "frost_ring", "mini_cd": 8.0, "mini_r": 6.0, "sound": "e_eis", "anims": {"skill": "skill"}, "counter": "Türme verteilen; Feuer +50 %.",
+		"look": "Mammut mit Eiszapfen-Stoßzähnen und Schneedecke", "text": "Stampft eine Frostwelle, die Türme in der Nähe einfriert."},
+	{"key": "daemonen_kettenteufel", "family": "daemonen", "role": "miniboss", "name": "Kettenteufel", "hp": 1050.0, "speed": 1.4, "dmg": 38.0, "interval": 1.4, "armor": 3.0, "coins": 25, "radius": 1.3, "scale": 3.0, "max": 2,
+		"ai": ["miniboss", "pull"], "pull": 10.0, "pull_cd": 9.0, "mini_skill": "chain", "mini_cd": 7.0, "mini_r": 4.0, "sound": "e_daemonen", "anims": {"skill": "skill", "pull": "throw"}, "counter": "Ausweichrolle reißt die Kette los; Wasser/Eis +30 %.",
+		"look": "Dämon in Ketten mit glühendem Halsband", "text": "Zieht den Helden an der Kette heran und entfacht einen Feuerring."},
+	# ---- Weltboss (Clan-Raids und Ereignisse; über das Admin-Menü startbar)
+	{"key": "boss_leviathan", "family": "schleim", "role": "boss", "name": "Schleim-Leviathan", "hp": 30000.0, "speed": 0.8, "dmg": 90.0, "interval": 1.8, "armor": 4.0, "coins": 200, "radius": 3.2, "scale": 7.0, "max": 1, "boss": true, "world": true,
+		"ai": [], "specials": ["tide", "rain", "summon"], "summon": "schleim_brutschleim", "summon_n": 2, "sound": "e_schleim", "counter": "Gemeinsam angreifen; rote Zonen meiden.",
+		"look": "gewaltige Schleimschlange mit Krone aus Wrackteilen", "text": "Weltboss: Flutwelle, Schleimregen und Brutschleime. Für Clan-Raids und Ereignisse."},
+	# ---- Vulkaninsel (Paket Z): Magma-Wesen – sechs Arten, drei Rollen aus G2, Miniboss und Boss
+	##   lava_bath: in der Nähe fließender Lava (bath_r Meter) heilt die Art bath (Anteil Leben/s) und läuft 20 % schneller
+	##   harden:    nach Treffern verhärtet die Kruste (harden_t Sekunden, nur harden_k des Schadens kommt durch); Wasser/Eis sprengt sie
+	{"key": "magma_lavaschnecke", "family": "magma", "role": "mass", "name": "Lavaschnecke", "hp": 22.0, "speed": 1.9, "dmg": 6.0, "interval": 1.1, "armor": 0.0, "coins": 1, "radius": 0.45, "scale": 1.0, "max": 300,
+		"ai": ["lava_bath"], "bath": 0.12, "bath_r": 4.0, "sound": "e_magma", "anims": {"bath": "steam"}, "counter": "Weg von der Lava locken – dort heilt sie nicht; Wasser +60 %.",
+		"look": "Schnecke mit qualmendem Vulkanhaus auf dem Rücken", "text": "Kriecht in großen Mengen heran. Nahe der Lava badet sie im Glutdampf: Sie heilt und wird schneller."},
+	{"key": "magma_feuerkaefer", "family": "magma", "role": "fast", "name": "Feuerkäfer", "hp": 18.0, "speed": 5.0, "dmg": 4.0, "interval": 0.7, "armor": 0.0, "coins": 1, "radius": 0.4, "scale": 0.9, "max": 100,
+		"ai": ["pack", "pounce", "death_cloud"], "hunt": true, "swarm": [2, 3], "pounce": 4.5, "cloud": "fire", "cloud_r": 1.4, "cloud_t": 2.5, "sound": "e_magma", "anims": {"pounce": "pounce"},
+		"counter": "Aus der Ferne erledigen – beim Tod lodert eine Stichflamme.",
+		"look": "Käfer mit glühendem Hinterleib wie ein Kohlestück", "text": "Kommt im Schwarm, springt den Helden an und verpufft beim Tod in einer Stichflamme."},
+	{"key": "magma_obsidiangolem", "family": "magma", "role": "tank", "name": "Obsidian-Golem", "hp": 340.0, "speed": 1.2, "dmg": 32.0, "interval": 1.7, "armor": 4.0, "coins": 9, "radius": 1.1, "scale": 2.6, "max": 30,
+		"ai": ["siege", "harden"], "siege": 2.0, "harden_t": 2.5, "harden_k": 0.35, "harden_cd": 8.0, "sound": "e_magma", "anims": {"harden": "harden"},
+		"counter": "Wasser oder Eis sprengen die Kruste; warten, bis sie wieder weich wird.",
+		"look": "Riese aus schwarzem Glas mit Lavaadern und Basaltfäusten", "text": "Doppelter Schaden an Mauern. Wird er getroffen, verhärtet die Kruste 2,5 s (nur 35 % Schaden)."},
+	{"key": "magma_glutspucker", "family": "magma", "role": "ranged", "name": "Glutspucker", "hp": 34.0, "speed": 1.9, "dmg": 12.0, "interval": 2.6, "armor": 0.0, "coins": 3, "radius": 0.5, "scale": 1.25, "max": 60,
+		"ai": ["ranged_arc"], "range": 14.0, "splash": 2.0, "zone": "fire", "zone_t": 3.5, "siege_shot": true, "sound": "e_magma", "anims": {"aim": "erupt"},
+		"counter": "Den roten Kreisen ausweichen; Fernkampf und Wasser.",
+		"look": "kleiner Vulkan auf Stummelbeinen, der Glutbrocken spuckt", "text": "Spuckt Glutbrocken im hohen Bogen (14 m); der Boden brennt 3,5 s."},
+	{"key": "magma_aschegeist", "family": "magma", "role": "air", "name": "Aschegeist", "hp": 18.0, "speed": 3.2, "dmg": 5.0, "interval": 1.0, "armor": 0.0, "coins": 2, "radius": 0.42, "scale": 1.1, "max": 60,
+		"ai": ["blink", "death_cloud"], "fly": true, "blink": 6.0, "blink_cd": 5.0, "cloud": "spore", "cloud_r": 2.2, "cloud_t": 3.0, "sound": "e_magma", "anims": {"blink": "blink"},
+		"counter": "Nicht in seine Aschewolke laufen – sie macht langsam.",
+		"look": "schwebende Aschewolke mit zwei glühenden Augen", "text": "Fliegt über Mauern, springt alle 5 s 6 m weit und zerfällt beim Tod zu einer Aschewolke, die verlangsamt."},
+	{"key": "magma_schlackenkriecher", "family": "magma", "role": "special", "name": "Schlackenkriecher", "hp": 70.0, "speed": 2.2, "dmg": 10.0, "interval": 1.1, "armor": 1.0, "coins": 5, "radius": 0.6, "scale": 1.2, "max": 40,
+		"ai": ["split", "lava_bath"], "split": 2, "split_hp": 0.3, "bath": 0.06, "bath_r": 4.0, "sound": "e_magma", "anims": {"bath": "steam"},
+		"counter": "Explosionen erwischen auch die Brocken, in die er zerfällt.",
+		"look": "Raupe aus Schlackebrocken mit glühenden Fugen", "text": "Zerfällt beim Tod in zwei kleine Schlackebrocken. Heilt nahe der Lava."},
+	{"key": "magma_glutpriesterin", "family": "magma", "role": "healer", "name": "Glutpriesterin", "hp": 44.0, "speed": 2.0, "dmg": 5.0, "interval": 1.2, "armor": 0.0, "coins": 5, "radius": 0.46, "scale": 1.35, "max": 20,
+		"ai": ["healer"], "heal_pct": 0.07, "heal_r": 6.0, "heal_cd": 1.5, "keep": 9.0, "sound": "e_magma", "anims": {"heal": "heal"}, "counter": "Zuerst töten; Gift verhindert die Heilung.",
+		"look": "Gestalt in Aschemantel mit Glutschale und Obsidianmaske", "text": "Heilt alle Magma-Wesen im Umkreis von 6 m mit ihrer Glutschale."},
+	{"key": "magma_basaltschild", "family": "magma", "role": "shield", "name": "Basaltschildträger", "hp": 64.0, "speed": 1.5, "dmg": 11.0, "interval": 1.3, "armor": 1.0, "coins": 4, "radius": 0.7, "scale": 1.5, "max": 40,
+		"ai": ["shield_front"], "shield_k": 0.0, "sound": "e_magma", "anims": {"block": "block"}, "counter": "Von der Seite angreifen, Explosionen oder Bogenwürfe; Wasser +60 %.",
+		"look": "gedrungener Krieger mit sechseckiger Basaltplatte als Schild", "text": "Seine Basaltplatte hält alle Treffer von vorn ab."},
+	{"key": "magma_lavamutter", "family": "magma", "role": "brood", "name": "Lavamutter", "hp": 110.0, "speed": 1.3, "dmg": 9.0, "interval": 1.3, "armor": 1.0, "coins": 8, "radius": 0.9, "scale": 1.9, "max": 12,
+		"ai": ["brood"], "brood_key": "magma_lavaschnecke", "brood_n": 2, "brood_cd": 7.0, "sound": "e_magma", "anims": {"brood": "brood"}, "counter": "Zuerst töten – sonst kriechen immer mehr Lavaschnecken heraus.",
+		"look": "riesige Schnecke mit brodelndem Kraterhaus voller Eier", "text": "Lässt alle 7 s zwei Lavaschnecken aus ihrem Krater schlüpfen."},
+	{"key": "magma_glutbrecher", "family": "magma", "role": "miniboss", "name": "Glutbrecher", "hp": 1150.0, "speed": 1.4, "dmg": 40.0, "interval": 1.5, "armor": 4.0, "coins": 25, "radius": 1.4, "scale": 3.0, "max": 2,
+		"ai": ["miniboss"], "mini_skill": "lava", "mini_cd": 7.0, "mini_r": 3.5, "sound": "e_magma", "anims": {"skill": "skill"}, "counter": "Aus der roten Zone gehen – dort bleibt flüssige Lava; Wasser +60 %.",
+		"look": "Stier aus Basalt mit Magmahörnern und glühendem Nasenring", "text": "Stampft auf: Wo die rote Zone war, quillt Lava aus dem Boden."},
+	{"key": "boss_magma", "family": "magma", "role": "boss", "name": "Magmafürst Brodel", "hp": 2800.0, "speed": 1.2, "dmg": 80.0, "interval": 1.7, "armor": 3.0, "coins": 60, "radius": 2.1, "scale": 4.8, "max": 2, "boss": true,
+		"ai": [], "specials": ["eruption", "summon"], "summon": "magma_lavaschnecke", "summon_n": 4, "sound": "e_magma", "counter": "Bei rotem Boden laufen; nach dem Ausbruch glüht der Kern – dann zuschlagen.",
+		"look": "Vulkanriese mit Obsidiankrone, Lavabart und glühendem Kern in der Brust", "text": "Lässt Lavabomben regnen (rote Zonen), ruft Lavaschnecken und stampft ab Phase 2. Unter 30 % rast er."},
 ]
 const ENEMY_INDEX := {"schleim_schleimling": 0, "schleim_flitzer": 1, "schleim_fass": 2, "schleim_brocken": 3, "schleim_spucker": 4, "schleim_helm": 5, "schleim_flatter": 6, "schleim_schamane": 7, "schleim_boss": 8,
 	"wald_pilzling": 9, "wald_dornenwolf": 10, "wald_baumhueter": 11, "wald_zapfenwerfer": 12, "wald_irrlicht": 13, "wald_wurzelkriecher": 14,
@@ -489,14 +677,42 @@ const ENEMY_INDEX := {"schleim_schleimling": 0, "schleim_flitzer": 1, "schleim_f
 	"mutanten_giftkroete": 27, "mutanten_egelschwarm": 28, "mutanten_schlammgolem": 29, "mutanten_rohrspucker": 30, "mutanten_werksdrohne": 31, "mutanten_seuchenarzt": 32,
 	"eis_frostwichtel": 33, "eis_eiswolf": 34, "eis_yeti": 35, "eis_kristallschuetze": 36, "eis_eisgeist": 37, "eis_lawinenroller": 38,
 	"daemonen_hoellenwichtel": 39, "daemonen_hund": 40, "daemonen_waechter": 41, "daemonen_feuerspeier": 42, "daemonen_schattenschwinge": 43, "daemonen_beschwoerer": 44,
-	"boss_wald": 45, "boss_wueste": 46, "boss_untote": 47, "boss_mutanten": 48, "boss_eis": 49, "boss_daemonen": 50, "daemonen_portal": 51}
+	"boss_wald": 45, "boss_wueste": 46, "boss_untote": 47, "boss_mutanten": 48, "boss_eis": 49, "boss_daemonen": 50, "daemonen_portal": 51,
+	"schleim_brutschleim": 52, "schleim_deckel": 53, "schleim_klauschleim": 54, "wald_druide": 55, "wald_spinnenmutter": 56, "wald_rankenwerfer": 57, "wueste_maulwurf": 58, "wueste_waschbaer": 59, "wueste_radkappe": 60, "untote_schildmatrose": 61, "untote_seehexe": 62, "untote_pluenderer": 63, "mutanten_maulwurf": 64, "mutanten_stoerer": 65, "mutanten_brutkessel": 66, "eis_schildwall": 67, "eis_frostschamanin": 68, "eis_schneemutter": 69, "daemonen_glutkobold": 70, "daemonen_gierteufel": 71, "daemonen_hoellengraeber": 72, "schleim_koloss": 73, "wald_eichbart": 74, "wueste_skorpion": 75, "untote_bootsmann": 76, "mutanten_panzerkroete": 77, "eis_mammut": 78, "daemonen_kettenteufel": 79, "boss_leviathan": 80,
+	"magma_lavaschnecke": 81, "magma_feuerkaefer": 82, "magma_obsidiangolem": 83, "magma_glutspucker": 84, "magma_aschegeist": 85, "magma_schlackenkriecher": 86, "magma_glutpriesterin": 87, "magma_basaltschild": 88, "magma_lavamutter": 89, "magma_glutbrecher": 90, "boss_magma": 91}
 ## Boss je Gebiet (Schlüssel) – Gebiet 7 beginnt als Schleimriese, aus dem der Dämon hervorbricht (phase_of)
-const AREA_BOSS := ["schleim_boss", "boss_wald", "boss_wueste", "boss_untote", "boss_mutanten", "boss_eis", "boss_daemonen"]
+const AREA_BOSS := ["schleim_boss", "boss_wald", "boss_wueste", "boss_untote", "boss_mutanten", "boss_eis", "boss_daemonen", "boss_magma"]
 const BOSSES := [
 	{"name": "Dicker Bert", "special": "summon"}, {"name": "Mooskönigin", "special": "spit"}, {"name": "Rostbrocken", "special": "slam"},
 	{"name": "Kapitän Glibber", "special": "spit"}, {"name": "Der Schlund", "special": "summon"}, {"name": "Frostbrocken", "special": "slam"},
-	{"name": "Schleimkönig", "special": "all"},
+	{"name": "Schleimkönig", "special": "all"}, {"name": "Magmafürst Brodel", "special": "cycle"},
 ]
+## Bosse (Paket G2, 6.5): Phasen nach Lebensanteil. Phase 2 bringt einen weiteren Sonderangriff, unter 30 % folgt die Wutphase
+## (schneller, stärker, Sonderangriffe öfter). Nach jedem großen Angriff ist der Boss kurz erschöpft: die Schwachstelle leuchtet
+## (doppelter Schaden). intro = Untertitel beim Auftritt, weak = wo die Schwachstelle sitzt (nur Anzeige), trophy = Deko-Gebäude.
+const BOSS_RAGE_AT := 0.3
+const BOSS_RAGE := {"speed": 1.35, "dmg": 1.3, "special": 0.6}
+const BOSS_EXPOSE_T := 2.4
+const BOSS_EXPOSE_DMG := 2.0
+const BOSS_PHASES := {
+	"schleim_boss": {"intro": "Der Herr der Schleimlinge", "weak": "die Krone", "p2": 0.66, "add": "slam", "trophy": "trophy_bert"},
+	"boss_wald": {"intro": "Herrin des Kiefernforsts", "weak": "der Pilzhut", "p2": 0.66, "add": "slam", "trophy": "trophy_moos"},
+	"boss_wueste": {"intro": "Schrottgolem der Staubebene", "weak": "der Kessel im Bauch", "p2": 0.66, "add": "summon", "summon": "wueste_schrottkaefer", "trophy": "trophy_rost"},
+	"boss_untote": {"intro": "Schrecken der Schrottküste", "weak": "das Steuerrad", "p2": 0.66, "add": "slam", "trophy": "trophy_glibber"},
+	"boss_mutanten": {"intro": "Das Maul des Sumpfwerks", "weak": "das Ventil", "p2": 0.66, "add": "spores", "trophy": "trophy_schlund"},
+	"boss_eis": {"intro": "Wächter des Frostpasses", "weak": "die Kristallkrone", "p2": 0.66, "add": "slam", "trophy": "trophy_frost"},
+	"boss_daemonen": {"intro": "König des Schleimkraters", "weak": "das Herz aus Glut", "p2": 0.0, "add": "", "trophy": "trophy_koenig"},
+	"boss_leviathan": {"intro": "Weltboss", "weak": "die Kiemen", "p2": 0.66, "add": "slam", "trophy": ""},
+	"boss_magma": {"intro": "Herrscher der Vulkaninsel", "weak": "der Glutkern in der Brust", "p2": 0.66, "add": "slam", "trophy": "trophy_brodel"},
+}
+## Elite-Gegner (6.2): sichtbar mit Krone, Aura und Namensschild; in der Flut ab ELITE_WEEK je Welle (ab Welle 2) einige.
+const ELITE_HP := 2.5
+const ELITE_COLOR := Color(1.25, 1.05, 0.55)
+const ELITE_WEEK := 4
+## Minibosse in der Flut ab Woche MINI_WEEK in der mittleren Welle; Expedition: der MINI_EXP_EVERY-te Gegner eines Großangriffs (einmal)
+const MINI_WEEK := 5
+const MINI_EXP_HP := 0.4                         # Miniboss im Großangriff der Expedition: Anteil am Leben
+const MINI_EXP_EVERY := 30
 const MAX_ALIVE := [200, 300, 420]                  # je Qualitätsstufe (Niedrig, Mittel, Hoch)
 const BESTIARY_TIERS := [10, 100, 1000]             # Monsterbuch: so viele Besiegte …
 const BESTIARY_GEMS := [2, 5, 15]                   # … geben so viele Juwelen
@@ -512,8 +728,66 @@ static func family_enemies(fam: String) -> Array:
 	var out: Array = []
 	for i in ENEMIES.size():
 		var e: Dictionary = ENEMIES[i]
-		if e.family == fam and e.role != "boss" and e.role != "object":
+		if e.family == fam and ROLES.has(String(e.role)):
 			out.append(i)
+	return out
+
+
+## Alle Arten einer Familie, die in gemischten Gruppen vorkommen: die sechs Grundrollen und die neuen Rollen (ohne Miniboss).
+static func family_all(fam: String) -> Array:
+	var out: Array = []
+	for i in ENEMIES.size():
+		var e: Dictionary = ENEMIES[i]
+		if e.family == fam and (ROLES.has(String(e.role)) or ROLES_EXTRA.has(String(e.role))):
+			out.append(i)
+	return out
+
+
+## Miniboss einer Familie (Nummer) oder -1.
+static func family_mini(fam: String) -> int:
+	for i in ENEMIES.size():
+		if ENEMIES[i].family == fam and ENEMIES[i].role == "miniboss":
+			return i
+	return -1
+
+
+## Paket G2: Symbol je Element (Monsterbuch: Schwächen-Symbole)
+const ELEMENT_ICON := {"kugel": "ui_bullet", "feuer": "ui_fire", "wasser": "ui_water", "eis": "ui_snow", "blitz": "ui_bolt", "explosion": "ui_bomb", "gift": "ui_poison"}
+const ELEMENT_NAME := {"kugel": "Kugeln", "feuer": "Feuer", "wasser": "Wasser", "eis": "Eis", "blitz": "Blitz", "explosion": "Explosion", "gift": "Gift"}
+## Ab dieser Woche kommen die Schleimlinge 0–7 in der Flut vor (wie flood_mix)
+const FLOOD_WEEK := [1, 2, 3, 3, 4, 6, 8, 12]
+
+
+## Fundorte einer Art (Monsterbuch): Gebiet der Expedition, Flut (Grundlage oder Gast), Bosse und Weltboss.
+static func enemy_places(key: String) -> Array:
+	var e: Dictionary = enemy(key)
+	var fam := String(e.family)
+	var ai: int = AREA_FAMILY.find(fam)
+	var area := String(AREAS[ai].name) if ai >= 0 else ""
+	var role := String(e.role)
+	var t: int = int(ENEMY_INDEX[key])
+	var out: Array = []
+	if e.get("world", false):
+		return ["Weltboss: Ereignisse und Clan-Raids"]
+	if role == "boss":
+		out.append("Boss in %s (Expedition)" % area)
+		out.append("Flut: Boss der letzten Welle ab Woche 3" + ("" if fam == "schleim" else " (als Gast)"))
+		return out
+	if role == "object":
+		return ["Kommt mit dem Beschwörer (%s)" % area]
+	if role == "miniboss":
+		out.append("%s: Großangriff der Expedition" % area)
+		out.append("Flut: mittlere Welle ab Woche %d" % MINI_WEEK + ("" if fam == "schleim" else " (als Gast)"))
+		return out
+	if fam == "schleim":
+		out.append("Grüntal (Expedition)")
+		if t < FLOOD_WEEK.size():
+			out.append("Flut ab Woche %d" % int(FLOOD_WEEK[t]))
+		elif FLOOD_EXTRA.has(key):
+			out.append("Flut ab Woche %d" % int(FLOOD_EXTRA[key][0]))
+		return out
+	out.append("%s (Expedition)" % area)
+	out.append("Flut: als Gastfamilie ab Woche 3")
 	return out
 
 
@@ -561,6 +835,15 @@ static func flood_mix(week: int) -> Array:
 	return m
 
 
+## Neue Schleim-Rollen (Paket G2) in der Flut: Schlüssel -> [ab Woche, Anteil].
+const FLOOD_EXTRA := {"schleim_deckel": [4, 0.05], "schleim_brutschleim": [5, 0.015], "schleim_klauschleim": [6, 0.02]}
+
+
+## Elite-Gegner je Welle (ab Welle 2) in Woche w.
+static func flood_elites(week: int) -> int:
+	return 0 if week < ELITE_WEEK else 1 + int((week - ELITE_WEEK) / 4)
+
+
 ## Flut-Gäste (Kapitel 11.4): ab Woche 3 eine Gastfamilie mit 25 %, ab Woche 10 zwei mit zusammen 40 %.
 static func flood_guest_count(week: int) -> int:
 	return 0 if week < 3 else (1 if week < 10 else 2)
@@ -574,7 +857,7 @@ const MAX_LEVEL := 60
 static func xp_need(level: int) -> int:
 	return int(round(80.0 * pow(level, 1.6) / 10.0) * 10)
 
-const LEVEL_UNLOCKS := {3: "Garage", 5: "Kiefernforst, Freunde", 8: "Clans", 10: "Staubebene", 16: "Schrottküste", 24: "Sumpfwerk", 34: "Frostpass", 45: "Schleimkrater", 60: "Meister-Rang"}
+const LEVEL_UNLOCKS := {3: "Garage", 5: "Kiefernforst, Freunde", 8: "Clans", 10: "Staubebene", 16: "Schrottküste", 24: "Sumpfwerk", 34: "Frostpass", 45: "Schleimkrater", 55: "Vulkaninsel", 60: "Meister-Rang"}
 
 ## Kommandanten-Fähigkeiten: je Zweig fünf Fähigkeiten mit bis zu fünf Rängen. stat -> Wert je Rang.
 const COMMANDER := [
@@ -914,7 +1197,7 @@ const ITEM_LEVEL_CAP := 10
 const TRAIN_XP_PER_HOUR := 30.0
 const TRAIN_XP_PER_LEVEL := 10.0
 const AREA_HERO_LEVEL := [1, 5, 10, 16, 22, 28, 34]
-const AREA_FACTOR := [1.0, 1.5, 2.2, 3.2, 4.5, 6.5, 9.0]
+const AREA_FACTOR := [1.0, 1.5, 2.2, 3.2, 4.5, 6.5, 9.0, 10.5]
 
 ## Höchste Stufe, auf die ein Held seine Ausrüstung verbessern kann.
 static func item_cap(hero_level: int) -> int:
@@ -1073,6 +1356,9 @@ const AREAS := [
 	{"key": "krater", "name": "Schleimkrater", "level": 45, "fuel": 70, "boss": 6, "res": {"shards": 1, "cells": 2, "metal": 2, "coins": 3},
 		"text": "Leuchtend grüner Krater, Ursprung der Flut.", "enemies": [1.0, 0.2, 0.12, 0.1, 0.12, 0.3, 0.15, 0.05],
 		"ground": Color("7FB23A"), "ground2": Color("5E9A30"), "path": Color("A6D24A"), "tree": "crystal", "fog": Color("C8F09A"), "sun": Color("EAFFC0"), "water": true},
+	{"key": "vulkan", "name": "Vulkaninsel", "level": 55, "fuel": 85, "boss": 7, "res": {"stone": 2, "cells": 2, "shards": 1, "coins": 3},
+		"text": "Schwarze Lavafelder, Obsidian und ein rauchender Vulkan. Lavaströme wandern, die Hitze steigt.", "enemies": [1.0, 0.2, 0.12, 0.1, 0.12, 0.3, 0.15, 0.05],
+		"ground": Color("4C4648"), "ground2": Color("37302F"), "path": Color("7A5E4C"), "tree": "lava", "fog": Color("A8948C"), "sun": Color("FFE0B8"), "water": false},
 ]
 const MISSIONS := {
 	"sammeln": {"name": "Sammeln", "text": "Fülle deinen Rucksack mindestens zur Hälfte und kehre zurück."},
@@ -1141,7 +1427,7 @@ const EXP_XP := {"pad": 10, "outpost": 150, "nest": 40, "bounty": 120, "rescue":
 const EXP_DONE_XP := [80, 12]                       # Expedition abgeschlossen: 80 + 12 × Gebietsstufe
 const EXP_ABORT_XP := 0.3
 const EXP_COIN_K := 0.6                             # Münzen aus Gegnern in der Expedition (je Gebietsfaktor)
-const EXP_HERO_LEVEL := [1, 4, 8, 13, 18, 25, 32]    # empfohlene Heldenstufe je Gebiet (Weltkarte)
+const EXP_HERO_LEVEL := [1, 4, 8, 13, 18, 25, 32, 38]    # empfohlene Heldenstufe je Gebiet (Weltkarte)
 ## Je Gebiet (Reihenfolge wie AREAS): Preisfaktor, Baustoffe (ersetzen Holz/Stein), Sperre, Quellen mit Gewicht.
 const EXP_AREAS := [
 	{"factor": 1.0, "mats": ["wood", "stone"], "barrier": "Dornenhecke", "nodes": {"tree_small": 3, "tree_big": 2, "rock": 2, "coinpile": 1}},
@@ -1151,6 +1437,7 @@ const EXP_AREAS := [
 	{"factor": 4.5, "mats": ["metal", "fuel"], "barrier": "Giftnebel", "nodes": {"scrap": 3, "wreck": 1, "barrel": 2, "pump": 1, "crystal": 1, "battery": 1, "coinpile": 1}},
 	{"factor": 6.5, "mats": ["stone", "metal"], "barrier": "Eisbarriere", "nodes": {"rock": 4, "scrap": 2, "crystal": 1, "battery": 1, "coinpile": 1}},
 	{"factor": 9.0, "mats": ["metal", "cells"], "barrier": "Schleimwand", "nodes": {"scrap": 3, "wreck": 1, "crystal": 2, "battery": 1, "shard": 1, "coinpile": 1}},
+	{"factor": 10.5, "mats": ["stone", "cells"], "barrier": "Lavastrom", "nodes": {"obsidian": 4, "rock": 1, "sulfur": 2, "crystal": 1, "battery": 1, "scrap": 1, "shard": 1, "coinpile": 1}},
 ]
 ## Rohstoffquellen: Modell (stages = Größen _1.._3), Ertrag min/max (× Gebietsfaktor), Hiebe, Animation, seltene Beigabe.
 const EXP_NODES := {
@@ -1165,6 +1452,9 @@ const EXP_NODES := {
 	"battery": {"name": "Batterie", "model": "n_battery", "res": "cells", "min": 3, "max": 8, "hits": 5, "clip": "mine"},
 	"shard": {"name": "Scherbenader", "model": "n_shard_vein", "res": "shards", "min": 1, "max": 1, "hits": 8, "clip": "mine", "max_n": 2, "no_factor": true},
 	"coinpile": {"name": "Münzhaufen", "model": "n_coinpile", "res": "coins", "min": 25, "max": 45, "hits": 2, "clip": "pick_up"},
+	# Vulkaninsel (Paket Z): Obsidian ist eine gebietseigene Quelle für Stein (selten mit Sternsplittern), Schwefel gibt Treibstoff
+	"obsidian": {"name": "Obsidianbrocken", "model": "n_obsidian", "stages": 3, "res": "stone", "min": 18, "max": 34, "hits": 4, "clip": "mine", "rare": "shards", "rare_p": 0.08},
+	"sulfur": {"name": "Schwefelquelle", "model": "n_sulfur", "res": "fuel", "min": 10, "max": 22, "hits": 3, "clip": "pick_up"},
 }
 ## Bauplätze der Außenbasis (Grüntal-Preise; Holz/Stein werden durch die Baustoffe des Gebiets ersetzt, alles × Faktor).
 ## at: Lage in Metern (+z zeigt zur Landestelle), line: Mauer von–bis, level: ab dieser Ausbaustufe (1 = Erstaufbau).

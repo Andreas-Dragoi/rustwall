@@ -1,0 +1,81 @@
+{
+ "key": "wald_rankenwerfer",
+ "kind": "vat",
+ "role": "jammer",
+ "verts": 979,
+ "tris": 996,
+ "width": 979,
+ "rows": 65,
+ "rpf": 1,
+ "fps": 10,
+ "bounds_min": [
+  -0.6010470946458215,
+  -1.5790000305175786,
+  -0.7251678187364015
+ ],
+ "bounds_size": [
+  1.1360323440030489,
+  3.599163114330505,
+  1.6642377726121858
+ ],
+ "height": 1.78000009059906,
+ "radius": 0.603489712435851,
+ "clips": {
+  "idle": {
+   "row": 0,
+   "n": 14,
+   "dur": 1.4,
+   "loop": true,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "walk": {
+   "row": 14,
+   "n": 7,
+   "dur": 0.7,
+   "loop": true,
+   "stride": 1.54,
+   "hit": -1.0
+  },
+  "attack": {
+   "row": 21,
+   "n": 9,
+   "dur": 0.8,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.4
+  },
+  "hit": {
+   "row": 30,
+   "n": 4,
+   "dur": 0.3,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "death": {
+   "row": 34,
+   "n": 12,
+   "dur": 1.1,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "jam": {
+   "row": 46,
+   "n": 10,
+   "dur": 0.9,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.5666666666666667
+  },
+  "spawn": {
+   "row": 56,
+   "n": 9,
+   "dur": 0.8,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  }
+ }
+}

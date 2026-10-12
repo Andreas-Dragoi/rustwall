@@ -1,0 +1,13 @@
+{
+  "name": "rustwall-server",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Rustwall – Server-Modul für Nakama",
+  "scripts": {
+    "build": "tsc"
+  },
+  "devDependencies": {
+    "nakama-runtime": "github:heroiclabs/nakama-common",
+    "typescript": "^6.0.0"
+  }
+}

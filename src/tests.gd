@@ -17,6 +17,13 @@ const Gegner = preload("res://src/tests_gegner.gd")
 const TestsNpc = preload("res://src/tests_npc.gd")
 const TestsWaffen = preload("res://src/tests_waffen.gd")
 const TestsBegleiter = preload("res://src/tests_begleiter.gd")
+const TestsFuehrung = preload("res://src/tests_fuehrung.gd")
+const TestsOnline = preload("res://src/tests_online.gd")
+const TestsGegner2 = preload("res://src/tests_gegner2.gd")
+const TestsWelt = preload("res://src/tests_welt.gd")
+const TestsZone = preload("res://src/tests_zone.gd")
+const TestsLiveops = preload("res://src/tests_liveops.gd")
+const TestsSprache = preload("res://src/tests_sprache.gd")
 
 var _t := 0.0
 var _shot_i := 0
@@ -53,6 +60,16 @@ func prepare() -> void:
 			P.place("mg", c + 3, c + 6)
 			for i in 5:
 				P.place("wall", c + 4 + i, c + 10)
+	# Paket F: --tut=<Schritt 1..6> startet das Tutorial bei diesem Schritt, --away=<Tage> zeigt die Rückkehr-Zusammenfassung
+	if G.arg("tut") != "" and P.d.has("tut"):
+		P.d.tut.step = clampi(int(G.arg("tut")) - 1, 0, 6)
+	if G.arg("away") != "":
+		for b0 in P.d.buildings:
+			if P.is_building(b0) and b0.key != "wall":
+				b0.done_at = P.now() - 60.0
+		P.d["last_seen"] = P.now() - float(G.arg("away")) * D.DAY_SECONDS
+		preload("res://src/guide.gd").ensure(P.d)
+		P._time_passed()
 	if G.arg("goto") != "":
 		var gp := G.arg("goto").split(":")
 		_goto = Vector2(float(gp[0]), float(gp[1]))
@@ -75,10 +92,34 @@ func prepare() -> void:
 
 func begin() -> void:
 	_wall0 = Time.get_ticks_msec()
+	if G.autotest == "welt":             # nur die Prüfungen des Pakets Welt (src/tests_welt.gd)
+		G.autotest = ""
+		G.selftest = true
+		Engine.time_scale = 8.0
+		await TestsWelt.new(self).run()
+		print("SELFTEST WELT %s (%d Fehler)" % ["OK" if _fails == 0 else "FEHLER", _fails])
+		get_tree().quit()
+		return
+	if G.autotest == "zone":             # nur die Prüfungen von Paket Z (src/tests_zone.gd, Vulkaninsel)
+		G.autotest = ""
+		G.selftest = true
+		Engine.time_scale = 8.0
+		await TestsZone.new(self).run()
+		print("SELFTEST ZONE %s (%d Fehler)" % ["OK" if _fails == 0 else "FEHLER", _fails])
+		get_tree().quit()
+		return
 	if G.autotest == "begleiter":        # nur die Prüfungen von Paket B (src/tests_begleiter.gd)
 		G.autotest = ""
 		await TestsBegleiter.new(self).run()
 		print("SELFTEST BEGLEITER %s (%d Fehler)" % ["OK" if _fails == 0 else "FEHLER", _fails])
+		get_tree().quit()
+		return
+	if G.autotest == "fuehrung":         # nur die Prüfungen von Paket F (src/tests_fuehrung.gd)
+		G.autotest = ""
+		G.selftest = true
+		Engine.time_scale = 4.0
+		await TestsFuehrung.new(self).run()
+		print("SELFTEST FUEHRUNG %s (%d Fehler)" % ["OK" if _fails == 0 else "FEHLER", _fails])
 		get_tree().quit()
 		return
 	if G.autotest == "gegner":           # nur die Prüfungen von Paket 11 (src/tests_gegner.gd)
@@ -86,6 +127,35 @@ func begin() -> void:
 		Engine.time_scale = 8.0
 		await Gegner.new(self).run()
 		print("SELFTEST GEGNER %s (%d Fehler)" % ["OK" if _fails == 0 else "FEHLER", _fails])
+		get_tree().quit()
+		return
+	if G.autotest == "gegner2":          # nur die Prüfungen von Paket G2 (src/tests_gegner2.gd)
+		G.autotest = ""
+		G.selftest = true
+		Engine.time_scale = 8.0
+		await TestsGegner2.new(self).run()
+		print("SELFTEST GEGNER2 %s (%d Fehler)" % ["OK" if _fails == 0 else "FEHLER", _fails])
+		get_tree().quit()
+		return
+	if G.autotest == "liveops":          # nur die Prüfungen von Paket L (src/tests_liveops.gd)
+		G.autotest = ""
+		G.selftest = true
+		Engine.time_scale = 8.0
+		await TestsLiveops.new(self).run()
+		print("SELFTEST LIVEOPS %s (%d Fehler)" % ["OK" if _fails == 0 else "FEHLER", _fails])
+		get_tree().quit()
+		return
+	if G.autotest == "sprache":          # nur die Prüfungen von Paket S (src/tests_sprache.gd)
+		G.autotest = ""
+		G.selftest = true
+		await TestsSprache.new(self).run()
+		print("SELFTEST SPRACHE %s (%d Fehler)" % ["OK" if _fails == 0 else "FEHLER", _fails])
+		get_tree().quit()
+		return
+	if G.autotest == "online":           # nur die Prüfungen von Paket O (src/tests_online.gd)
+		G.autotest = ""
+		await TestsOnline.new(self).run()
+		print("SELFTEST ONLINE %s (%d Fehler)" % ["OK" if _fails == 0 else "FEHLER", _fails])
 		get_tree().quit()
 		return
 	if G.autotest == "waffenschau":      # Paket W: eine Waffe in der Arena zeigen (für Bilder)
@@ -120,6 +190,12 @@ func begin() -> void:
 					G.main.world.select(int(b.id))
 					break
 		"dialog":
+			G.main.hud._ask_flood()
+		"dialog_flood":                  # Paket F: echte Flut (Fluttag) mit Schwierigkeit und Wellen-Vorschau
+			P.d.week.start_day = P.day_index() - 6
+			P.d.week.flood_done = false
+			if G.arg("diff") != "":
+				preload("res://src/guide.gd").set_flood_diff(int(G.arg("diff")))
 			G.main.hud._ask_flood()
 		"menu":
 			G.main.menu.show_menu()
@@ -161,6 +237,8 @@ func begin() -> void:
 				ew.cam.snap()
 		"pause":
 			G.main.hud._on_pause()
+		"training":                      # Paket Welt: Übungsplatz (Bilder)
+			await G.main.start_training()
 		"adminkey":
 			var k := InputEventKey.new()
 			k.keycode = KEY_MINUS
@@ -302,7 +380,7 @@ func _selftest() -> void:
 	_check(P.hero_stats("jona").m.dmg > 0.0, "Talent wirkt")
 	# Woche: sieben Tage vorspulen -> Flut verfügbar, dann automatisch
 	var wk := int(P.d.week.number)
-	P.skip_time(86400 * 6)
+	P.skip_time(86400 * (7 - P.week_day()))          # die 3 h oben können nachts über 4:00 (Tageswechsel) führen
 	_check(P.week_day() == 7 and P.flood_available(), "Tag 7: Flut verfügbar")
 	P.skip_time(86400)
 	_check(int(P.d.week.number) == wk + 1 and not P.d.week.last.is_empty(), "Verpasste Flut wird automatisch ausgewertet")
@@ -457,6 +535,13 @@ func _selftest() -> void:
 	await TestsNpc.new(self).run()
 	await TestsWaffen.new(self).run()
 	await TestsBegleiter.new(self).run()
+	await TestsFuehrung.new(self).run()
+	await TestsOnline.new(self).run()
+	await TestsGegner2.new(self).run()
+	await TestsWelt.new(self).run()
+	await TestsZone.new(self).run()
+	await TestsLiveops.new(self).run()
+	await TestsSprache.new(self).run()
 	G.main.goto_base()
 	await _wait(0.3)
 	# ---------- Admin-Menü: jede Aktion einmal

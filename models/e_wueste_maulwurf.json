@@ -1,0 +1,97 @@
+{
+ "key": "wueste_maulwurf",
+ "kind": "vat",
+ "role": "digger",
+ "verts": 939,
+ "tris": 1146,
+ "width": 939,
+ "rows": 77,
+ "rpf": 1,
+ "fps": 10,
+ "bounds_min": [
+  -0.9141468397115198,
+  -1.7499999499320984,
+  -0.8521874344348908
+ ],
+ "bounds_size": [
+  1.8550110738546404,
+  3.5529029797968588,
+  1.9553349177849957
+ ],
+ "height": 1.5720000267028809,
+ "radius": 0.784136138069301,
+ "clips": {
+  "idle": {
+   "row": 0,
+   "n": 14,
+   "dur": 1.4,
+   "loop": true,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "walk": {
+   "row": 14,
+   "n": 6,
+   "dur": 0.6,
+   "loop": true,
+   "stride": 1.56,
+   "hit": -1.0
+  },
+  "attack": {
+   "row": 20,
+   "n": 9,
+   "dur": 0.8,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.4
+  },
+  "hit": {
+   "row": 29,
+   "n": 4,
+   "dur": 0.3,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "death": {
+   "row": 33,
+   "n": 12,
+   "dur": 1.1,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "dig": {
+   "row": 45,
+   "n": 7,
+   "dur": 0.6,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "under": {
+   "row": 52,
+   "n": 8,
+   "dur": 0.8,
+   "loop": true,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "rise": {
+   "row": 60,
+   "n": 8,
+   "dur": 0.7,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "spawn": {
+   "row": 68,
+   "n": 9,
+   "dur": 0.8,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  }
+ }
+}

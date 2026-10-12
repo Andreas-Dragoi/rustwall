@@ -9,6 +9,8 @@ const Models = preload("res://src/models.gd")
 const Humanoid = preload("res://src/humanoid.gd")
 const Npc = preload("res://src/npc.gd")
 const NavGrid = preload("res://src/nav_grid.gd")
+const DW = preload("res://src/data_welt.gd")
+const WS = preload("res://src/welt_state.gd")
 
 ## Produktionsberufe: Gebäude -> Beruf
 const PROD_JOB := {"saege": "holz", "steinbruch": "stein", "presse": "schrott", "raffinerie": "technik", "generator": "technik"}
@@ -17,7 +19,7 @@ const HERO_SPOT := {
 	"greta": ["quartier", "bunker", "hammer", "c_crate", "Backt Brot am Quartier"],
 	"bruno": ["training", "quartier", "pick_up", "c_stone", "Stemmt Gewichte"],
 	"ada": ["werkstatt", "bunker", "hammer", "c_hammer", "Schraubt an der Werkstatt"],
-	"yuki": ["wachturm", "bunker", "wave", "", "Übt am Wachturm"],
+	"yuki": ["wachturm", "bunker", "idle_look", "", "Hält Ausschau am Wachturm"],
 	"mika": ["bunker", "bunker", "pay", "c_can", "Prüft den Schlauch"],
 	"jona": ["funkturm", "bunker", "pay", "c_crate", "Sortiert Post am Funkturm"],
 }
@@ -39,6 +41,18 @@ var _rr := {}                    # Zähler für Rundlauf je Beruf
 var _pickups := 0
 var _gates: Array = []           # Mittelpunkte der Tore
 var _nav_v := -1
+# Paket Welt: Tagesablauf, echte Bäume, Wünsche
+static var force_phase := ""     # Tests: "morgen", "mittag", "abend", "tag" (sonst aus weather.gd und Uhr)
+var phase := "tag"
+var trees_felled := 0            # (Test)
+var lamps_lit := 0               # (Test)
+var wishes_done := 0             # (Test)
+var _tree_res := {}              # Baum-Schlüssel -> Bewohner (wird gerade gefällt)
+var _fire: Node3D                # Lagerfeuer zur Mittagspause
+var _fire_p := Vector2.INF
+var _lamp_npc = null
+var _wish_t := 120.0
+var _wish_counts := {}
 
 
 func _init(world) -> void:
@@ -53,6 +67,8 @@ func _init(world) -> void:
 
 func _ready() -> void:
 	name = "Bewohner"
+	if G.arg("npcphase") != "":                  # Bilder: Tagesabschnitt festlegen (morgen, mittag, abend)
+		force_phase = G.arg("npcphase")
 	_roster()
 
 
@@ -279,6 +295,8 @@ func _refresh() -> void:
 				n.give(_next(n))
 	if _night:
 		return
+	_update_phase()
+	_tick_wishes()
 	_check_sites()
 	_check_damage()
 
@@ -396,6 +414,18 @@ func on_act(n, st: Dictionary, dt: float) -> void:
 	var t: Dictionary = n.task
 	if t.get("kind", "") == "work" and t.has("sid"):
 		work_seen[int(t.sid)] = w.time
+	if st.has("tree"):
+		n.acc += dt
+		if n.acc >= 1.0:
+			n.acc -= 1.0
+			var tp: Vector2 = st.face
+			Sfx.play_at("tree_chop_base", Vector3(tp.x, 1.0, tp.y), -9.0, 1.0, 0.2)
+			if w.fx != null:
+				w.fx.puff(Vector3(tp.x, 1.0, tp.y), Color(0.8, 0.6, 0.35), 3, 0.6)
+	if st.get("clip", "") == "shoo" and n.acc <= 0.0:
+		n.acc = 1.0
+		if w.get("wildlife") != null and w.wildlife.has_method("shoo_chickens"):
+			w.wildlife.shoo_chickens(n.pos, 5.0)
 	if t.get("kind", "") != "repair":
 		return
 	var s = w.nodes.get(int(t.sid))
@@ -466,6 +496,8 @@ func tap(sp: Vector2) -> bool:
 	if best == null:
 		return false
 	var txt := "%s · %s\n%s" % [best.name, best.job_name(), best.doing()]
+	if not best.wish.is_empty():
+		txt += "\nWunsch: „%s“" % String(best.wish.text)
 	if best.hero_key != "":
 		txt += "\n„%s“" % _first_sentence(String(D.HEROES[best.hero_key].get("story", "")))
 	best.show_sign(txt)
@@ -520,6 +552,9 @@ func _next(n) -> Dictionary:
 		return _guard_post(n, true) if n.job == "wache" else _alarm_task(n)
 	if _night and n.night_home:
 		return _night_task(n)
+	var rt := _routine_task(n)
+	if not rt.is_empty():
+		return rt
 	var t := {}
 	match n.job:
 		"holz", "stein", "schrott", "technik":
@@ -578,13 +613,15 @@ func _work_task(n) -> Dictionary:
 	var steps: Array = []
 	match n.job:
 		"holz":
-			steps = [
-				{"at": _stand(w2), "face": w2, "clip": "chop", "dur": 5.0, "prop": "c_hammer", "take": "c_log", "text": "Hackt Holz"},
-				{"at": _stand(dr), "face": dr, "clip": "pick_up", "dur": 1.2, "drop": true, "text": "Trägt einen Stamm zum Stapel"}]
+			steps = _tree_steps(n, s, dr)
+			if steps.is_empty():
+				steps = [
+					{"at": _stand(w2), "face": w2, "clip": "chop", "dur": 5.0, "prop": "c_hammer", "take": "c_log", "text": "Hackt Holz"},
+					{"at": _stand(dr), "face": dr, "clip": "pick_up", "dur": 1.2, "drop": true, "text": "Trägt einen Stamm zum Stapel"}]
 		"stein":
 			steps = [
-				{"at": _stand(w1), "face": w1, "clip": "mine", "dur": 5.0, "prop": "c_hammer", "take": "c_stone", "text": "Klopft am Fels"},
-				{"at": _stand(dr), "face": dr, "clip": "pick_up", "dur": 1.2, "drop": true, "text": "Bringt Steine zur Ablage"}]
+				{"at": _stand(w1), "face": w1, "clip": "mine", "dur": 5.0, "prop": "c_hammer", "take": "c_barrow", "text": "Klopft am Fels"},
+				{"at": _stand(dr), "face": dr, "clip": "pick_up", "dur": 1.2, "drop": true, "text": "Schiebt die Schubkarre zur Ablage"}]
 		"schrott":
 			steps = [
 				{"at": _stand(w2), "face": w2, "clip": "pick_up", "dur": 1.2, "take": "c_scrap", "text": "Sammelt Schrott"},
@@ -594,7 +631,7 @@ func _work_task(n) -> Dictionary:
 			steps = [
 				{"at": _stand(w1), "face": w1, "clip": "pay", "dur": 3.0, "text": "Prüft die Anzeigen"},
 				{"at": _stand(w2), "face": w2, "clip": "hammer", "dur": 3.0, "prop": "c_hammer", "text": "Dreht am Ventil"},
-				{"at": _stand(w2), "face": w2 + (w2 - s.mid), "clip": "wave", "dur": 1.5, "text": "Wischt sich die Stirn"}]
+				{"at": _stand(w2), "face": w2 + (w2 - s.mid), "clip": "wipe_brow", "dur": 1.6, "text": "Wischt sich die Stirn"}]
 	return {"kind": "work", "sid": int(s.b.get("id", -1)) if not s.b.is_empty() else -1, "steps": steps}
 
 
@@ -710,6 +747,13 @@ func _night_task(n) -> Dictionary:
 
 ## Pause: Bank, Plausch mit einem anderen Bewohner oder kurz umschauen.
 func _pause_task(n) -> Dictionary:
+	# Paket Welt: ab und zu Hühner scheuchen
+	if _rng.randf() < 0.18 and n.hero_key == "" and w.get("wildlife") != null and w.wildlife.has_method("chicken_spot"):
+		var cp: Vector2 = w.wildlife.chicken_spot()
+		if cp != Vector2.INF:
+			var at0: Vector2 = nav.free_near(cp + Vector2(1.6, 0).rotated(_rng.randf() * TAU), 4)
+			if at0 != Vector2.INF and at0.distance_to(cp) < 4.0:
+				return {"kind": "pause", "steps": [{"at": at0, "face": cp, "clip": "shoo", "dur": 2.4, "text": "Scheucht die Hühner"}]}
 	for b in _benches:
 		if b.used.size() < 2:
 			var seat: Vector2 = b.p + b.side * (0.45 if b.used.is_empty() else -0.45)
@@ -766,3 +810,202 @@ func _place_benches() -> void:
 func release(n) -> void:
 	for b in _benches:
 		b.used.erase(n)
+
+
+# ================================================================= Paket Welt: echte Bäume, Tagesablauf, Wünsche
+## Ein Bewohner hat einen Schritt beendet (npc.gd): gefällter Baum fällt um, Laterne wird angezündet.
+func step_done(n, st: Dictionary) -> void:
+	if st.has("tree"):
+		var pl: Dictionary = st.tree
+		if w.nature != null and w.nature.has_method("fell_tree"):
+			w.nature.fell_tree(pl, n.pos)
+			trees_felled += 1
+		_tree_res.erase(w.nature._tree_key(pl) if w.nature != null else "")
+	if st.has("lamp"):
+		var lp: Vector2 = st.face
+		lamps_lit += 1
+		Sfx.play_at("lamp_on", Vector3(lp.x, 2.0, lp.y), -8.0, 1.0, 0.2)
+		if w.fx != null:
+			w.fx.puff(Vector3(lp.x, 2.6, lp.y), Color(1.0, 0.85, 0.4), 6, 0.7)
+	if st.get("clip", "") == "shoo":
+		n.acc = 0.0
+
+
+## Holzfäller: einen Baum in der Nähe des Sägewerks fällen, den Stamm zum Sägewerk tragen.
+func _tree_steps(n, s, dr: Vector2) -> Array:
+	if w.nature == null or not w.nature.has_method("trees_near"):
+		return []
+	var lim: float = _area() - 2.0
+	for pl in w.nature.trees_near(s.mid, DW.NPC_TREE_RANGE, _tree_res):
+		var tp: Vector2 = w.nature.tree_pos(pl)
+		if absf(tp.x) > lim or absf(tp.y) > lim:
+			continue
+		var side: Vector2 = (s.mid - tp).normalized() if s.mid.distance_to(tp) > 0.5 else Vector2.RIGHT
+		var stand: Vector2 = nav.free_near(tp + side * 1.3, 6)
+		if stand == Vector2.INF or stand.distance_to(tp) > 3.2:
+			continue
+		_tree_res[w.nature._tree_key(pl)] = n
+		return [
+			{"at": stand, "face": tp, "clip": "chop", "dur": 5.0, "prop": "c_hammer", "tree": pl, "text": "Fällt einen Baum"},
+			{"at": stand, "face": tp + side * 2.0, "clip": "pick_up", "dur": 1.0, "take": "c_log", "text": "Hebt den Stamm auf"},
+			{"at": _stand(dr), "face": dr, "clip": "pick_up", "dur": 1.2, "drop": true, "text": "Trägt den Stamm zum Sägewerk"}]
+	return []
+
+
+## Teil des Tages: morgen, mittag, abend, tag (nachts schlafen die meisten ohnehin).
+func _update_phase() -> void:
+	var ph := "tag"
+	if force_phase != "":
+		ph = force_phase
+	elif w.get("weather") != null and w.weather != null:
+		var mw: Dictionary = w.weather.mood_w
+		if float(mw.get("morgen", 0.0)) > 0.5:
+			ph = "morgen"
+		elif float(mw.get("abend", 0.0)) > 0.5:
+			ph = "abend"
+		elif w.weather.force == "":
+			var hr: float = w.weather.hour_now()
+			if hr >= 12.0 and hr < 13.5:
+				ph = "mittag"
+	if ph != phase:
+		phase = ph
+		_lamp_npc = null
+		if phase == "mittag":
+			_make_fire()
+		elif _fire != null:
+			_fire.queue_free()
+			_fire = null
+			_fire_p = Vector2.INF
+
+
+func _make_fire() -> void:
+	if _fire != null or not Models.has_glb("p_campfire"):
+		return
+	var s = _node_of("quartier")
+	if s == null:
+		s = w.bunker_node
+	if s == null:
+		return
+	var d := _spot(s, "door")
+	var out: Vector2 = (d - s.mid).normalized() if d.distance_to(s.mid) > 0.1 else Vector2(0, 1)
+	var q: Vector2 = nav.free_near(d + out * 5.0, 6)
+	if q == Vector2.INF:
+		return
+	_fire_p = q
+	_fire = Models.glb("p_campfire")
+	_fire.position = Vector3(q.x, 0, q.y)
+	w.add_child(_fire)
+	w._anims.append_array(preload("res://src/anim.gd").collect(_fire))
+
+
+## Morgens Frühstück vor dem Bunker, mittags Pause am Lagerfeuer, abends Laternen anzünden (jeder einmal je Abschnitt).
+func _routine_task(n) -> Dictionary:
+	if n.hero_key != "" or n.job == "wache" or n.job == "hand" or n.task.get("kind", "") == "build":
+		return {}
+	if phase == "tag" or n.routine == phase:
+		return {}
+	match phase:
+		"morgen":
+			if n.idx % 2 == 0:
+				n.routine = phase
+				var d := _door("bunker")
+				var q: Vector2 = nav.free_near(d + Vector2(_rng.randf_range(-3, 3), _rng.randf_range(1.5, 3.5)))
+				return {"kind": "pause", "steps": [{"at": q, "face": d, "clip": "eat", "dur": 6.0, "text": "Frühstückt vor dem Bunker"}]}
+		"mittag":
+			if _fire_p != Vector2.INF and n.idx % 3 != 2:
+				n.routine = phase
+				var a: float = (n.idx * 1.3) + _rng.randf() * 0.4
+				var q2: Vector2 = nav.free_near(_fire_p + Vector2(cos(a), sin(a)) * 2.0, 4)
+				return {"kind": "pause", "steps": [{"at": q2, "face": _fire_p, "clip": "warm_hands", "dur": 8.0, "text": "Mittagspause am Lagerfeuer"}]}
+		"abend":
+			if _lamp_npc == null and w.nature != null and w.nature.lamp_spots.size() > 0:
+				n.routine = phase
+				_lamp_npc = n
+				var steps: Array = []
+				var spots: Array = Array(w.nature.lamp_spots)
+				spots.sort_custom(func(a, b): return a.distance_squared_to(n.pos) < b.distance_squared_to(n.pos))
+				for lp in spots.slice(0, 4):
+					var st0: Vector2 = nav.free_near(lp + Vector2(0.9, 0.0), 4)
+					steps.append({"at": st0, "face": lp, "clip": "pick_up", "dur": 1.0, "lamp": true, "text": "Zündet die Laternen an"})
+				return {"kind": "work", "steps": steps}
+	n.routine = phase
+	return {}
+
+
+# ---------------------------------------------------------------- Wünsche
+func _tick_wishes() -> void:
+	if w.mode != "peace" or npcs.is_empty():
+		return
+	# erfüllt?
+	for n in npcs:
+		if n.wish.is_empty():
+			continue
+		var ok := false
+		match String(n.wish.key):
+			"flowers":
+				ok = _nodes_of("blumen").size() > int(_wish_counts.get("blumen", 0))
+			"lamp":
+				ok = _nodes_of("laterne").size() > int(_wish_counts.get("laterne", 0))
+			"visit", "coins":
+				if w.hero != null and w.hero.alive and w.hero.pos2().distance_to(n.pos) < 2.6:
+					if String(n.wish.key) == "visit":
+						ok = true
+					elif P.res("coins") >= 50:
+						P.add("coins", -50)
+						ok = true
+		if not ok and w.time - float(n.wish.get("t", 0.0)) > DW.NPC_WISH_TIME:
+			n.clear_wish()
+			continue
+		if ok:
+			_wish_done(n)
+	_wish_t -= 1.0
+	if _wish_t > 0.0:
+		return
+	_wish_t = _rng.randf_range(DW.NPC_WISH_EVERY[0], DW.NPC_WISH_EVERY[1])
+	var cand: Array = npcs.filter(func(o): return o.hero_key == "" and o.wish.is_empty() and not o.hidden)
+	for o in npcs:
+		if not o.wish.is_empty():
+			return                                    # immer nur ein offener Wunsch
+	if cand.is_empty():
+		return
+	var n = cand[_rng.randi() % cand.size()]
+	var opts: Array = []
+	for wd in DW.NPC_WISHES:
+		match String(wd.key):
+			"flowers":
+				if P.can_build("blumen") == "":
+					opts.append(wd)
+			"lamp":
+				if P.can_build("laterne") == "":
+					opts.append(wd)
+			_:
+				opts.append(wd)
+	if opts.is_empty():
+		return
+	give_wish(n, opts[_rng.randi() % opts.size()])
+
+
+## Wunsch an einen Bewohner geben (auch für Tests).
+func give_wish(n, wd: Dictionary) -> void:
+	var w0: Dictionary = wd.duplicate()
+	w0["t"] = w.time
+	_wish_counts = {"blumen": _nodes_of("blumen").size(), "laterne": _nodes_of("laterne").size()}
+	n.show_wish(w0)
+	Sfx.play_at("npc_wish", n.h.global_position, -8.0, 1.0, 0.5)
+	P.toast.emit("%s wünscht sich etwas: „%s“" % [n.name, String(wd.text)])
+
+
+func _wish_done(n) -> void:
+	var key := String(n.wish.key)
+	n.clear_wish()
+	wishes_done += 1
+	WS.st().wish_done = int(WS.st().wish_done) + 1
+	P.count_up("wishes", 1)
+	var bundle: Dictionary = DW.NPC_WISH_REWARD.duplicate()
+	if key == "coins":
+		bundle = {"coins": 100}
+	P.add_pickup("wish", "quartier" if _node_of("quartier") != null else "bunker", bundle, "Danke von %s!" % n.name)
+	Sfx.play_at("npc_wish_done", n.h.global_position, -4.0, 1.0, 0.3)
+	n.cheer(2.0)
+	n.bubble("ui_heart")
+	P.toast.emit("%s freut sich: Wunsch erfüllt! Ein Dankeschön liegt bereit." % n.name)

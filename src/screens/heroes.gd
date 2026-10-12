@@ -3,6 +3,7 @@ extends RefCounted
 
 const D = preload("res://src/data.gd")
 const UI = preload("res://src/ui.gd")
+const Arsenal = preload("res://src/arsenal_rules.gd")
 
 const TABS := ["Übersicht", "Waffen", "Ausrüstung", "Talente", "Fähigkeiten", "Geschichte", "Auto-Expedition"]
 const TAB_ICONS := ["ui_info", "ui_sword", "ui_helmet", "ui_star", "ui_bolt", "ui_quest", "ui_expedition"]
@@ -197,7 +198,7 @@ func _overview(c: VBoxContainer, key: String, unlocked: bool) -> void:
 			var chip := UI.hbox(6, [UI.pic("ui_check" if got else "ui_lock", 22.0, "", UI.GREEN if got else UI.GREY), UI.label("%d · %s" % [int(e[0]), String(e[1])], 18, UI.WHITE if got else UI.GREY, false)])
 			ladder.add_child(UI.card(chip, Color("1F5A34") if got else UI.NAVY_D, 6))
 		c.add_child(ladder)
-		c.add_child(UI.label("Jede Stufe: +3 %% Leben, +2 %% Schaden und ein Talentpunkt. Erfahrung bekommt nur der Held, der kämpft." , 18, UI.GREY, false))
+		c.add_child(UI.label("Jede Stufe: +3 % Leben, +2 % Schaden und ein Talentpunkt. Erfahrung bekommt nur der Held, der kämpft." , 18, UI.GREY, false))
 		# Werte
 		var stats: Dictionary = P.hero_stats(key)
 		var g2 := UI.grid(2, 10)
@@ -244,44 +245,93 @@ func _item_row(it: Dictionary, right: Control) -> Control:
 	return UI.card(row, UI.NAVY_D, 10, Color(S.rarity_color(r), 0.55))
 
 
+## Alle 15 Waffen des Helden (wie in der Werkstatt): besessen mit Ausrüsten, gesperrt mit Hinweis, wo es sie gibt.
+## Oben der Schnellwechsel: jede besessene Waffenart als Bild, ein Tipp rüstet das beste Stück davon aus (Paket F).
 func _weapons(c: VBoxContainer, key: String) -> void:
 	var def: Dictionary = D.HEROES[key]
 	var h: Dictionary = P.hero(key)
-	var wkeys: Array = def.weapons
+	var wkeys: Array = D.hero_weapons(key)
+	var cur: Dictionary = P.item(int(h.weapon))
+	var cur_key := String(cur.get("key", ""))
+	# ---- Schnellwechsel
+	var quick := UI.flow(8)
+	var owned_n := 0
+	for wk in wkeys:
+		var items := _owned("weapon", String(wk))
+		if items.is_empty():
+			continue
+		owned_n += 1
+		var best: Dictionary = items[0]
+		var on: bool = cur_key == String(wk)
+		var pic := UI.pic("w_" + String(wk), 64.0, "sword")
+		var qb: Button = S.card_button(on, S.act(func():
+			if int(h.weapon) != int(best.id):
+				P.equip(key, int(best.id))
+				UI.sfx("ui_equip", "", -6.0)
+				S.preview_cheer()), UI.vbox(0, [pic]), 78.0)
+		qb.custom_minimum_size = Vector2(88, 84)
+		qb.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+		qb.tooltip_text = "%s (%s)" % [String(D.WEAPONS[wk].name), String(D.RARITY[int(best.rarity)].name)]
+		quick.add_child(qb)
+	var qhead := UI.hbox(10, [UI.pic("ui_speed", 34.0), UI.label("Schnellwechsel", 25, UI.GOLD), UI.spacer(true), UI.label("%d von %d Waffen im Besitz" % [owned_n, wkeys.size()], 20, UI.TEXT, false)])
+	c.add_child(UI.card(UI.vbox(8, [qhead, quick]), UI.NAVY_L, 12, Color(UI.GOLD, 0.5)))
+	# ---- alle Waffen
 	for i in wkeys.size():
 		var wk := String(wkeys[i])
 		var w: Dictionary = D.WEAPONS[wk]
-		var need := int(D.WEAPON_UNLOCK_LEVELS[i])
-		var box := UI.vbox(8)
+		var need := D.weapon_level(wk)
+		var st := Arsenal.status(wk)
+		var box := UI.vbox(6)
 		var info := "Schaden %d · %d Schuss/Min · Reichweite %d m" % [int(w.damage), int(w.rpm), int(w.range)]
-		if int(w.mag) > 0:
+		if int(w.get("mag", 0)) > 0:
 			info += " · Magazin %d" % int(w.mag)
-		var wp := UI.pic("w_" + wk, 92.0, "sword")
-		var tt := UI.vbox(0, [UI.hbox(12, [UI.label(String(w.name), 29), UI.label(String(w.kind), 21, UI.SKY, false)]), UI.label(info, 20, UI.TEXT, false)])
+		var wp := UI.pic("w_" + wk, 80.0, "sword")
+		var nm := UI.label(String(w.name), 26, UI.WHITE if st == "owned" else UI.GREY)
+		var tt := UI.vbox(0, [UI.hbox(10, [nm, UI.label(String(w.kind), 19, UI.SKY, false), UI.label("Stufe %d" % need, 17, UI.GREY, false)]), UI.label(info, 18, UI.TEXT, false)])
 		tt.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		tt.alignment = BoxContainer.ALIGNMENT_CENTER
-		var title := UI.hbox(14, [wp, tt])
+		var title := UI.hbox(12, [wp, tt])
 		box.add_child(title)
-		if int(h.level) < need:
-			wp.modulate = Color(0.4, 0.47, 0.65)
-			title.add_child(UI.hbox(8, [UI.icon("lock", 34.0, UI.GOLD), UI.label("Ab Heldenstufe %d" % need, 23, UI.GOLD)]))
-		else:
-			var items := _owned("weapon", wk)
-			if items.is_empty():
-				box.add_child(S.hint("Noch kein Stück im Besitz."))
-			for it in items:
+		if st == "owned":
+			# höchstens zwei Stücke je Art (das ausgerüstete und das beste), der Rest steht in der Werkstatt
+			var all_it := _owned("weapon", wk)
+			var show: Array = []
+			for it0 in all_it:
+				if int(it0.id) == int(h.weapon):
+					show.append(it0)
+			for it0 in all_it:
+				if show.size() < 2 and not show.has(it0):
+					show.append(it0)
+			for it in show:
 				var id := int(it.id)
 				var right: Control
 				if int(h.weapon) == id:
-					right = UI.badge("Ausgerüstet", Color("2E8A22"), 21)
+					right = UI.badge("Ausgerüstet", Color("2E8A22"), 20)
 				else:
 					right = UI.button("Ausrüsten", S.act(func():
 						P.equip(key, id)
-						UI.sfx("ui_equip", "", -6.0)), "green", 23)
-					right.custom_minimum_size = Vector2(180, 70)
+						UI.sfx("ui_equip", "", -6.0)), "green", 22)
+					right.custom_minimum_size = Vector2(170, 64)
 				box.add_child(_item_row(it, right))
-		c.add_child(UI.card(box, UI.NAVY_L, 14))
-	c.add_child(S.hint("Neue Stücke gibt es in Beutekisten. In der Werkstatt lassen sie sich verbessern und verschmelzen."))
+			if all_it.size() > show.size():
+				box.add_child(UI.label("   + %d weitere Stücke (Werkstatt: verbessern, verschmelzen)" % (all_it.size() - show.size()), 18, UI.GREY, false))
+		else:
+			wp.modulate = Color(0.05, 0.08, 0.16, 0.85) if int(h.level) < need else Color(0.32, 0.38, 0.55, 0.9)
+			var hint := UI.label(Arsenal.hint(wk), 19, UI.ORANGE if int(h.level) < need else (UI.GREEN if st == "craft" else UI.GREY), false)
+			hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			hint.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			var lrow := UI.hbox(10, [UI.pic("ui_lock" if st != "craft" else "ui_hammer", 30.0, "", UI.GOLD), UI.badge(String(D.WEAPON_GET_NAME[D.weapon_get(wk)]), Color("2F6DB8"), 16), hint])
+			if st == "craft":
+				var cb := UI.button("Herstellen", S.act(func():
+					if not Arsenal.craft(wk).is_empty():
+						S.preview_cheer()), "green", 22, "ui_hammer")
+				cb.custom_minimum_size = Vector2(0, 60)
+				UI.disable(cb, not Arsenal.can_craft(wk))
+				lrow.add_child(UI.cost_row(D.craft_cost(wk), 18))
+				lrow.add_child(cb)
+			box.add_child(lrow)
+		c.add_child(UI.card(box, UI.NAVY_L if st == "owned" else UI.NAVY_D, 12))
+	c.add_child(S.hint("Neue Waffen gibt es als Fund oder Bauplan auf Expeditionen und in Beutekisten. In der Werkstatt lassen sie sich verbessern und verschmelzen."))
 
 
 # ----------------------------------------------------------------- Ausrüstung

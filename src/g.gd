@@ -3,6 +3,7 @@ extends Node
 ## einheitliche Eingabe für Touch, Tastatur, Maus und Gamepad, Testschalter.
 
 const D = preload("res://src/data.gd")
+const I18N = preload("res://src/i18n.gd")
 
 # Verweise, die die laufende Welt (Basis oder Expedition) setzt
 var main: Node
@@ -67,6 +68,7 @@ func _ready() -> void:
 			test_args[kv[0]] = kv[1]
 	if autotest != "":
 		Engine.max_physics_steps_per_frame = 40
+	I18N.setup()                  # Sprache (Paket S): gespeichert, sonst Systemsprache; --lang=en zum Testen
 	_setup_actions()
 	is_touch = (DisplayServer.is_touchscreen_available() and (OS.has_feature("mobile") or OS.has_feature("web_ios") or OS.has_feature("web_android"))) or force_touch
 
@@ -190,3 +192,10 @@ func apply_quality() -> void:
 	Engine.max_fps = 60 if P.d.settings.get("fps60", not web_mobile()) else 30
 	if autotest != "":
 		Engine.max_fps = 0
+
+
+## Paket S: nicht übersetzte Texte beim Beenden in die Datei aus --i18n_log= schreiben (nur zum Prüfen).
+func _exit_tree() -> void:
+	if arg("i18n_log") != "":
+		I18N.dump_misses(arg("i18n_log"))
+	I18N.shutdown()

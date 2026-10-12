@@ -1,0 +1,81 @@
+{
+ "key": "eis_schneemutter",
+ "kind": "vat",
+ "role": "brood",
+ "verts": 511,
+ "tris": 686,
+ "width": 511,
+ "rows": 69,
+ "rpf": 1,
+ "fps": 10,
+ "bounds_min": [
+  -1.2239455225209783,
+  -2.6650001507997505,
+  -1.3875106848592316
+ ],
+ "bounds_size": [
+  2.485748080100722,
+  6.087726240017677,
+  3.2029008707678286
+ ],
+ "height": 3.0199999809265137,
+ "radius": 1.0523716468557598,
+ "clips": {
+  "idle": {
+   "row": 0,
+   "n": 14,
+   "dur": 1.4,
+   "loop": true,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "walk": {
+   "row": 14,
+   "n": 10,
+   "dur": 1.0,
+   "loop": true,
+   "stride": 1.4,
+   "hit": -1.0
+  },
+  "attack": {
+   "row": 24,
+   "n": 9,
+   "dur": 0.8,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.4
+  },
+  "hit": {
+   "row": 33,
+   "n": 4,
+   "dur": 0.3,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "death": {
+   "row": 37,
+   "n": 12,
+   "dur": 1.1,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "brood": {
+   "row": 49,
+   "n": 11,
+   "dur": 1.0,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.6
+  },
+  "spawn": {
+   "row": 60,
+   "n": 9,
+   "dur": 0.8,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  }
+ }
+}

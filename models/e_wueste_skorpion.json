@@ -1,0 +1,81 @@
+{
+ "key": "wueste_skorpion",
+ "kind": "vat",
+ "role": "miniboss",
+ "verts": 944,
+ "tris": 1468,
+ "width": 944,
+ "rows": 65,
+ "rpf": 1,
+ "fps": 10,
+ "bounds_min": [
+  -2.0432126489958566,
+  -3.0612871345395707,
+  -3.2701075434440643
+ ],
+ "bounds_size": [
+  4.096890703311356,
+  6.973166721878922,
+  5.986228737637145
+ ],
+ "height": 3.454903721809387,
+ "radius": 2.6559260890935117,
+ "clips": {
+  "idle": {
+   "row": 0,
+   "n": 12,
+   "dur": 1.2,
+   "loop": true,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "walk": {
+   "row": 12,
+   "n": 7,
+   "dur": 0.7,
+   "loop": true,
+   "stride": 1.12,
+   "hit": -1.0
+  },
+  "attack": {
+   "row": 19,
+   "n": 8,
+   "dur": 0.7,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.36666666666666664
+  },
+  "hit": {
+   "row": 27,
+   "n": 4,
+   "dur": 0.3,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "death": {
+   "row": 31,
+   "n": 11,
+   "dur": 1.0,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "skill": {
+   "row": 42,
+   "n": 14,
+   "dur": 1.3,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.9
+  },
+  "spawn": {
+   "row": 56,
+   "n": 9,
+   "dur": 0.8,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  }
+ }
+}

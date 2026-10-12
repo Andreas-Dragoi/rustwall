@@ -44,6 +44,13 @@ var _vol := -1.0
 var _poll := 0.0
 var _warm_i := 0
 var _bus := 0
+var _bus_amb := 0                      # Mischpult (V5): Umgebung und Stimmen haben eigene Regler
+var _bus_voice := 0
+var _vol_amb := -1.0
+var _vol_voice := -1.0
+var _voice_t := {}                     # Held -> Zeit des letzten Rufs
+var _vw := {}                          # beobachteter Held: Werte vom letzten Blick (Rufe ohne Eingriff in hero.gd)
+var _vw_t := 0.0
 var _log_on := false                   # Testhilfe: -- --sfxlog zählt mit, was gespielt wurde
 var _log := {}
 
@@ -62,6 +69,8 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_rng.seed = 12345
 	_bus = ensure_bus("SFX")
+	_bus_amb = ensure_bus("Ambient")
+	_bus_voice = ensure_bus("Voice")
 	_log_on = OS.get_cmdline_user_args().has("--sfxlog")
 	_p_time.resize(VOICES)
 	for i in VOICES:
@@ -91,6 +100,8 @@ func ground(theme: Dictionary) -> String:
 			return "step_sand"
 		"frost":
 			return "step_snow"
+		"vulkan":
+			return "step_sand"                 # Asche und Lavakies
 	return "step_grass"
 
 
@@ -109,6 +120,8 @@ func ambience(theme: Dictionary) -> String:
 			return "amb_snow"
 		"krater":
 			return "amb_crater"
+		"vulkan":
+			return "amb_x_vulkan" if has("amb_x_vulkan") else "amb_crater"
 	return "amb_meadow"
 
 
@@ -117,6 +130,11 @@ func has(sound: String) -> bool:
 
 
 func play(sound: String, vol_db := 0.0, pitch := 1.0, min_gap := 0.045) -> void:
+	if (sound == "win" or sound == "lose") and Music.has_stinger(sound):
+		if _log_on:
+			_log[sound] = int(_log.get(sound, 0)) + 1
+		Music.stinger(sound)                   # Sieg/Niederlage: kurzes Musikstück statt Klang
+		return
 	var arr: Array = _snd(sound)
 	if arr.is_empty():
 		return
@@ -166,6 +184,7 @@ func play(sound: String, vol_db := 0.0, pitch := 1.0, min_gap := 0.045) -> void:
 			v = (v + 1) % n
 		_pick[sound] = v
 	var p := _players[idx]
+	p.bus = _bus_name_for(sound)
 	p.stream = arr[v]
 	p.volume_db = vol_db
 	p.pitch_scale = pitch * (_rng.randf_range(0.95, 1.05) if _jitter.get(sound, false) else 1.0)
@@ -219,7 +238,10 @@ func loop(id: String, sound: String, vol_db := 0.0, pitch := 1.0, ttl := 0.0) ->
 		p.bus = "SFX"
 		add_child(p)
 		p.finished.connect(_on_loop_finished.bind(p))
+	p.bus = _bus_name_for(id if _is_amb(id) else sound)
 	var st: AudioStream = arr[0]
+	if st is AudioStreamOggVorbis:
+		st.loop = true
 	if st is AudioStreamWAV and st.loop_mode == AudioStreamWAV.LOOP_DISABLED:
 		st.loop_mode = AudioStreamWAV.LOOP_FORWARD
 		st.loop_begin = 0
@@ -315,6 +337,11 @@ func _process(dt: float) -> void:
 	if _poll <= 0.0:
 		_poll = 0.3
 		_read_volume()
+		_read_mixer()
+	_vw_t -= dt
+	if _vw_t <= 0.0:
+		_vw_t = 0.1
+		_watch_hero()
 	if _warm_i < WARM.size():
 		_snd(WARM[_warm_i])
 		_warm_i += 1
@@ -344,13 +371,17 @@ func _snd(sound: String) -> Array:
 	if arr != null:
 		return arr
 	var out: Array = []
-	if ResourceLoader.exists(DIR + sound + ".wav"):
+	if ResourceLoader.exists(DIR + sound + ".ogg"):        # lange Klänge und Schleifen als OGG (kleiner fürs Web); OGG vor WAV, falls alte WAV liegen geblieben sind
+		out.append(load(DIR + sound + ".ogg"))
+	elif ResourceLoader.exists(DIR + sound + ".wav"):
 		out.append(load(DIR + sound + ".wav"))
 	else:
-		for i in range(1, 6):
-			var path := "%s%s_%d.wav" % [DIR, sound, i]
+		for i in range(1, 9):
+			var path := "%s%s_%d.ogg" % [DIR, sound, i]
 			if not ResourceLoader.exists(path):
-				break
+				path = "%s%s_%d.wav" % [DIR, sound, i]
+				if not ResourceLoader.exists(path):
+					break
 			out.append(load(path))
 	if out.is_empty() and ALIAS.has(sound) and ALIAS[sound] != sound:
 		out = _snd(ALIAS[sound])
@@ -358,3 +389,91 @@ func _snd(sound: String) -> Array:
 	if not out.is_empty():
 		_jitter[sound] = out.size() > 1 or (out[0] as AudioStream).get_length() < 0.45
 	return out
+
+
+# ---------------------------------------------------------------- Mischpult und Stimmen (V5)
+const VOICE_KINDS := ["start", "skill", "dodge", "hurt", "down", "cheer", "win"]
+const VOICE_GAP := {"start": 3.0, "skill": 6.0, "dodge": 5.0, "hurt": 3.5, "down": 1.0, "cheer": 2.0, "win": 1.0}
+
+
+## Umgebungsschleifen (amb…, nat_…, wx_…) laufen über den Kanal "Ambient", Rufe (v_…) über "Voice".
+func _is_amb(n: String) -> bool:
+	return n == "amb" or n.begins_with("amb_") or n.begins_with("nat_") or n.begins_with("wx_") or n.begins_with("ev_amb")
+
+
+func _bus_name_for(n: String) -> String:
+	if n.begins_with("v_"):
+		return "Voice"
+	if _is_amb(n):
+		return "Ambient"
+	return "SFX"
+
+
+func _read_mixer() -> void:
+	if not P.d.has("settings"):
+		return
+	var a := clampf(float(P.d.settings.get("amb", 0.8)), 0.0, 1.0)
+	if not is_equal_approx(a, _vol_amb):
+		_vol_amb = a
+		AudioServer.set_bus_mute(_bus_amb, a <= 0.01)
+		AudioServer.set_bus_volume_db(_bus_amb, linear_to_db(maxf(a, 0.01)))
+	var v := clampf(float(P.d.settings.get("voice", 0.8)), 0.0, 1.0)
+	if not is_equal_approx(v, _vol_voice):
+		_vol_voice = v
+		AudioServer.set_bus_mute(_bus_voice, v <= 0.01)
+		AudioServer.set_bus_volume_db(_bus_voice, linear_to_db(maxf(v, 0.01)))
+
+
+## Comic-Ruf eines Helden (v_<held>_<art>, mehrere Fassungen werden gewürfelt). Jede Art hat eine Pause.
+func voice(hero_key: String, kind: String, vol_db := -4.0) -> void:
+	var now := Time.get_ticks_msec() * 0.001
+	var k := hero_key + ":" + kind
+	if now - float(_voice_t.get(k, -99.0)) < float(VOICE_GAP.get(kind, 2.0)):
+		return
+	if now - float(_voice_t.get(hero_key, -99.0)) < 0.8 and kind != "down" and kind != "win":   # nie zwei Rufe übereinander
+		return
+	_voice_t[k] = now
+	_voice_t[hero_key] = now
+	if kind == "start" or kind == "win" or kind == "down":
+		# beim Start und Sieg klingt gerade viel gleichzeitig: den Ruf kurz danach (sonst fällt er unter die Grenze je Bild)
+		get_tree().create_timer(0.7, true, false, true).timeout.connect(func(): play("v_%s_%s" % [hero_key, kind], vol_db, 1.0, 0.2))
+		return
+	play("v_%s_%s" % [hero_key, kind], vol_db, 1.0, 0.2)
+
+
+## Beobachtet den gesteuerten Helden (zehnmal je Sekunde) und ruft passend: Treffer, Ausweichen, Fähigkeit,
+## Stufenaufstieg, Fallen, Sieg, Start. So braucht hero.gd keine eigenen Aufrufe.
+func _watch_hero() -> void:
+	var h = G.player
+	var w = G.game
+	if h == null or not is_instance_valid(h) or w == null or not is_instance_valid(w) or not ("key" in h):
+		_vw = {}
+		return
+	var key := String(h.key)
+	var sk_left := 0.0
+	if h.skills != null:
+		for sl in h.skills.slots:
+			sk_left += float(sl.left)
+	var cur := {"id": h.get_instance_id(), "hp": float(h.hp), "alive": bool(h.alive), "lv": int(h.level), "dodge": int(h.dodge_n),
+		"sk": sk_left, "ended": bool(w.ended), "mode": String(w.mode)}
+	if _vw.is_empty() or int(_vw.id) != int(cur.id) or String(_vw.mode) != String(cur.mode):
+		_vw = cur
+		if cur.mode != "peace":
+			voice(key, "start", -5.0)
+		return
+	if cur.mode != "peace" and cur.alive:
+		if float(cur.hp) < float(_vw.hp) - maxf(4.0, float(h.max_hp) * 0.06):
+			voice(key, "hurt", -6.0)
+		if int(cur.dodge) < int(_vw.dodge):
+			voice(key, "dodge", -7.0)
+		if float(cur.sk) > float(_vw.sk) + 1.0:
+			voice(key, "skill", -5.0)
+	if bool(_vw.alive) and not cur.alive:
+		voice(key, "down", -4.0)
+	if int(cur.lv) > int(_vw.lv):
+		voice(key, "cheer", -4.0)
+	if cur.ended and not bool(_vw.ended) and cur.mode != "peace":
+		var r: Dictionary = w.result if "result" in w else {}
+		if bool(r.get("win", r.get("success", false))):
+			voice(key, "win", -3.0)
+	_vw = cur

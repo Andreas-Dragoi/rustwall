@@ -10,6 +10,8 @@ const D = preload("res://src/data.gd")
 const Social = preload("res://src/social.gd")
 const MK = preload("res://src/mk.gd")
 const Arsenal = preload("res://src/arsenal_rules.gd")
+const Guide = preload("res://src/guide.gd")              # Paket F: Spielerführung und Komfort
+const LO = preload("res://src/liveops.gd")               # Paket L: Live-Betrieb (Ereignisse, Saison, Kosmetik, Endspiel)
 
 const SAVE_PATH := "user://rustwall_v2.json"
 const VERSION := 3
@@ -43,6 +45,7 @@ var _needs_migration := false
 var _sync_pending := false
 var slot := 1                      # aktive Stadt
 var cities: Dictionary = {}        # Verzeichnis: {"current": n, "list": {"n": {name, bunker_name, level, bunker, played}}}
+var server_offset := 0.0           # Paket O: Serveruhr minus Geräteuhr (net.gd misst das beim Verbinden)
 
 
 func _ready() -> void:
@@ -63,7 +66,7 @@ func _ready() -> void:
 
 # ================================================================= Zeit
 func now() -> float:
-	return Time.get_unix_time_from_system() + float(d.get("time_offset", 0.0))
+	return Time.get_unix_time_from_system() + float(d.get("time_offset", 0.0)) + server_offset
 
 
 func day_index(t := -1.0) -> int:
@@ -172,6 +175,7 @@ func _load() -> bool:
 func _after_load() -> void:
 	# JSON kennt nur Kommazahlen: Zähler wieder zu Ganzzahlen machen
 	_ensure_fields()
+	_wallet_pull()
 	for b in d.buildings:
 		for k in ["id", "x", "y", "rot", "level"]:
 			b[k] = int(b[k])
@@ -205,6 +209,8 @@ func save() -> void:
 	_dirty = false
 	if no_save:
 		return
+	_wallet_push()
+	d["last_seen"] = now()
 	var f := FileAccess.open(slot_path(slot), FileAccess.WRITE)
 	if f:
 		f.store_string(JSON.stringify(d))
@@ -214,6 +220,7 @@ func save() -> void:
 func reset_all() -> void:
 	var keep_name := bunker_name()
 	new_game()
+	_wallet_pull()
 	d.bunker_name = keep_name
 	social = Social.new(self)
 	social.ensure()
@@ -259,6 +266,8 @@ func _time_passed() -> void:
 	_train_tick(t)
 	if social:
 		social.tick(t)
+	Guide.tick(t)
+	LO.tick(t)                                                # Paket L: Wochenwechsel, Saison-Ende, Feiertage
 
 
 ## Ein Bau, eine Verbesserung oder das Wegräumen eines Hindernisses ist fertig.
@@ -471,7 +480,21 @@ func has_built(key: String) -> bool:
 
 
 func max_count(key: String) -> int:
+	if D.BUILDINGS[key].has("trophy"):
+		return 1 if boss_beaten(String(D.BUILDINGS[key].trophy)) else 0
 	return int(D.BUILDINGS[key].max[clampi(bunker_level(), 1, 10) - 1])
+
+
+## Paket G2: Boss schon einmal besiegt (Flut oder Expedition)? Schaltet seine Trophäe frei.
+func boss_beaten(boss_key: String) -> bool:
+	if int(d.counters.get("boss_win_" + boss_key, 0)) > 0:
+		return true
+	var ai: int = D.AREA_BOSS.find(boss_key)
+	if ai >= 0 and ai < d.areas.boss.size():
+		for v in d.areas.boss[ai]:
+			if bool(v):
+				return true
+	return false
 
 
 ## Beste Mauerart, die der Bunker erlaubt (0 Holz, 1 Stein, 2 Metall). Jedes Mauerstück hat seine eigene Art: level - 1.
@@ -553,7 +576,7 @@ func cost_for(key: String, level: int) -> Dictionary:
 func time_for(key: String, level: int) -> float:
 	if G.ch("instant"):
 		return 0.0
-	return D.build_time(key, level) * (1.0 - cmd_bonus("build_time")) / build_speed()
+	return D.build_time(key, level) * (1.0 - cmd_bonus("build_time")) / build_speed() * LO.build_mult()     # Paket L: Bauwoche
 
 
 func max_level(key: String) -> int:
@@ -1071,7 +1094,23 @@ func prod_rate(b: Dictionary) -> float:
 	var def: Dictionary = D.BUILDINGS[b.key]
 	if not def.has("prod"):
 		return 0.0
-	return float(def.rate) * pow(1.3, int(b.level) - 1) * (1.0 + outpost_bonus("prod_" + String(def.prod)))
+	return float(def.rate) * pow(1.3, int(b.level) - 1) * (1.0 + outpost_bonus("prod_" + String(def.prod))) * (1.0 + deco_bonus())
+
+
+## Paket G2: Deko-Punkte aller fertigen Schmuck-Gebäude (Bewohner-Zufriedenheit).
+func deco_points() -> int:
+	var n := 0
+	for b in d.buildings:
+		var def: Dictionary = D.BUILDINGS.get(String(b.key), {})
+		if def.get("cat", "") != "deco" or (is_building(b) and not b.get("up", false)):
+			continue
+		n += int(def.get("deco", D.DECO_POINTS_OLD.get(String(b.key), 0)))
+	return n
+
+
+## Produktions-Bonus aus den Deko-Punkten (0 … D.DECO_BONUS_MAX).
+func deco_bonus() -> float:
+	return minf(float(deco_points()) * D.DECO_BONUS_PER, D.DECO_BONUS_MAX)
 
 
 func prod_stored(b: Dictionary) -> int:
@@ -1161,7 +1200,7 @@ func add_hero_xp(key: String, n: float) -> void:
 		Sfx.play("hero_level_up", -4.0, 1.0, 0.8)
 		hero_level_up.emit(key, nl)
 	if int(h.level) >= D.HERO_MAX_LEVEL:
-		h.xp = 0.0
+		h.xp = LO.prestige_xp(key, float(h.xp))               # Paket L: Erfahrung über Stufe 40 wird zu Prestige-Sternen
 	mark()
 
 
@@ -1307,6 +1346,7 @@ func hero_stats(key: String) -> Dictionary:
 		m.pickup += 0.5 if strong else 0.3
 	if key == "yuki":
 		m.crit += 0.25 if strong else 0.15
+	LO.prestige_bonus(key, m)                                 # Paket L: Prestige-Sterne
 	return {"hp": float(def.hp) * (1.0 + m.hp), "speed": float(def.speed) * (1.0 + m.speed), "m": m, "level": lv}
 
 
@@ -1514,6 +1554,8 @@ func chest_count(type := "") -> int:
 
 
 func add_chest(type: String, n := 1) -> void:
+	if social and social.hold("chest", n, type):          # Paket O: mit Server erst nach Bestätigung
+		return
 	d.chests[type] = chest_count(type) + n
 	mark()
 
@@ -1543,12 +1585,16 @@ func open_chest(type: String) -> Array:
 	if chest_count(type) <= 0:
 		return []
 	d.chests[type] = chest_count(type) - 1
+	var seed_v: int = social.chest_seed(type) if social else -1       # Paket O: Ziehung vom Server
+	if seed_v >= 0:
+		_rng.seed = seed_v
 	var def: Dictionary = D.CHESTS[type]
 	var out: Array = []
 	var got_epic := false
 	var got_legend := false
 	var ap := Arsenal.chest_loot(type, _roll_rarity(def.table, 0))      # V4: Waffe oder Bauplan ersetzt ein Stück
-	for i in int(def.count) - (0 if ap.is_empty() else 1):
+	var egg: Dictionary = preload("res://src/welt_state.gd").chest_egg(type, null)   # Paket Welt: Begleiter-Ei ersetzt ein Stück (eigener Zufall)
+	for i in int(def.count) - (0 if ap.is_empty() else 1) - (0 if egg.is_empty() else 1):
 		var min_r := 0
 		if i == 0 and def.has("min_rarity"):
 			min_r = int(def.min_rarity)
@@ -1564,9 +1610,13 @@ func open_chest(type: String) -> Array:
 		out.append(_grant_piece(r, float(def.items)))
 	if not ap.is_empty():
 		out.append(ap)
+	if not egg.is_empty():
+		out.append(egg)
 	d.pity_epic = 0 if got_epic else int(d.pity_epic) + 1
 	d.pity_legend = 0 if got_legend else int(d.pity_legend) + 1
 	d.stats.chests = int(d.stats.chests) + 1
+	if seed_v >= 0:
+		_rng.randomize()
 	quest_progress("chests", 1)
 	add_xp(15)
 	mark()
@@ -1741,6 +1791,7 @@ func flood_result(win: bool, hp_ratio: float, auto: bool, kills: int) -> Diction
 	if social:
 		social.add_points("flood", int(out.points))
 		social.add_clan_points(int(out.stars) * 40 + 20)
+	LO.on_flood(win, out)                                     # Paket L: Saisonpunkte, Ereignis, Wochenaufgabe
 	resources_changed.emit()
 	mark()
 	return out
@@ -1781,6 +1832,7 @@ func _ensure_quests() -> void:
 
 
 func quest_progress(key: String, n: int) -> void:
+	LO.on_progress(key, n)                                    # Paket L: Ereignis, Wochenaufgaben, Saison
 	if not d.has("quests"):
 		return
 	for q in d.quests.list:
@@ -1788,6 +1840,7 @@ func quest_progress(key: String, n: int) -> void:
 			q.progress = mini(int(q.amount), int(q.progress) + n)
 			if int(q.progress) >= int(q.amount):
 				add_gems(int(D.GEM_REWARD.quest), "Tagesauftrag")
+				LO.on_daily_quest()                            # Paket L: Saisonpunkte
 				toast.emit("Auftrag erfüllt: " + String(q.text))
 				Sfx.play("quest_done", -4.0, 1.0, 0.5)
 
@@ -1804,6 +1857,7 @@ func claim_quests() -> bool:
 		return false
 	d.quests.claimed = true
 	add_gems(int(D.GEM_REWARD.quests_all), "Alle Tagesaufträge")
+	LO.on_daily_all()                                         # Paket L: Saisonpunkte, Wochenaufgabe
 	add_chest("quest")
 	add_xp(60)
 	mark()
@@ -1969,6 +2023,7 @@ func expedition_end(area: int, diff: int, hero_key: String, success: bool, home_
 		social.add_clan_points(10 + 5 * diff)
 		if float(info.get("race_time", 0.0)) > 0.0:
 			social.submit_time(area, float(info.race_time))
+	LO.on_expedition(area, diff, success, out)                # Paket L: Albtraum+
 	out["outpost_level"] = int(o.level)
 	resources_changed.emit()
 	mark()
@@ -2088,9 +2143,12 @@ func gems() -> int:
 
 
 func add_gems(n: int, reason: String) -> void:
+	if social and social.hold("gems", n, reason):          # Paket O: mit Server erst nach Bestätigung
+		return
 	if n <= 0:
 		return
 	d.res.gems = res("gems") + n
+	_wallet_push()
 	_gem_log(n, reason)
 	Sfx.play("gem_get", -8.0, 1.0, 0.3)
 	gems_changed.emit(n)
@@ -2105,6 +2163,9 @@ func spend_gems(n: int, reason: String) -> bool:
 		toast.emit("Es fehlen %d Juwelen" % (n - res("gems")))
 		return false
 	d.res.gems = res("gems") - n
+	_wallet_push()
+	if social:
+		social.note_spend(n)                               # Paket O: Abgleich mit dem Server
 	_gem_log(-n, reason)
 	Sfx.play("gem_spend", -6.0)
 	gems_changed.emit(-n)
@@ -2245,9 +2306,7 @@ func _check_daily() -> void:
 	d.daily_gift.day = di
 	if has_pickup("daily"):
 		return
-	var i := int(d.daily_gift.idx) % D.DAILY_GIFT.size()
-	d.daily_gift.idx = i + 1
-	add_pickup("daily", "bunker", {"gems": int(D.DAILY_GIFT[i])}, "Tägliches Geschenk (Tag %d von 7)" % (i + 1))
+	LO.daily_gift()                                           # Paket L: 28-Tage-Login-Kalender statt der 7-Tage-Reihe
 
 
 # ----------------------------------------------------------------- Zähler und Erfolge
@@ -2682,11 +2741,20 @@ func _ensure_fields() -> void:
 		d["blueprints"] = {}            # V4 Waffen-Arsenal: gefundene Baupläne
 	if not d.has("flood_guest"):
 		d["flood_guest"] = {"week": -1, "areas": []}
+	for k in [["rev", 0], ["server_time", 0.0], ["net_pending", []], ["net_spent", 0], ["chest_seeds", {}]]:     # Paket O: Cloud-Speicher, Serverbestätigung
+		if not d.has(k[0]):
+			d[k[0]] = k[1]
 	for a in D.AREAS:
 		outpost(String(a.key))
 	for p in d.pickups:
 		p.id = int(p.id)
 	preload("res://src/companion_data.gd").ensure(d)        # Begleiter (Paket B)
+	Guide.ensure(d)                                           # Spielerführung und Komfort (Paket F)
+	preload("res://src/welt_state.gd").ensure(d)             # Welt: Tagebuch, Werkzeuge, Eier, Wünsche (Paket Welt)
+	if d.areas.boss.size() > 0:                              # Paket Z: alte Stände bekommen das achte Gebiet (Vulkaninsel)
+		while d.areas.boss.size() < D.AREAS.size():
+			d.areas.boss.append([false, false, false])
+	LO.ensure(d)                                              # Paket L: Live-Betrieb
 
 
 ## Einmalige Umstellung eines Stands der Version 2 (eine Kopie liegt in rustwall_v2_backup.json).
@@ -2798,6 +2866,7 @@ func _read_cities() -> void:
 		if FileAccess.file_exists(slot_path(n)) and not cities.list.has(str(n)):
 			cities.list[str(n)] = {"name": "Kommandant", "bunker_name": "Stadt %d" % n, "level": 1, "bunker": 1, "played": 0.0}
 	slot = clampi(int(cities.get("current", 1)), 1, MAX_CITIES)
+	_wallet_init()
 
 
 func _write_cities() -> void:
@@ -2934,3 +3003,37 @@ func delete_city(n: int) -> String:
 	cities.list.erase(str(n))
 	_write_cities()
 	return ""
+
+
+# ================================================================= Juwelen auf Konto-Ebene (Paket F, Kapitel 9.2)
+## Juwelen gehören allen Städten gemeinsam: das Guthaben steht im Städte-Verzeichnis (Feld "wallet").
+## d.res.gems ist nur die Kopie für die gerade gespielte Stadt (damit res("gems") überall weiter stimmt).
+## Eine neue Stadt bekommt keine neuen Start-Juwelen. Alte Stände: Guthaben = höchster Stand einer Stadt (nicht die Summe).
+func _wallet_init() -> void:
+	if cities.has("wallet"):
+		cities.wallet = int(cities.wallet)
+		return
+	var best := -1
+	for n in range(1, MAX_CITIES + 1):
+		var path := slot_path(n)
+		if not FileAccess.file_exists(path):
+			continue
+		var v = JSON.parse_string(FileAccess.get_file_as_string(path))
+		if v is Dictionary and v.get("res") is Dictionary:
+			best = maxi(best, int(v.res.get("gems", 0)))
+	cities["wallet"] = best if best >= 0 else int(D.START_RES.gems)
+	cities["wallet_from"] = "max" if best >= 0 else "start"
+	_write_cities()
+
+
+## Konto-Guthaben in die gespielte Stadt übernehmen (nach Laden, Wechsel, neuer Stadt). Tests ohne Speichern: unverändert.
+func _wallet_pull() -> void:
+	if no_save or not cities.has("wallet") or d.is_empty():
+		return
+	d.res["gems"] = int(cities.wallet)
+
+
+func _wallet_push() -> void:
+	if no_save or d.is_empty():
+		return
+	cities["wallet"] = res("gems")

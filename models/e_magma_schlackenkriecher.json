@@ -1,0 +1,81 @@
+{
+ "key": "magma_schlackenkriecher",
+ "kind": "vat",
+ "role": "special",
+ "verts": 944,
+ "tris": 736,
+ "width": 944,
+ "rows": 64,
+ "rpf": 1,
+ "fps": 10,
+ "bounds_min": [
+  -0.9590972787278516,
+  -1.1759422418935748,
+  -1.4990155884007186
+ ],
+ "bounds_size": [
+  1.781448053103937,
+  2.6164155610094153,
+  2.925316822755127
+ ],
+ "height": 0.9323999919414518,
+ "radius": 1.348341151290778,
+ "clips": {
+  "idle": {
+   "row": 0,
+   "n": 12,
+   "dur": 1.2,
+   "loop": true,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "walk": {
+   "row": 12,
+   "n": 8,
+   "dur": 0.8,
+   "loop": true,
+   "stride": 1.7600000000000002,
+   "hit": -1.0
+  },
+  "attack": {
+   "row": 20,
+   "n": 9,
+   "dur": 0.8,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.43333333333333335
+  },
+  "hit": {
+   "row": 29,
+   "n": 4,
+   "dur": 0.3,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "death": {
+   "row": 33,
+   "n": 11,
+   "dur": 1.0,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "steam": {
+   "row": 44,
+   "n": 11,
+   "dur": 1.0,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "spawn": {
+   "row": 55,
+   "n": 9,
+   "dur": 0.8,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  }
+ }
+}

@@ -182,6 +182,8 @@ var _rng := RandomNumberGenerator.new()
 func build(look: Dictionary) -> void:
 	kind = look.get("kind", "settler")
 	var file := "hero_" + kind
+	if String(look.get("skin", "")) != "" and Models.has_glb("hero_" + String(look.skin)):
+		file = "hero_" + String(look.skin)                   # Paket L: Helden-Skin (gleiches Skelett, andere Farben)
 	if not Models.has_glb(file):
 		file = "hero_settler"
 	_pivot = Node3D.new()

@@ -1,0 +1,81 @@
+{
+ "key": "magma_lavaschnecke",
+ "kind": "vat",
+ "role": "mass",
+ "verts": 506,
+ "tris": 526,
+ "width": 506,
+ "rows": 63,
+ "rpf": 1,
+ "fps": 10,
+ "bounds_min": [
+  -0.6063521461563408,
+  -0.9075999729871749,
+  -0.7850000059604645
+ ],
+ "bounds_size": [
+  1.2798997851306466,
+  2.1111191716457527,
+  1.9471073873259113
+ ],
+ "height": 1.0099999904632568,
+ "radius": 0.8140000104904175,
+ "clips": {
+  "idle": {
+   "row": 0,
+   "n": 12,
+   "dur": 1.2,
+   "loop": true,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "walk": {
+   "row": 12,
+   "n": 8,
+   "dur": 0.8,
+   "loop": true,
+   "stride": 1.5199999999999998,
+   "hit": -1.0
+  },
+  "attack": {
+   "row": 20,
+   "n": 8,
+   "dur": 0.7,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.36666666666666664
+  },
+  "hit": {
+   "row": 28,
+   "n": 4,
+   "dur": 0.3,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "death": {
+   "row": 32,
+   "n": 11,
+   "dur": 1.0,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "steam": {
+   "row": 43,
+   "n": 11,
+   "dur": 1.0,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "spawn": {
+   "row": 54,
+   "n": 9,
+   "dur": 0.8,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  }
+ }
+}

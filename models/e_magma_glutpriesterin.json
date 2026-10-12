@@ -1,0 +1,81 @@
+{
+ "key": "magma_glutpriesterin",
+ "kind": "vat",
+ "role": "healer",
+ "verts": 460,
+ "tris": 552,
+ "width": 460,
+ "rows": 67,
+ "rpf": 1,
+ "fps": 10,
+ "bounds_min": [
+  -0.5638509878599651,
+  -1.7719164868957427,
+  -1.0868407910603965
+ ],
+ "bounds_size": [
+  1.1316759207187377,
+  4.182259388666839,
+  2.156434805703926
+ ],
+ "height": 2.1316044330596924,
+ "radius": 0.6256331346759256,
+ "clips": {
+  "idle": {
+   "row": 0,
+   "n": 14,
+   "dur": 1.4,
+   "loop": true,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "walk": {
+   "row": 14,
+   "n": 8,
+   "dur": 0.8,
+   "loop": true,
+   "stride": 1.6,
+   "hit": -1.0
+  },
+  "attack": {
+   "row": 22,
+   "n": 9,
+   "dur": 0.8,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.4
+  },
+  "hit": {
+   "row": 31,
+   "n": 4,
+   "dur": 0.3,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "death": {
+   "row": 35,
+   "n": 12,
+   "dur": 1.1,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "heal": {
+   "row": 47,
+   "n": 11,
+   "dur": 1.0,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.5
+  },
+  "spawn": {
+   "row": 58,
+   "n": 9,
+   "dur": 0.8,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  }
+ }
+}

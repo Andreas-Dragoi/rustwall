@@ -1,0 +1,81 @@
+{
+ "key": "daemonen_gierteufel",
+ "kind": "vat",
+ "role": "thief",
+ "verts": 755,
+ "tris": 1050,
+ "width": 755,
+ "rows": 62,
+ "rpf": 1,
+ "fps": 10,
+ "bounds_min": [
+  -0.616292007236152,
+  -1.7589999780654912,
+  -0.9144566120436275
+ ],
+ "bounds_size": [
+  1.2569821916092274,
+  3.9205852820679006,
+  2.0287012796163886
+ ],
+ "height": 1.9000000953674316,
+ "radius": 0.6550000309944153,
+ "clips": {
+  "idle": {
+   "row": 0,
+   "n": 14,
+   "dur": 1.4,
+   "loop": true,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "walk": {
+   "row": 14,
+   "n": 5,
+   "dur": 0.5,
+   "loop": true,
+   "stride": 1.8,
+   "hit": -1.0
+  },
+  "attack": {
+   "row": 19,
+   "n": 9,
+   "dur": 0.8,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.4
+  },
+  "hit": {
+   "row": 28,
+   "n": 4,
+   "dur": 0.3,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "death": {
+   "row": 32,
+   "n": 12,
+   "dur": 1.1,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "grab": {
+   "row": 44,
+   "n": 9,
+   "dur": 0.8,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.3333333333333333
+  },
+  "spawn": {
+   "row": 53,
+   "n": 9,
+   "dur": 0.8,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  }
+ }
+}

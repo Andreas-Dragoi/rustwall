@@ -53,6 +53,8 @@ var weather: Node3D            # Wind, Tageszeit, Regen der Hauptbasis (weather.
 var wind3 := false             # Kulissen mit dem gemeinsamen Wind der lebendigen Basis zeichnen
 var world_env: Environment     # Umgebung (Tageszeit stellt Farben und Licht um)
 var companion: Node3D          # aktiver Begleiter (companion.gd, Paket B); folgt dem Helden
+var lure_t := 0.0              # Köder des Begleiters (Paket Welt): solange > 0 laufen jagende Gegner zu lure_p
+var lure_p := Vector2.ZERO
 
 
 func is_running() -> bool:
@@ -414,6 +416,12 @@ func make_ambient(kind: String) -> void:
 			bm.size = Vector3(0.16, 0.16, 0.16)
 			p.direction = Vector3(0, 1, 0)
 			p.gravity = Vector3(0, 0.6, 0)
+		"vulkan":                              # Paket Z: Glutfunken steigen auf
+			col = Color(1.0, 0.55, 0.15, 1.0)
+			bm.size = Vector3(0.07, 0.07, 0.07)
+			p.direction = Vector3(0.2, 1, 0.1)
+			p.gravity = Vector3(0.1, 0.5, 0)
+			p.initial_velocity_max = 1.4
 	p.mesh = bm
 	var m := StandardMaterial3D.new()
 	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
@@ -507,6 +515,8 @@ func tick_common(dt: float) -> void:
 		_ambient.global_position = cam.focus + Vector3(0, 3.0, 0)
 	if barrier_t > 0.0:
 		barrier_t -= dt
+	if lure_t > 0.0:
+		lure_t -= dt
 	_coin_t += dt
 	if _coin_t > 0.4:
 		_coin_t = 0.0

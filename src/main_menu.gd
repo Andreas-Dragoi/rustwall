@@ -10,7 +10,7 @@ const UI = preload("res://src/ui.gd")
 signal play_pressed
 
 const INTRO := [
-	["Vor vielen Jahren kam die Flut.", "Seitdem kriecht jede Woche etwas aus den sieben Gebieten.", Vector3(0, 0, 0), -0.6, 0.15, 46.0],
+	["Vor vielen Jahren kam die Flut.", "Seitdem kriecht jede Woche etwas aus den acht Gebieten.", Vector3(0, 0, 0), -0.6, 0.15, 46.0],
 	["Schleimlinge, Untote, Waldgeister, Dämonen …", "Sie wollen nur eines: deinen Bunker.", Vector3(14, 0, 10), 0.4, 0.0, 30.0],
 	["Hinter starken Mauern ist man sicher.", "Bewohner bauen, sammeln und reparieren für dich.", Vector3(-10, 0, 12), 1.1, -0.1, 26.0],
 	["Draußen warten Rohstoffe und Außenbasen.", "Sammle, trag alles heim und erobere die Gebiete.", Vector3(8, 0, -14), 1.8, 0.05, 34.0],
@@ -114,6 +114,7 @@ func show_menu() -> void:
 	_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_panel.alignment = BoxContainer.ALIGNMENT_CENTER
 	row.add_child(_panel)
+	_root.add_child(preload("res://src/liveops_ui.gd").menu_banner(self))     # Paket L: Ereignis, Saison, Neuigkeiten (unten rechts)
 	Music.set_mood("menu")
 
 
@@ -169,7 +170,7 @@ func _show_cities() -> void:
 		_name_edit.custom_minimum_size = Vector2(420, 72)
 		_name_edit.text = _suggest()
 		_name_edit.text_submitted.connect(func(_t: String): _create())
-		var dice := UI.button("🎲", func(): _name_edit.text = _suggest(), "dark", 30)
+		var dice := UI.button("⚄", func(): _name_edit.text = _suggest(), "dark", 30)
 		dice.tooltip_text = "Namen vorschlagen"
 		dice.custom_minimum_size = Vector2(80, 72)
 		var go := UI.button("Gründen", _create, "green", 28, "ui_check")

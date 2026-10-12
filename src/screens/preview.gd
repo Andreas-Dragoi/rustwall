@@ -80,14 +80,15 @@ func _clear() -> void:
 		c.queue_free()
 
 
-func show_hero(key: String, tier: int, weapon_key: String) -> void:
+func show_hero(key: String, tier: int, weapon_key: String, skin := "-", wskin := "-") -> void:
 	_clear()
 	var def: Dictionary = D.HEROES[key]
 	var h: Node3D = Humanoid.new()
 	pivot.add_child(h)
-	h.build({"helm": def.color, "suit": def.suit, "kind": key, "tier": tier})
+	var LO = load("res://src/liveops.gd")                    # Paket L: Skin und Waffen-Skin ("-" = angelegt)
+	h.build({"helm": def.color, "suit": def.suit, "kind": key, "tier": tier, "skin": LO.hero_skin(key) if skin == "-" else skin})
 	if weapon_key != "" and D.WEAPONS.has(weapon_key):
-		h.set_weapon(Models.weapon(weapon_key), float(D.WEAPONS[weapon_key].len))
+		h.set_weapon(LO.tint_weapon(Models.weapon(weapon_key), wskin), float(D.WEAPONS[weapon_key].len))
 	h.aiming = true
 	h.tick(0.016)
 	human = h

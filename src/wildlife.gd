@@ -783,3 +783,31 @@ func animals_in_buildings() -> int:
 		if a.n.visible and a.kind in ["chicken", "rabbit", "cat", "dog"] and _blocked(a.n.position):
 			n += 1
 	return n
+
+
+# ---------------------------------------------------------------- Bewohner scheuchen Hühner (Paket Welt)
+## Ort eines Huhns, das gerade pickt oder herumsteht (sonst Vector2.INF).
+func chicken_spot() -> Vector2:
+	for a in animals:
+		if a.kind == "chicken" and a.n.visible and a.st != "flee":
+			return Vector2(a.n.position.x, a.n.position.z)
+	return Vector2.INF
+
+
+## Hühner im Umkreis r flattern von from weg. Rückgabe: so viele.
+func shoo_chickens(from: Vector2, r: float) -> int:
+	var n := 0
+	for a in animals:
+		if a.kind != "chicken" or not a.n.visible:
+			continue
+		var p2 := Vector2(a.n.position.x, a.n.position.z)
+		if p2.distance_to(from) > r:
+			continue
+		var away := (p2 - from).normalized() if p2.distance_to(from) > 0.1 else Vector2.RIGHT
+		a.st = "flee"
+		a.to = _free_near(Vector3(p2.x + away.x * 5.0, 0, p2.y + away.y * 5.0), 1.0)
+		n += 1
+	if n > 0:
+		Sfx.play_at("npc_shoo", Vector3(from.x, 0, from.y), -8.0, 1.0, 0.5)
+		Sfx.play_at("chicken_cluck", Vector3(from.x, 0, from.y), -8.0, 1.2, 0.3)
+	return n

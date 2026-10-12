@@ -1,0 +1,81 @@
+{
+ "key": "wald_druide",
+ "kind": "vat",
+ "role": "healer",
+ "verts": 900,
+ "tris": 1024,
+ "width": 900,
+ "rows": 67,
+ "rpf": 1,
+ "fps": 10,
+ "bounds_min": [
+  -0.8767596902801886,
+  -2.078799881887436,
+  -1.1621231603412234
+ ],
+ "bounds_size": [
+  1.5555917476769223,
+  4.78548756604874,
+  2.429480396638231
+ ],
+ "height": 2.391160488128662,
+ "radius": 0.5673409852252512,
+ "clips": {
+  "idle": {
+   "row": 0,
+   "n": 14,
+   "dur": 1.4,
+   "loop": true,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "walk": {
+   "row": 14,
+   "n": 8,
+   "dur": 0.8,
+   "loop": true,
+   "stride": 1.6,
+   "hit": -1.0
+  },
+  "attack": {
+   "row": 22,
+   "n": 9,
+   "dur": 0.8,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.4
+  },
+  "hit": {
+   "row": 31,
+   "n": 4,
+   "dur": 0.3,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "death": {
+   "row": 35,
+   "n": 12,
+   "dur": 1.1,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "heal": {
+   "row": 47,
+   "n": 11,
+   "dur": 1.0,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.5
+  },
+  "spawn": {
+   "row": 58,
+   "n": 9,
+   "dur": 0.8,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  }
+ }
+}

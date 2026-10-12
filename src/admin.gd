@@ -136,8 +136,15 @@ func _fill() -> void:
 		_row(types)
 	_row([_btn("1 spawnen", func(): spawn(_spawn_type, 1)), _btn("10 spawnen", func(): spawn(_spawn_type, 10)), _btn("50 spawnen", func(): spawn(_spawn_type, 50)), _btn("Gemischte Horde (80)", func(): spawn(-1, 80))])
 	_row([_btn("Held heilen", heal), _btn("Münzen regnen", func(): rain_coins())])
+	_row([_btn("Weltboss: Schleim-Leviathan", world_boss, "red"), _btn("Miniboss rufen", func(): special_spawn("mini")), _btn("Elite rufen", func(): special_spawn("elite"))])
 	if w != null and w.mode == "exp":
 		_row([_btn("Rucksack füllen", fill_pack), _btn("Heimkehren (Sieg)", win_now, "green"), _btn("Phase überspringen", skip_phase), _btn("Außenbasis fertig", outpost_done, "gold")])
+		_row([_btn("Gebiets-Ereignis an/aus", func():           # Paket Welt
+			w.admin_event()
+			_say("Ereignis: %s" % (w.welt.event_key() if w.welt.event_active() else "aus"))), _btn("Alle Werkzeuge", func():
+			for tk in preload("res://src/data_welt.gd").TOOLS:
+				preload("res://src/welt_state.gd").give_tool(tk)
+			_say("Alle Werkzeuge"))])
 	_section("Außenbasen")
 	var sg := P.outpost_besieged()
 	_row([_btn("Belagerung AN" if sg != "" else "Belagerung aus", toggle_siege, "red" if sg != "" else "dark"), _btn("Alle Außenbasen Stufe 1", func(): outposts_all(1)), _btn("Alle Außenbasen Stufe 5", func(): outposts_all(5), "gold"), _btn("Lieferung jetzt", deliver_now)])
@@ -159,6 +166,7 @@ func _fill() -> void:
 	_row([_btn("Aufträge erfüllen", finish_quests), _btn("Testbasis (Bunker 6)", func(): test_base(6)), _btn("Testbasis (Bunker 10)", func(): test_base(10))])
 	_row([_btn("Tageszeit: " + (Weather.force if Weather.force != "" else "Uhr"), cycle_daytime), _btn("Regen jetzt / aus", toggle_rain)])
 	_row([_btn("Alle Begleiter geben", give_companions, "gold"), _btn("Begleiter +1 Stufe", companion_level)])
+	preload("res://src/liveops_admin.gd").fill(self)        # Paket L: Live-Betrieb
 	_sc.set_deferred("scroll_vertical", keep)
 
 
@@ -582,3 +590,55 @@ func companion_level() -> void:
 	if lv < CD.MAX_LEVEL:
 		CD.add_xp(float(CD.XP_NEED[lv]) - CD.xp(k) + 0.01, k)
 	_say("%s Stufe %d" % [String(CD.def(k).name), CD.level(k)])
+
+
+# ---------------------------------------------------------------- Paket G2: Weltboss, Miniboss, Elite
+## Weltboss „Schleim-Leviathan“ (für spätere Clan-Raids und Ereignisse): in der Basis startet erst eine Übungsflut ohne Wellen.
+func world_boss() -> void:
+	var w = G.main.world
+	if w == null:
+		return
+	if w.mode == "peace":
+		w.start_flood(true)
+		w._queue.clear()
+		w.flood.total = 0
+		w.wave_count = 1
+	if w.mode == "peace" or w.ended:
+		_say("es läuft kein Kampf")
+		return
+	var pp: Vector2 = w.hero.pos2()
+	var q := pp + Vector2(0, -18)
+	if w.field.is_solid(q):
+		q = pp + Vector2(0, 18)
+	var e = w.horde.spawn(int(D.ENEMY_INDEX["boss_leviathan"]), q, float(G.arg("raid_hp", "0.15")), 1.0, 1.0)
+	e.special = "cycle"
+	w.horde.boss = e
+	w.horde.boss_name = String(D.enemy("boss_leviathan").name)
+	if w.mode == "exp":
+		e.home = q
+		e.leash = 20.0
+		e.aggro = true
+	_say("Weltboss gerufen (Leben ×%s für einen Spieler)" % G.arg("raid_hp", "0.15"))
+
+
+## Miniboss oder Elite der gewählten Familie (Familie der gewählten Art).
+func special_spawn(kind: String) -> void:
+	var w = G.main.world
+	if w == null or w.mode == "peace" or w.ended:
+		_say("Gegner gibt es nur im Kampf – starte „Flut jetzt“, „Übung jetzt“ oder eine Expedition")
+		return
+	var fam := String(D.ENEMIES[maxi(_spawn_type, 0)].family)
+	var pp: Vector2 = w.hero.pos2()
+	var q := pp + Vector2(12, 0)
+	if w.field.is_solid(q):
+		q = pp + Vector2(-12, 0)
+	var e
+	if kind == "mini":
+		e = w.horde.spawn_planned(2000 + D.family_mini(fam), q, 1.0, 1.0)
+	else:
+		e = w.horde.spawn_planned(1000 + w.horde.strongest_type(fam), q, 1.0, 1.0)
+	if w.mode == "exp":
+		e.home = pp
+		e.leash = 14.0
+		e.aggro = true
+	_say("%s: %s" % ["Miniboss" if kind == "mini" else "Elite", D.ENEMIES[e.t].name])

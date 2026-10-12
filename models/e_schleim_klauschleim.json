@@ -1,0 +1,81 @@
+{
+ "key": "schleim_klauschleim",
+ "kind": "vat",
+ "role": "thief",
+ "verts": 749,
+ "tris": 1198,
+ "width": 749,
+ "rows": 51,
+ "rpf": 1,
+ "fps": 10,
+ "bounds_min": [
+  -1.2986785714832199,
+  -0.4232500101774923,
+  -1.4145522352326287
+ ],
+ "bounds_size": [
+  2.5973571429664397,
+  2.2921828643986353,
+  2.8823205543544295
+ ],
+ "height": 1.3394999517798425,
+ "radius": 0.9645102705231159,
+ "clips": {
+  "idle": {
+   "row": 0,
+   "n": 12,
+   "dur": 1.2,
+   "loop": true,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "walk": {
+   "row": 12,
+   "n": 4,
+   "dur": 0.4,
+   "loop": true,
+   "stride": 1.2466666666666666,
+   "hit": -1.0
+  },
+  "attack": {
+   "row": 16,
+   "n": 6,
+   "dur": 0.5,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.26666666666666666
+  },
+  "hit": {
+   "row": 22,
+   "n": 4,
+   "dur": 0.3,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "death": {
+   "row": 26,
+   "n": 10,
+   "dur": 0.9,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "spawn": {
+   "row": 36,
+   "n": 6,
+   "dur": 0.5,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "grab": {
+   "row": 42,
+   "n": 9,
+   "dur": 0.8,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.3333333333333333
+  }
+ }
+}

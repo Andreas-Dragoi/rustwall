@@ -1,0 +1,81 @@
+{
+ "key": "wald_eichbart",
+ "kind": "vat",
+ "role": "miniboss",
+ "verts": 1482,
+ "tris": 1646,
+ "width": 1024,
+ "rows": 148,
+ "rpf": 2,
+ "fps": 10,
+ "bounds_min": [
+  -2.226343150631818,
+  -3.9742665697839445,
+  -1.9148065706116262
+ ],
+ "bounds_size": [
+  4.660211787135051,
+  9.011473623630724,
+  4.136857911287866
+ ],
+ "height": 4.449999809265137,
+ "radius": 1.8136768144189739,
+ "clips": {
+  "idle": {
+   "row": 0,
+   "n": 14,
+   "dur": 1.4,
+   "loop": true,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "walk": {
+   "row": 14,
+   "n": 12,
+   "dur": 1.2,
+   "loop": true,
+   "stride": 1.32,
+   "hit": -1.0
+  },
+  "attack": {
+   "row": 26,
+   "n": 9,
+   "dur": 0.8,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.4
+  },
+  "hit": {
+   "row": 35,
+   "n": 4,
+   "dur": 0.3,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "death": {
+   "row": 39,
+   "n": 12,
+   "dur": 1.1,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "skill": {
+   "row": 51,
+   "n": 14,
+   "dur": 1.3,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.9
+  },
+  "spawn": {
+   "row": 65,
+   "n": 9,
+   "dur": 0.8,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  }
+ }
+}

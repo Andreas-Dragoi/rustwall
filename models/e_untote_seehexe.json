@@ -1,0 +1,81 @@
+{
+ "key": "untote_seehexe",
+ "kind": "vat",
+ "role": "healer",
+ "verts": 684,
+ "tris": 800,
+ "width": 684,
+ "rows": 68,
+ "rpf": 1,
+ "fps": 10,
+ "bounds_min": [
+  -0.8795899625148669,
+  -2.0804706144519916,
+  -1.3205392384153012
+ ],
+ "bounds_size": [
+  1.460857871523701,
+  4.782756531698655,
+  2.8208127919377666
+ ],
+ "height": 2.319999933242798,
+ "radius": 0.5860034262431695,
+ "clips": {
+  "idle": {
+   "row": 0,
+   "n": 14,
+   "dur": 1.4,
+   "loop": true,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "walk": {
+   "row": 14,
+   "n": 9,
+   "dur": 0.9,
+   "loop": true,
+   "stride": 1.71,
+   "hit": -1.0
+  },
+  "attack": {
+   "row": 23,
+   "n": 9,
+   "dur": 0.8,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.4
+  },
+  "hit": {
+   "row": 32,
+   "n": 4,
+   "dur": 0.3,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "death": {
+   "row": 36,
+   "n": 12,
+   "dur": 1.1,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "heal": {
+   "row": 48,
+   "n": 11,
+   "dur": 1.0,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.5
+  },
+  "spawn": {
+   "row": 59,
+   "n": 9,
+   "dur": 0.8,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  }
+ }
+}
