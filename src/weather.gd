@@ -42,6 +42,8 @@ var mood_w := {}                 # Stimmung -> Anteil 0..1
 var day_k := 1.0
 var night_k := 0.0
 var rain_k := 0.0                # Regenstärke 0..1
+var fog_extra := 0.0             # V6 Paket B: Nebel der Flut (zusätzliche Nebeldichte)
+var _fog_now := 0.0
 var wet := 0.0
 var raining := false
 var rainbow_k := 0.0
@@ -207,7 +209,10 @@ func _update_daytime(dt: float, snap := false) -> void:
 		env.ambient_light_color = amb
 		env.ambient_light_energy = ae
 		env.fog_light_color = fog.lerp(Color(0.6, 0.65, 0.72), rain_k * 0.4)
-		env.fog_density = fd + rain_k * 0.002
+		_fog_now = move_toward(_fog_now, fog_extra, dt * 0.01 if not snap else 1.0)
+		env.fog_density = fd + rain_k * 0.002 + _fog_now
+		if _fog_now > 0.0001:
+			env.fog_light_color = env.fog_light_color.lerp(Color(0.74, 0.77, 0.8), clampf(_fog_now * 45.0, 0.0, 0.7))
 		env.background_color = env.fog_light_color
 	if nature != null and nature.lamp_mat != null:
 		nature.lamp_mat.albedo_color = Color(0.42, 0.4, 0.36).lerp(Color(1.0, 0.86, 0.45), clampf(lamp + rain_k * 0.3, 0.0, 1.0))

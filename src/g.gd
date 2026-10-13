@@ -70,6 +70,7 @@ func _ready() -> void:
 		Engine.max_physics_steps_per_frame = 40
 	I18N.setup()                  # Sprache (Paket S): gespeichert, sonst Systemsprache; --lang=en zum Testen
 	_setup_actions()
+	preload("res://src/pc_input.gd").setup(self)          # Paket Q: Tastenbelegung, Fenster, Gamepad-Menüs
 	is_touch = (DisplayServer.is_touchscreen_available() and (OS.has_feature("mobile") or OS.has_feature("web_ios") or OS.has_feature("web_android"))) or force_touch
 
 
@@ -158,7 +159,11 @@ func move_vector() -> Vector2:
 	return v.limit_length(1.0)
 
 
+var vibrations := 0              # V6 Paket B: Zähler für Tests (Vibration bei Bau fertig, Kiste, Stufe)
+
+
 func vibrate(ms: int) -> void:
+	vibrations += 1
 	if is_touch and P.d.settings.get("vibrate", true):
 		Input.vibrate_handheld(ms)
 
@@ -167,6 +172,9 @@ func quality() -> int:
 	# Handy-Browser: wenig Speicher – „Niedrig“, solange der Spieler nichts anderes gewählt hat
 	if web_mobile() and not P.d.settings.get("quality_user", false):
 		return 0
+	var aq: int = preload("res://src/auto_quality.gd").auto_quality()      # Paket Q: beim ersten Start gemessen
+	if aq >= 0 and not P.d.settings.get("quality_user", false):
+		return aq
 	return clampi(int(P.d.settings.get("quality", 1)), 0, 2)
 
 

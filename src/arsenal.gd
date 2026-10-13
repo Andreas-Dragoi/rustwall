@@ -286,7 +286,7 @@ func _seek_land(w: Dictionary, d: float, to: Vector3) -> void:
 ## Wirkungen für Flächenschaden (horde.explode).
 func _opts(w: Dictionary) -> Dictionary:
 	var o := {"element": String(w.get("element", "explosion"))}
-	for k in ["stun", "slow", "root", "burn", "poison", "knock"]:
+	for k in ["stun", "slow", "root", "burn", "poison", "poison_d", "knock"]:
 		if w.has(k):
 			o[k] = float(w[k])
 	if w.has("chill"):
@@ -531,6 +531,14 @@ func _step_bolt(b: Dictionary, dt: float) -> bool:
 	b.n.global_position = Vector3(b.p.x, b.y, b.p.y)
 	if b.spin:
 		b.n.rotation = Vector3(0, b.n.rotation.y + dt * 22.0, PI * 0.5)
+		# Paket H: Wurfbahn sichtbar – kurze Leuchtspur hinter Bumerang, Feuerrad, Sternen, Anker
+		var now3: Vector3 = b.n.global_position
+		var tp: Vector3 = b.get("tp", now3)
+		if tp.distance_to(now3) > 0.45:
+			G.fx.tracer(tp, now3, el_col(w).lightened(0.45), 0.05, 0.22)
+			b["tp"] = now3
+		elif not b.has("tp"):
+			b["tp"] = now3
 	else:
 		b.n.look_at(b.n.global_position + Vector3(b.dir.x, 0, b.dir.y), Vector3.UP)
 	# über die ganze Strecke dieses Schritts prüfen (schnelle Geschosse springen sonst über kleine Gegner)

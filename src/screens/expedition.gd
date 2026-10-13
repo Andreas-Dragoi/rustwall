@@ -1,5 +1,5 @@
 extends RefCounted
-## Bildschirm "Expedition" (V3): Weltkarte mit den acht Gebieten. Je Gebiet: Zustand der Außenbasis
+## Bildschirm "Expedition" (V3): Weltkarte mit allen Gebieten (D.AREAS). Je Gebiet: Zustand der Außenbasis
 ## (nicht gebaut / Stufe 1–5 / belagert), empfohlene Heldenstufe, Treibstoff, Vorteil und Preis der nächsten Stufe.
 ## Schwierigkeit bleibt wählbar. Eine belagerte Außenbasis blinkt rot; Los startet dann die Befreiung.
 
@@ -7,7 +7,9 @@ const D = preload("res://src/data.gd")
 const UI = preload("res://src/ui.gd")
 
 ## Lage der Gebiete auf der Karte (Anteile der Kartenfläche), von unten links nach oben rechts.
-const MAP_POS := [Vector2(0.15, 0.86), Vector2(0.45, 0.74), Vector2(0.18, 0.54), Vector2(0.50, 0.42), Vector2(0.82, 0.56), Vector2(0.80, 0.24), Vector2(0.42, 0.11), Vector2(0.12, 0.25)]
+## Paket Z2: die Vulkaninsel rückt etwas nach unten, darüber liegen die Stadtruinen (Gebiet 9) in der Ecke oben links.
+const MAP_POS := [Vector2(0.15, 0.86), Vector2(0.45, 0.74), Vector2(0.18, 0.54), Vector2(0.50, 0.42), Vector2(0.82, 0.56), Vector2(0.80, 0.24), Vector2(0.42, 0.11), Vector2(0.12, 0.29),
+	Vector2(0.14, 0.07)]
 const MAP_SIZE := Vector2(760, 860)
 const NODE := Vector2(176, 156)
 
@@ -78,6 +80,7 @@ func build() -> Control:
 	var jb := UI.button("Tagebuch %d/%d" % [WS.pages(ak).size(), preload("res://src/data_welt.gd").JOURNAL[ak].size()], func(): S.open("tagebuch", {"tab": area}), "dark", 20, "p_journal")
 	jb.custom_minimum_size = Vector2(0, 52)
 	facts.add_child(jb)
+	preload("res://src/screens/unterwegs.gd").exp_extras(S, facts, area)     # V6 Paket E: Auto-Expeditionen, wer hier gerettet werden will
 	v.add_child(facts)
 	v.add_child(UI.hbox(10, [UI.enemy_pic(0, 44.0), UI.label("%s – %s" % [String(fam.name), String(fam.weak_text)], 21, UI.TEXT, false)]))
 	# ---- Außenbasis
@@ -126,10 +129,11 @@ func build() -> Control:
 	# ---- Aufstellung und Start (bleibt unten stehen)
 	var hk := String(P.d.hero_sel)
 	var vk: String = P.vehicle_sel()
-	var busy: bool = P.hero_busy(hk)
+	var hurt: bool = preload("res://src/story.gd").injured(hk)          # V6 Paket E: verletzt von einer Auto-Expedition
+	var busy: bool = P.hero_busy(hk) or hurt
 	var lo := UI.hbox(12)
 	var hb: Button = S.card_button(false, func(): S.open("heroes"), UI.hbox(10, [UI.hero_pic(hk, 76.0),
-		UI.vbox(-2, [UI.label(String(D.HEROES[hk].name), 22), UI.label("Unterwegs!" if busy else "Stufe %d" % int(P.hero(hk).level), 18, UI.RED if busy else UI.TEXT, false)])]), 96.0)
+		UI.vbox(-2, [UI.label(String(D.HEROES[hk].name), 22), UI.label(("Verletzt!" if hurt else "Unterwegs!") if busy else "Stufe %d" % int(P.hero(hk).level), 18, UI.RED if busy else UI.TEXT, false)])]), 96.0)
 	hb.custom_minimum_size = Vector2(250, 96)
 	lo.add_child(hb)
 	var vb: Button = S.card_button(false, func(): S.open("garage"), UI.hbox(10, [UI.vehicle_pic(vk, 76.0),
@@ -228,11 +232,16 @@ class MapBack extends Control:
 		var s := size
 		draw_style_box(load("res://src/ui.gd").panel_style(Color("1E4D3A"), Color("3B7BD0"), 22, 0, 8), Rect2(Vector2.ZERO, s))
 		# Landschaft: Flecken für Wald, Wüste, Küste, Schnee, Krater (grob, nur zur Stimmung)
-		var cols := [Color("5E8F3A"), Color("3F6B35"), Color("C99A52"), Color("D6BE7C"), Color("55703E"), Color("BFD2E6"), Color("7FB23A"), Color("4A3A3A")]
+		var cols := [Color("5E8F3A"), Color("3F6B35"), Color("C99A52"), Color("D6BE7C"), Color("55703E"), Color("BFD2E6"), Color("7FB23A"), Color("4A3A3A"), Color("6E7076")]
 		if pts.size() > 7:                       # Vulkaninsel: Meer rund um die Insel
 			draw_circle(pts[7], 165.0, Color(0.2, 0.45, 0.75, 0.45))
 		for i in pts.size():
 			draw_circle(pts[i], 150.0 if i < 7 else 118.0, Color(cols[i % cols.size()], 0.45 if i < 7 else 0.8))
+		if pts.size() > 8:                       # Paket Z2: Stadtruinen – grauer Häuserblock mit Straßen
+			var c8: Vector2 = pts[8]
+			for k in 3:
+				draw_line(c8 + Vector2(-90, -30 + k * 30), c8 + Vector2(90, -30 + k * 30), Color(0.25, 0.26, 0.28, 0.7), 6.0)
+				draw_line(c8 + Vector2(-50 + k * 50, -70), c8 + Vector2(-50 + k * 50, 70), Color(0.25, 0.26, 0.28, 0.7), 6.0)
 		draw_rect(Rect2(Vector2(s.x * 0.88, 0), Vector2(s.x * 0.12, s.y)), Color(0.2, 0.45, 0.75, 0.35))
 		for i in pts.size() - 1:
 			var a: Vector2 = pts[i]

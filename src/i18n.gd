@@ -24,7 +24,7 @@ const SINGULAR := {"gems": "gem", "coins": "coin", "crates": "crate", "waves": "
 	"buildings": "building", "jobs": "job", "shipments": "shipment", "skills": "skill", "levels": "level", "cities": "city",
 	"pages": "page", "drones": "drone", "achievements": "achievement", "vehicles": "vehicle", "walls": "wall", "nests": "nest",
 	"traps": "trap", "outposts": "outpost", "practice alarms": "practice alarm", "loot crates": "loot crate", "talent points": "talent point"}
-const SEPS := ["\n", " · ", " – ", " — ", " | ", " → ", " / ", ". ", "! ", "? ", "; ", ", ", ": "]
+const SEPS := ["\n", " · ", " – ", " — ", " | ", " → ", " / ", ". ", "! ", "? ", "; ", ", ", ": ", " + "]     # " + ": Paket Q (Wellen-Vorschau)
 
 static var inst: Translation = null
 static var _lang := "de"

@@ -258,6 +258,29 @@ static func reward_text(rw: Dictionary) -> String:
 	return ", ".join(parts)
 
 
+## V6 Paket E: Story-Ziel als zweite Zeile der Ziele-Leiste (Daten in data_geschichte.gd GOALS, Stand in P.d.story.goal).
+## Rückgabe: {} wenn die Geschichte (vorerst) zu Ende ist.
+static func story_goal() -> Dictionary:
+	return load("res://src/story.gd").goal()
+
+
+static func story_goal_ready() -> bool:
+	var g := story_goal()
+	return not g.is_empty() and bool(load("res://src/story.gd").goal_done(g))
+
+
+## Text der Zeile: Ziel, darunter warum es noch nicht geht (Gebiet gesperrt).
+static func story_goal_text() -> String:
+	var g := story_goal()
+	if g.is_empty():
+		return ""
+	return String(g.text)
+
+
+static func story_goal_claim() -> Dictionary:
+	return load("res://src/story.gd").goal_claim()
+
+
 # ================================================================= Rückkehr-Zusammenfassung
 ## Zeilen für „Während du weg warst …“ (nach dem Laden einmal). Leer = nichts zu zeigen.
 static func away_report() -> Dictionary:
@@ -516,12 +539,16 @@ static func upgrade_preview(key: String, lv: int) -> Array:
 	if def.has("tower"):
 		var t: Dictionary = D.TOWERS[def.tower]
 		var d0: float = float(t.damage) * float(t.rpm) / 60.0 * pow(D.TOWER_DMG_GROWTH, lv - 1)
+		# Paket Q: Forschung (Schaden, Feuertempo), Kommandant und Außenbasen wie im Kampf (structure.gd, world.tower_rate)
+		d0 *= (1.0 + P.cmd_bonus("tower_dmg")) * (1.0 + P.outpost_bonus("tower_rate")) * (1.0 + preload("res://src/research.gd").bonus("tower_rate"))
 		out.append(["ui_sword", "Schaden pro Sekunde", str(int(d0)), str(int(d0 * D.TOWER_DMG_GROWTH))])
 	if def.has("prod"):
 		var r0: float = float(def.rate) * pow(1.3, lv - 1) * (1.0 + P.outpost_bonus("prod_" + String(def.prod)))
+		r0 *= (1.0 + P.deco_bonus()) * (1.0 + preload("res://src/research.gd").prod_bonus(String(def.prod)))     # Paket Q: wie P.prod_rate
 		out.append(["res_" + String(def.prod), "%s pro Stunde" % String(D.RES_NAME[def.prod]), "+%d" % int(r0), "+%d" % int(r0 * 1.3)])
 	if key == "bunker":
-		out.append(["ui_heart", "Haltbarkeit", str(int(D.bunker_hp(lv))), str(int(D.bunker_hp(lv + 1)))])
+		var bk := 1.0 + preload("res://src/research.gd").bonus("bunker_hp")     # Paket Q: Forschung „Bunkerpanzer“
+		out.append(["ui_heart", "Haltbarkeit", str(int(D.bunker_hp(lv) * bk)), str(int(D.bunker_hp(lv + 1) * bk))])
 		if int(D.DRONES_BY_BUNKER[clampi(lv, 1, 10) - 1]) != int(D.DRONES_BY_BUNKER[clampi(lv + 1, 1, 10) - 1]):
 			out.append(["ui_drone", "Baudrohnen", str(int(D.DRONES_BY_BUNKER[clampi(lv, 1, 10) - 1])), str(int(D.DRONES_BY_BUNKER[clampi(lv + 1, 1, 10) - 1]))])
 		out.append(["ui_grid", "Baufeld", "%d × %d" % [D.GRID_BY_BUNKER[clampi(lv, 1, 10) - 1], D.GRID_BY_BUNKER[clampi(lv, 1, 10) - 1]],

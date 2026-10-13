@@ -34,18 +34,25 @@ const BUILDERS := {
 	"tagebuch": preload("res://src/screens/tagebuch.gd"),
 	"saison": preload("res://src/screens/saison.gd"),           # Paket L: Ereignis, Saison-Pass, Aufgaben, Kalender, Rangliste, Neuigkeiten, Endspiel
 	"garderobe": preload("res://src/screens/garderobe.gd"),     # Paket L: Kosmetik und Kosmetik-Shop
+	"forschung": preload("res://src/screens/forschung.gd"),     # V6 Paket B: Forschungsbaum im Labor
+	"rueckblick": preload("res://src/screens/rueckblick.gd"),   # V6 Paket B: Flut-Rückblick
+	"chronik": preload("res://src/screens/chronik.gd"),         # V6 Paket E: Geschichte, Szenen, Gerettete
+	"tausch": preload("res://src/screens/tausch.gd"),           # V6 Paket E: Tauschladen der Händlerin
+	"auto": preload("res://src/screens/unterwegs.gd"),          # V6 Paket E: Auto-Expeditionen aller Helden
+	"modi": preload("res://src/screens/modi.gd"),               # V6 Paket M: Turm der Prüfungen, Überleben, Clan-Raid, Höhlen
 }
 const TITLES := {"heroes": "Helden", "chests": "Beutekisten", "workshop": "Werkstatt", "garage": "Garage", "social": "Funkturm",
-	"clan": "Clan", "profile": "Profil", "quests": "Aufträge und Flut", "expedition": "Expedition", "settings": "Einstellungen", "shop": "Laden", "erfolge": "Erfolge", "bestiary": "Monsterbuch", "begleiter": "Begleiter", "hilfe": "Hilfe", "legal": "Rechtliches", "tagebuch": "Tagebuch", "saison": "Saison und Ereignisse", "garderobe": "Garderobe"}
+	"clan": "Clan", "profile": "Profil", "quests": "Aufträge und Flut", "expedition": "Expedition", "settings": "Einstellungen", "shop": "Laden", "erfolge": "Erfolge", "bestiary": "Monsterbuch", "begleiter": "Begleiter", "hilfe": "Hilfe", "legal": "Rechtliches", "tagebuch": "Tagebuch", "saison": "Saison und Ereignisse", "garderobe": "Garderobe", "forschung": "Forschung", "rueckblick": "Flut-Rückblick", "chronik": "Chronik", "tausch": "Tauschladen", "auto": "Auto-Expeditionen", "modi": "Spielmodi"}
 ## Kopfzeile: Münzen, Bauteile, Sternsplitter und dazu alles, was der Bildschirm ausgibt.
 const STRIP_BASE := ["coins", "parts", "shards", "gems"]
 const STRIP_EXTRA := {"heroes": ["fuel"], "garage": ["metal", "fuel", "cells"], "social": ["wood", "stone", "metal", "fuel"],
 	"clan": ["wood", "stone", "metal", "fuel"], "expedition": ["fuel"], "settings": ["wood", "stone", "metal", "fuel", "cells"],
-	"begleiter": ["wood", "stone", "metal", "fuel", "cells"]}
+	"begleiter": ["wood", "stone", "metal", "fuel", "cells"], "forschung": ["wood", "stone", "metal", "fuel", "cells"],
+	"tausch": ["wood", "stone", "metal", "fuel", "cells"], "auto": ["fuel"]}
 const PANEL_MAX_W := 2040.0
 ## Bildzeichen in der Kopfzeile
 const HEAD_ICON := {"heroes": "ui_helmet", "chests": "ui_chest", "workshop": "ui_hammer", "garage": "ui_garage", "social": "ui_mail",
-	"clan": "ui_clan", "profile": "ui_badge", "quests": "ui_quest", "expedition": "ui_expedition", "settings": "ui_gear", "shop": "res_gems", "erfolge": "ui_trophy", "bestiary": "e_0", "begleiter": "comp_kistenbein", "hilfe": "ui_help", "legal": "ui_shield", "tagebuch": "p_journal", "saison": "ui_season", "garderobe": "ui_wardrobe"}
+	"clan": "ui_clan", "profile": "ui_badge", "quests": "ui_quest", "expedition": "ui_expedition", "settings": "ui_gear", "shop": "res_gems", "erfolge": "ui_trophy", "bestiary": "e_0", "begleiter": "comp_kistenbein", "hilfe": "ui_help", "legal": "ui_shield", "tagebuch": "p_journal", "saison": "ui_season", "garderobe": "ui_wardrobe", "forschung": "ui_research", "rueckblick": "ui_replay", "chronik": "ui_chronik", "tausch": "ui_trade", "auto": "ui_report", "modi": "ui_tower"}
 const SIM_NOTICE := "Mitspieler sind in dieser Version simuliert. Für echtes Online-Spiel wird ein Server benötigt."
 
 var screen := ""
@@ -558,7 +565,7 @@ func preview_hero(key: String) -> Control:
 	var it: Dictionary = P.item(int(h.weapon))
 	if not it.is_empty():
 		wk = String(it.key)
-	var sig := "hero:%s:%d:%s:%s" % [key, tier, wk, _lo_sig(key)]
+	var sig := "hero:%s:%d:%s:%s:%s" % [key, tier, wk, _lo_sig(key), preload("res://src/helden.gd").look_sig(key)]     # Paket H: Ausrüstung, Module
 	var pv := _get_preview(sig)
 	if pv.sig != sig:
 		pv.show_hero(key, tier, wk)
@@ -569,7 +576,7 @@ func preview_hero(key: String) -> Control:
 ## Wie preview_hero(), aber der Held hält eine bestimmte Waffe (Werkstatt).
 func preview_hero_with(key: String, weapon_key: String) -> Control:
 	var tier := clampi(int(int(P.hero(key).level) / 10), 0, 3)
-	var sig := "hero:%s:%d:%s:%s" % [key, tier, weapon_key, _lo_sig(key)]
+	var sig := "hero:%s:%d:%s:%s:%s" % [key, tier, weapon_key, _lo_sig(key), preload("res://src/helden.gd").look_sig(key)]
 	var pv := _get_preview(sig)
 	if pv.sig != sig:
 		pv.show_hero(key, tier, weapon_key)

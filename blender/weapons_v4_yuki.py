@@ -125,19 +125,33 @@ def y_rain():
 
 
 def y_hawk():
+    """Paket H: deutlicher – Falknerhandschuh (Stulpe + Finger) mit Falke Kiko, Flügel weit nach oben gespreizt,
+    gelber Hakenschnabel und große Augen."""
     p = Part()
-    p.box((0.14, 0.24, 0.12), (0, 0.06, 0.0), BROWN, bevel=0.05, segs=2)          # Falknerhandschuh
-    p.box((0.15, 0.06, 0.13), (0, 0.18, 0.0), "6B5A45", bevel=0.02, segs=1)
-    c = (0, -0.18, 0.14)
-    p.ball(0.1, c, "8A6A4A", scale=(0.9, 1.2, 1.0), subdiv=2)                       # Falke
-    p.ball(0.07, (0, -0.28, 0.22), "8A6A4A", subdiv=2)
-    p.ball(0.05, (0, -0.23, 0.12), "F2E6D0", scale=(1, 1.2, 1.1), subdiv=1)       # Brust
-    p.cone(0.025, 0.06, (0, -0.35, 0.21), YEL, r=rot(90, 0, 0), sides=6)            # Schnabel
+    p.box((0.16, 0.2, 0.14), (0, 0.12, -0.02), BROWN, bevel=0.05, segs=2)         # Stulpe
+    p.box((0.17, 0.05, 0.15), (0, 0.22, -0.02), "D9B47A", bevel=0.02, segs=1)
+    p.box((0.15, 0.14, 0.09), (0, -0.04, 0.0), "8A5A32", bevel=0.04, segs=2)        # Faust
+    for x in (-0.045, 0.0, 0.045):
+        p.box((0.04, 0.05, 0.05), (x, -0.11, 0.0), "8A5A32", bevel=0.015, segs=1)
+    c = (0, -0.06, 0.2)
+    p.ball(0.11, c, "8A6A4A", scale=(0.9, 0.85, 1.2), subdiv=2)                     # Körper aufrecht
+    p.ball(0.07, (0, -0.1, 0.18), "F2E6D0", scale=(1, 0.6, 1.3), subdiv=1)        # Brust
+    for z in (0.14, 0.19, 0.24):
+        p.box((0.05, 0.01, 0.008), (0, -0.145, z), "8A6A4A", segs=1)
+    p.ball(0.075, (0, -0.07, 0.36), "8A6A4A", subdiv=2)                              # Kopf
+    p.ball(0.04, (0, -0.12, 0.33), "F2E6D0", subdiv=1)
+    p.cone(0.03, 0.06, (0, -0.15, 0.34), YEL, r=rot(110, 0, 0), sides=6)            # Hakenschnabel
+    p.cone(0.012, 0.03, (0, -0.17, 0.31), "2E3340", r=rot(180, 0, 0), sides=4)
     for sx in (-1, 1):
-        p.ball(0.018, (sx * 0.04, -0.32, 0.24), BLACK, subdiv=1)
-        prism(p, [(0.0, 0.0), (0.22, 0.05), (0.24, -0.02), (0.0, -0.12)], 0.025, (sx * 0.06, -0.16, 0.16), "6B5A45", r=rot(0, 0, 90 if sx > 0 else -90) @ rot(0, -20, 0))   # Flügel
-    prism(p, [(-0.05, 0.0), (0.05, 0.0), (0.03, -0.14), (-0.03, -0.14)], 0.02, (0, -0.04, 0.12), "6B5A45", r=rot(-90, 0, 0) @ rot(180, 0, 0))   # Schwanz
-    done("y_hawk", p, (0, -0.36, 0.2), tilt=0, yaw=-50, pitch=28)
+        p.ball(0.022, (sx * 0.04, -0.12, 0.38), YEL, subdiv=1)                       # Augen
+        p.ball(0.012, (sx * 0.042, -0.137, 0.38), BLACK, subdiv=1)
+        prism(p, [(0.0, 0.0), (0.12, 0.16), (0.26, 0.24), (0.3, 0.16), (0.2, 0.04), (0.06, -0.06)], 0.025, (sx * 0.07, -0.04, 0.24),
+              "6B5A45", r=rot(0, 0, 0 if sx > 0 else 180))                                   # Flügel hoch gespreizt
+        for k in range(3):
+            p.box((0.012, 0.03, 0.06), (sx * (0.25 + k * 0.03), -0.04, 0.42 - k * 0.04), WHITE, bevel=0.004, segs=1)   # Schwungfedern hell
+        p.cone(0.012, 0.04, (sx * 0.03, -0.1, 0.06), YEL, r=rot(180, 0, 0), sides=4)   # Krallen am Handschuh
+    prism(p, [(-0.05, 0.0), (0.05, 0.0), (0.04, -0.14), (-0.04, -0.14)], 0.02, (0, 0.03, 0.12), "6B5A45", r=rot(-60, 0, 0))   # Schwanz
+    done("y_hawk", p, (0, -0.16, 0.34), tilt=0, yaw=-30, pitch=8)
 
 
 def y_longbow():

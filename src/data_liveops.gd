@@ -129,6 +129,8 @@ const COSMETICS := {
 	"skin:yuki_herbstlaub": {"name": "Herbstlaub", "hero": "yuki", "price": 300},
 	"skin:greta_rosengarten": {"name": "Rosengarten", "hero": "greta", "price": 300},
 	"skin:greta_sternennacht": {"name": "Sternennacht", "hero": "greta", "price": 0, "src": "Saison-Pass (bezahlt), Stufe 35"},
+	"skin:nele_korallenriff": {"name": "Korallenriff", "hero": "nele", "price": 300},          # Paket H
+	"skin:nele_eismeer": {"name": "Eismeer", "hero": "nele", "price": 450},
 	"wskin:gold": {"name": "Gold", "tint": Color("FFC93A"), "metal": 0.7, "price": 0, "src": "Ereignis Goldrausch"},
 	"wskin:chrom": {"name": "Chrom", "tint": Color("DCE6F4"), "metal": 0.8, "price": 0, "src": "Saison-Pass, Stufe 30"},
 	"wskin:tarn": {"name": "Tarnung", "tint": Color("6E8A3A"), "metal": 0.0, "price": 200},

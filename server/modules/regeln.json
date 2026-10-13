@@ -63,5 +63,13 @@
       {"date": "12.10.2026", "title": "Saison 1: Rostflut beginnt", "text": "Acht Wochen, 40 Stufen im Saison-Pass, neue Helden-Skins, Fahnen und Begleiter-Hüte. Saisonpunkte gibt es für Fluten, Expeditionen, Tages- und Wochenaufgaben."},
       {"date": "12.10.2026", "title": "Server: Ereignisse und Rangliste", "text": "Der Ereigniskalender, die Saison-Rangliste und der Weltboss laufen jetzt über den Server."}
     ]
+  },
+  "modi": {
+    "_info": "V6 Paket M: Turm der Prüfungen und Überleben (Wochen-Ranglisten), Clan-Raid (Schleim-Leviathan je Clan und Woche)",
+    "score_max": {"tower": 60000, "surv": 5000000},
+    "board_size": 50,
+    "raid_hp_per_member": 260000,
+    "raid_hit_max": 400000,
+    "raid_hits_per_day": 3
   }
 }

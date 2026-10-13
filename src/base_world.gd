@@ -119,6 +119,16 @@ var _wall_tier := -1
 const Guide = preload("res://src/guide.gd")     # Paket F: Warteschlange, Tutorial-Flut, Schwierigkeit, Gebäudeschaden
 var queue_mode := false          # Platz wählen für einen vorgemerkten Bau (alle Drohnen beschäftigt)
 var tutorial_flood := false      # laufende Flut ist die leichte Tutorial-Flut (ohne Verlust)
+# ---- V6 Paket B: Belagerung, Wetter, Rückblick, Layout-Test, Mauer-Schäden, Funde, Wasser, Verletzte
+const Siege = preload("res://src/siege.gd")
+const FloodWeather = preload("res://src/flood_weather.gd")
+const FloodReplay = preload("res://src/flood_replay.gd")
+const BasisLife = preload("res://src/basis_life.gd")
+const BState = preload("res://src/basis_state.gd")
+const LayoutCode = preload("res://src/layout_code.gd")
+var life: Node3D                 # basis_life.gd
+var replay: Node                 # flood_replay.gd (nur während einer Flut)
+var layout_test := false         # laufende Flut ist ein Layout-Test (ohne Verlust, Aufbau danach zurück)
 
 
 func _ready() -> void:
@@ -150,6 +160,9 @@ func _ready() -> void:
 	add_child(_ghost_plate)
 	_sync()
 	_make_life()
+	life = BasisLife.new()
+	add_child(life)
+	life.setup(self)
 	var sp := respawn_point()
 	spawn_hero(String(P.d.hero_sel), sp)
 	P.buildings_changed.connect(_sync)
@@ -295,6 +308,9 @@ func _tick_life(dt: float) -> void:
 
 ## Antippen eines Bewohners: Schild mit Name, Beruf und Tätigkeit.
 func _tap_npc(sp: Vector2) -> bool:
+	var st = get_node_or_null("Geschichte")              # V6 Paket E: gerettete Figuren
+	if st != null and st.tap(sp):
+		return true
 	return npc_board != null and npc_board.tap(sp)
 
 
@@ -345,7 +361,7 @@ func _sync() -> void:
 			w.tier = clampi(int(b.level) - 1, 0, 2)
 			w.site = P.is_building(b) and not bool(b.get("up", false))
 			w.max_hp = wall_base * float(D.WALL_TIERS[w.tier].hp)
-			w.hp = w.max_hp * (0.25 if w.site else 1.0)
+			w.hp = w.max_hp * (0.25 if w.site else clampf(1.0 - float(b.get("dmg", 0.0)), 0.05, 1.0))     # V6 Paket B: Schaden bleibt
 			w.cost = 22.0 + w.hp * 0.03
 			w.owner_ref = self
 			walls.append(w)
@@ -353,7 +369,7 @@ func _sync() -> void:
 		seen[id] = true
 		var building := P.is_building(b)
 		var first: bool = building and not bool(b.get("up", false))
-		var sg := "%s|%d|%d|%d|%d|%s|%d|%s" % [b.key, int(b.x), int(b.y), int(b.rot), int(b.level), building, tier if b.key == "bunker" else 0, b.get("clear", false)]
+		var sg := "%s|%d|%d|%d|%d|%s|%d|%s|%d" % [b.key, int(b.x), int(b.y), int(b.rot), int(b.level), building, tier if b.key == "bunker" else 0, b.get("clear", false), Research.count()]
 		var s: Node3D = nodes.get(id)
 		if s == null or s.sig != sg:
 			if s != null:
@@ -439,9 +455,13 @@ func on_wall_destroyed(w) -> void:
 	field.dirty = true
 	fx.puff(Vector3(w.mid.x, 1.0, w.mid.y), Color(0.7, 0.6, 0.5), 14, 1.4)
 	Sfx.play_at(WALL_BREAK[w.tier], Vector3(w.mid.x, 0, w.mid.y), -6.0, 1.0, 0.1)
+	if replay != null:
+		replay.on_wall(w)
 
 
 func on_structure_destroyed(s) -> void:
+	if replay != null and is_running():
+		replay.on_building(s)
 	if s == bunker_node and is_running():
 		_finish(false)
 
@@ -491,6 +511,8 @@ func _update_walls() -> void:
 		_fill_mm(_mm_post[tier], posts[tier])
 		_fill_mm(_mm_link[tier], links[tier])
 	_fill_mm(_mm_site, sites)
+	if life != null:
+		life.update_wall_damage()
 
 
 func _fill_mm(mm: MultiMesh, list: Array) -> void:
@@ -944,6 +966,9 @@ func flood_preview(practice: bool, tutorial := false) -> Dictionary:
 	fd["guest_share"] = D.flood_guest_share(wk) if not fd.guests.is_empty() else 0.0
 	fd["guest_text"] = P.flood_guest_text()
 	Guide.apply_flood(fd, practice, tutorial)
+	if layout_test:
+		LayoutCode.test_flood(fd)                    # V6 Paket B: Layout-Test in der Stärke der echten Flut
+	FloodWeather.apply(fd, practice and not layout_test, self)     # V6 Paket B: Wetter der Flut
 	return fd
 
 
@@ -993,6 +1018,11 @@ func start_flood(practice: bool, tutorial := false) -> void:
 	_check_production()
 	_sync_pickups()
 	xp_factor = float(flood.hp)
+	horde.siege = Siege.new(self) if G.arg("nosiege") == "" else null     # V6 Paket B: Brecher, Flieger, Leitern (--nosiege=1: Vergleich)
+	FloodWeather.begin(self)
+	replay = FloodReplay.new()
+	add_child(replay)
+	replay.setup(self)
 	running = true
 	ended = false
 	hero.deaths = 0
@@ -1076,7 +1106,9 @@ func _spawn_one() -> void:
 	if t >= 1000:
 		horde.spawn_planned(t, p, float(flood.hp), float(flood.dmg))       # Elite (+1000) oder Miniboss (+2000)
 		return
-	horde.spawn(t, p, float(flood.hp), float(flood.dmg), float(flood.dmg))
+	var ne = horde.spawn(t, p, float(flood.hp), float(flood.dmg), float(flood.dmg))
+	if horde.siege != null:
+		horde.siege.on_spawn(ne)                     # V6 Paket B: Leitern
 
 
 func _tick_flood(dt: float) -> void:
@@ -1128,7 +1160,9 @@ func _finish(win: bool) -> void:
 	coins.collect_all()
 	var ratio: float = bunker_node.hp / bunker_node.max_hp if win else 0.0
 	var k: int = horde.kills
-	if tutorial_flood:
+	if layout_test:
+		result = LayoutCode.test_result(win, k)      # V6 Paket B: Layout-Test ohne Verlust und ohne Belohnung
+	elif tutorial_flood:
 		# Tutorial-Flut: kein Verlust, verbraucht nicht den Übungsalarm des Tages
 		result = {"win": win, "coins": 0, "xp": 20}
 		P.add_xp(20)
@@ -1143,10 +1177,23 @@ func _finish(win: bool) -> void:
 		result = P.flood_result(win, ratio, false, k)
 		result["practice"] = false
 	result["kills"] = k
-	Guide.flood_end(result, mode, win, tutorial_flood)
+	if not layout_test:
+		Guide.flood_end(result, mode, win, tutorial_flood)
+		BState.flood_end(self, result)               # V6 Paket B: Zusatzbeute (Nacht, Forschung), Bewertungs-Hinweis
 	result["waves"] = wave_idx if win else wave_idx - 1
 	result["hp_ratio"] = ratio
-	P.add_hero_xp(hero.key, (40.0 + 25.0 * wave_idx) * (1.0 if win else 0.5) * (0.5 if mode == "practice" else 1.0))
+	if replay != null:
+		var rp: Dictionary = replay.finish(result)  # V6 Paket B: Flut-Rückblick speichern
+		result["replay"] = true
+		if mode == "flood" and not layout_test and not tutorial_flood and not flood.has("raid"):
+			var lost := 0
+			var br := 0
+			for wv in rp.get("waves", []):
+				lost += (wv.lost as Array).size()
+				br += (wv.br as Array).size()
+			result["injured"] = BState.injuries_after(win, ratio, lost, br)
+	if not layout_test:
+		P.add_hero_xp(hero.key, (40.0 + 25.0 * wave_idx) * (1.0 if win else 0.5) * (0.5 if mode == "practice" else 1.0))
 	if win and mode == "practice":
 		Sfx.play("practice_done", -2.0)
 	else:
@@ -1161,6 +1208,15 @@ func _finish(win: bool) -> void:
 
 ## Nach dem Ergebnisbildschirm: Basis wiederherstellen, zurück in den Friedensbetrieb.
 func back_to_peace() -> void:
+	if life != null and not tutorial_flood and not layout_test:
+		life.store_wall_damage()                     # V6 Paket B: Mauern behalten ihren Schaden
+	FloodWeather.finish(self)
+	if horde.siege != null:
+		horde.siege.clear()
+		horde.siege = null
+	if replay != null:
+		replay.queue_free()
+		replay = null
 	horde.clear()
 	coins.clear()
 	clear_zones()
@@ -1172,6 +1228,8 @@ func back_to_peace() -> void:
 		if s is WallSeg:
 			s.alive = true
 			s.hp = s.max_hp * (0.25 if s.site else 1.0)
+		elif layout_test:
+			s.restore()                              # V6 Paket B: Layout-Test hinterlässt keinen Schaden
 		else:
 			_restore_after_flood(s)
 	for id in nodes:
@@ -1180,6 +1238,9 @@ func back_to_peace() -> void:
 	running = false
 	ended = false
 	tutorial_flood = false
+	if layout_test:
+		layout_test = false
+		LayoutCode.test_restore()                    # V6 Paket B: eigener Aufbau zurück
 	Music.set_mood("peace")
 	if not hero.alive:
 		hero._do_respawn()

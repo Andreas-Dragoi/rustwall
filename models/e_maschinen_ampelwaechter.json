@@ -1,0 +1,81 @@
+{
+ "key": "maschinen_ampelwaechter",
+ "kind": "vat",
+ "role": "ranged",
+ "verts": 828,
+ "tris": 736,
+ "width": 828,
+ "rows": 76,
+ "rpf": 1,
+ "fps": 10,
+ "bounds_min": [
+  -1.024995914129063,
+  -2.4400001108646396,
+  -0.9766341955443375
+ ],
+ "bounds_size": [
+  2.049991828258126,
+  5.454766999446907,
+  2.5752692958372627
+ ],
+ "height": 2.6550002098083496,
+ "radius": 0.6683618491540748,
+ "clips": {
+  "idle": {
+   "row": 0,
+   "n": 14,
+   "dur": 1.4,
+   "loop": true,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "walk": {
+   "row": 14,
+   "n": 8,
+   "dur": 0.8,
+   "loop": true,
+   "stride": 1.5199999999999998,
+   "hit": -1.0
+  },
+  "attack": {
+   "row": 22,
+   "n": 9,
+   "dur": 0.8,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.4
+  },
+  "hit": {
+   "row": 31,
+   "n": 4,
+   "dur": 0.3,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "death": {
+   "row": 35,
+   "n": 12,
+   "dur": 1.1,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "spawn": {
+   "row": 67,
+   "n": 9,
+   "dur": 0.8,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "signal": {
+   "row": 56,
+   "n": 11,
+   "dur": 1.0,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  }
+ }
+}

@@ -73,7 +73,8 @@ REST wie Nakama: `POST /v2/account/authenticate/device`, `POST /v2/account/sessi
 `rw_time, rw_hello, rw_rename, rw_save_put, rw_save_get, rw_save_list, rw_find, rw_suggest, rw_friends, rw_friend_add, rw_friend_remove,
 rw_send, rw_mail, rw_mail_claim, rw_clan_list, rw_clan_create, rw_clan_join, rw_clan_leave, rw_clan_get, rw_clan_chat, rw_clan_role,
 rw_clan_request, rw_clan_donate, rw_score, rw_board, rw_report, rw_block, rw_wallet, rw_wallet_init, rw_reward, rw_spend, rw_purchase,
-rw_restore, rw_telemetry, rw_crash, rw_account_delete`.
+rw_restore, rw_telemetry, rw_crash, rw_account_delete, rw_modi_score, rw_modi_board, rw_raid_hit, rw_raid_get`
+(die letzten vier: Spielmodi aus Paket M – Wochenranglisten für Turm/Überleben und der Clan-Raid).
 Der Testserver `mock_server.py` bedient dieselben Schnittstellen (`python3 server/mock_server.py --port 7350 --allow-test-purchases`)
 und wird von `src/tests_online.gd` automatisch gestartet.
 

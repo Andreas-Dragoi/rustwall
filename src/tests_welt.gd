@@ -257,7 +257,7 @@ func _events() -> void:
 				T._check(wl.cloud_hits() > 0 and e.hero.hp < hp0, "Giftnebel schadet (%d Treffer)" % wl.cloud_hits())
 				e.hero.hp = e.hero.max_hp
 				wl.end_event()
-			"lawine", "meteor", "ausbruch":
+			"lawine", "meteor", "ausbruch", "gewitter":
 				var t0 := 0
 				while wl.event_active() and t0 < 60:
 					await T._wait(1.0)

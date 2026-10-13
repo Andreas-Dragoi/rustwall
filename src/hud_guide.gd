@@ -11,9 +11,10 @@ const ScreenFit = preload("res://src/screen_fit.gd")
 
 const GLASS := Color(0.07, 0.19, 0.37, 0.94)
 ## Menü im kompakten Modus (kleine Handys): [Name, Bildschirm, nötiges Gebäude] – wie die rechte Spalte in hud.gd
-const MENU := [["Helden", "heroes", "quartier"], ["Kisten", "chests", "kistenlager"], ["Aufträge", "quests", ""], ["Werkstatt", "workshop", "werkstatt"],
+const MENU := [["Helden", "heroes", "quartier"], ["Kisten", "chests", "kistenlager"], ["Aufträge", "quests", ""], ["Werkstatt", "workshop", "werkstatt"], ["Forschung", "forschung", ""],
 	["Garage", "garage", "garage"], ["Begleiter", "begleiter", ""], ["Funk", "social", "funkturm"], ["Clan", "clan", "clanhalle"],
-	["Hilfe", "hilfe", ""], ["Optionen", "settings", ""], ["Saison", "saison", ""], ["Garderobe", "garderobe", ""]]
+	["Hilfe", "hilfe", ""], ["Optionen", "settings", ""], ["Saison", "saison", ""], ["Garderobe", "garderobe", ""],
+	["Chronik", "chronik", ""], ["Modi", "modi", ""]]
 
 var hud: CanvasLayer
 var _tut: PanelContainer
@@ -362,6 +363,7 @@ class GoalBox extends PanelContainer:
 	var _rw: Label
 	var _btn: Button
 	var _t := 0.0
+	var _story: Control              # V6 Paket E: zweite Zeile „Geschichte“ (story_goal_row.gd)
 
 	func _init() -> void:
 		add_theme_stylebox_override("panel", UIx.panel_style(Color(0.07, 0.19, 0.37, 0.94), UIx.GOLD, 20, 10))
@@ -382,11 +384,15 @@ class GoalBox extends PanelContainer:
 		var head := UIx.hbox(8, [UIx.label("Nächstes Ziel", 18, UIx.SKY), UIx.spacer(true), _num])
 		var col := UIx.vbox(3, [head, _txt, _bar, _rw, _btn])
 		col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		_story = load("res://src/story_goal_row.gd").new()
+		col.add_child(_story)
 		add_child(UIx.hbox(10, [UIx.pic("ui_target", 46.0, "", UIx.GOLD), col]))
 		custom_minimum_size = Vector2(420, 0)
 		update()
 
 	func update() -> void:
+		if _story != null:
+			_story.update()
 		var g: Dictionary = Gd.goal()
 		var pr: Array = Gd.goal_progress(g)
 		var ready: bool = int(pr[0]) >= int(pr[1])

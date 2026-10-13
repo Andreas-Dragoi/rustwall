@@ -87,7 +87,7 @@ const ABIL := {
 	"heal": ["Heiler", "heilt den Helden um %s des Lebens je Sekunde, wenn niemand angreift"],
 	"area": ["Gebietsvorteil", "%s"],
 }
-const AREA_WORD := {"gruental": "Grüntal", "forst": "Kiefernforst", "staub": "Staubebene", "kueste": "Schrottküste", "sumpf": "Sumpfwerk", "frost": "Frostpass", "krater": "Schleimkrater", "vulkan": "Vulkaninsel"}
+const AREA_WORD := {"gruental": "Grüntal", "forst": "Kiefernforst", "staub": "Staubebene", "kueste": "Schrottküste", "sumpf": "Sumpfwerk", "frost": "Frostpass", "krater": "Schleimkrater", "vulkan": "Vulkaninsel", "stadt": "Stadtruinen"}
 
 
 # ================================================================= Spielstand

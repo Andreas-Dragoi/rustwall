@@ -171,6 +171,14 @@ const HELP := [
 		["Ablauf", "Ankommen → Aufbauen → Großangriff überstehen → Erkunden. Wer alle Pflichtplätze baut und den Großangriff übersteht, bekommt eine Außenbasis mit dauerhaftem Vorteil."],
 		["Rucksack", "Stell dich neben Bäume, Felsen oder Schrott, dann sammelt dein Held. Der Rucksack hat ein Gewicht; bring Ladungen ins Depot."],
 		["Heimkehren", "An der Zentrale oder am Fahrzeug erscheint „Heimkehren“. Fällt dein Held, kommen Depot und halber Rucksack heim."],
-		["Gebiete", "Acht Gebiete mit eigener Gegnerfamilie. Je weiter, desto stärker die Gegner – und desto wertvoller die Beute."]]},
+		["Gebiete", "Jedes Gebiet hat seine eigene Gegnerfamilie. Je weiter, desto stärker die Gegner – und desto wertvoller die Beute."]]},
+	{"key": "forschung", "title": "Forschung und Belagerung", "icon": "ui_research", "sections": [      # V6 Paket B
+		["Forschung", "Drei Äste mit je elf Knoten: Türme und Mauern, Wirtschaft, Helden und Expedition. Jeder Knoten kostet Rohstoffe (ab der zweiten Reihe auch Sternsplitter) und Zeit; es läuft immer eine Forschung. Die Wirkung gilt sofort und dauerhaft."],
+		["Tüftelecke und Labor", "Die erste Reihe jedes Astes erforschst du schon in der Werkstatt. Das Labor (ab Bunker 8) öffnet den Rest; höhere Laborstufen öffnen tiefere Reihen und forschen schneller."],
+		["Wetter der Flut", "Regen macht Türme langsamer und Feuer schwächer, Nebel kürzt die Reichweite, nachts sind die Gegner zäher – dafür gibt es mehr Beute. Die Vorschau zeigt das Wetter vor dem Start."],
+		["Kluge Belagerer", "Brocken suchen gemeinsam die schwächste Stelle der Mauer, Flieger fliegen um die Luftabwehr herum, und ab Woche 3 tragen einzelne Schleimlinge Leitern und klettern über die Mauer."],
+		["Rückblick und Reparatur", "Nach jeder Flut zeigt der Rückblick, wo die Mauer brach und welche Türme am meisten geleistet haben. Mauern behalten ihren Schaden – „Alle reparieren“ macht sie wieder heil."],
+		["Aufbauten teilen und testen", "Im Bunker unter „Aufbauten“ kopierst du einen Aufbau als Code, fügst fremde Codes ein und schickst die Flut der Woche gegen einen gespeicherten Aufbau – ohne Verlust."],
+		["Verletzte Bewohner", "Nach einer verlorenen oder harten Flut tragen einige Bewohner einen Verband und gehen langsamer. Sie heilen mit der Zeit und lassen sich im Bunker verarzten; das Feldlazarett halbiert die Heilzeit."]]},
 	{"key": "bedienung", "title": "Bedienung", "icon": "ui_gear", "sections": []},
 ]

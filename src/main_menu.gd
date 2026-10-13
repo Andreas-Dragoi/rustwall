@@ -10,7 +10,7 @@ const UI = preload("res://src/ui.gd")
 signal play_pressed
 
 const INTRO := [
-	["Vor vielen Jahren kam die Flut.", "Seitdem kriecht jede Woche etwas aus den acht Gebieten.", Vector3(0, 0, 0), -0.6, 0.15, 46.0],
+	["Vor vielen Jahren kam die Flut.", "Seitdem kriecht jede Woche etwas aus den Gebieten ringsum.", Vector3(0, 0, 0), -0.6, 0.15, 46.0],
 	["Schleimlinge, Untote, Waldgeister, Dämonen …", "Sie wollen nur eines: deinen Bunker.", Vector3(14, 0, 10), 0.4, 0.0, 30.0],
 	["Hinter starken Mauern ist man sicher.", "Bewohner bauen, sammeln und reparieren für dich.", Vector3(-10, 0, 12), 1.1, -0.1, 26.0],
 	["Draußen warten Rohstoffe und Außenbasen.", "Sammle, trag alles heim und erobere die Gebiete.", Vector3(8, 0, -14), 1.8, 0.05, 34.0],
@@ -107,7 +107,7 @@ func show_menu() -> void:
 		_menu.add_child(_big("Beenden", func():
 			P.save()
 			get_tree().quit(), "red", "ui_close"))
-	var ver := UI.label("Version 3 · Mitspieler simuliert", 18, Color(1, 1, 1, 0.55), false)
+	var ver := UI.label("Version 6 · Mitspieler simuliert", 18, Color(1, 1, 1, 0.55), false)
 	_menu.add_child(ver)
 
 	_panel = UI.vbox(12)

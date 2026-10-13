@@ -819,6 +819,9 @@ static func tile(kind: String, size := 64.0, col := NAVY_L) -> Control:
 static func item_pic_name(it: Dictionary) -> String:
 	if String(it.get("slot", "")) == "weapon":
 		return "w_" + String(it.get("key", ""))
+	var sk := String(it.get("key", ""))                     # Paket H: Teil eines Ausrüstungs-Sets
+	if sk != "" and tex("gear_%s_%s" % [sk, String(it.get("slot", ""))]) != null:
+		return "gear_%s_%s" % [sk, String(it.get("slot", ""))]
 	return "gear_%s_%d" % [String(it.get("slot", "")), int(it.get("rarity", 0))]
 
 

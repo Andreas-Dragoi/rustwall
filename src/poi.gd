@@ -72,6 +72,7 @@ func setup(world: Node3D, poi_kind: String, pos: Vector2, rng: RandomNumberGener
 			for hk in D.HERO_ORDER:
 				if int(D.HEROES[hk].unlock_area) == w.area and not P.hero_unlocked(hk):
 					who = hk
+					break                    # Paket H: zuerst der erste Held des Gebiets (Schrottküste: Yuki, dann Nele)
 			title = "Rettung: %s" % (String(D.HEROES[who].name) if who != "" else "Bewohner")
 			reward = "neuer Held" if who != "" else "Münzen"
 			cage = Models.cage()

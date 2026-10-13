@@ -20,6 +20,7 @@ var pitch: Node3D
 var muzzles: Array[Node3D] = []
 var shots := 0
 var aim := ""                # Paket F: Zielwahl je Turm ("" automatisch, near, strong, fly, boss)
+var dealt := 0.0             # V6 Paket B: angerichteter Schaden (Flut-Rückblick; zählt horde.damage über horde.dmg_src)
 
 var _target = null
 var _think := 0.0
@@ -71,8 +72,9 @@ func show_range(v: bool) -> void:
 	if v and _ring == null:
 		_ring = MeshInstance3D.new()
 		var tor := TorusMesh.new()
-		tor.inner_radius = def.range - 0.12
-		tor.outer_radius = def.range
+		var rr: float = float(def.range) * (G.game.tower_range_k() if G.game != null and G.game.has_method("tower_range_k") else 1.0)
+		tor.inner_radius = rr - 0.12
+		tor.outer_radius = rr
 		tor.rings = 64
 		tor.ring_segments = 3
 		_ring.mesh = tor
@@ -315,7 +317,7 @@ func _physics_process(dt: float) -> void:
 		return
 	var horde = G.horde
 	var me := pos2()
-	var rng: float = def.range
+	var rng: float = def.range * G.game.tower_range_k()        # V6 Paket B: Forschung und Wetter (Nebel)
 	if _buff_t > 0.0:
 		_buff_t -= dt
 	var rate := _buff_k if _buff_t > 0.0 else 1.0
@@ -357,10 +359,12 @@ func _physics_process(dt: float) -> void:
 					Sfx.loop_at("tower_flame", "flame_loop", global_position, -13.0, 0.85, 0.3)
 					var dir := to.normalized()
 					var dmg: float = def.damage * dmg_mult * def.rpm / 60.0 * 0.1 * rate
+					horde.dmg_src = self
 					for e in horde.cone(me, dir, rng, def.cone * 0.5):
 						if not e.fly:
 							e.burn = maxf(e.burn, def.burn)
 							horde.damage(e, dmg, dir, false, false, def.get("element", ""))
+					horde.dmg_src = null
 			elif _cool <= 0.0:
 				_cool = 60.0 / def.rpm
 				_fire(_target, to)
@@ -398,6 +402,8 @@ func _fire(e, to: Vector2) -> void:
 	Sfx.play_at(def.sound, mp, -13.0 if def.mode == "hitscan" else -8.0, 1.0, 0.07)
 	var ty: float = 0.5 * e.sc + (2.4 if e.fly else 0.0)
 	var tp := Vector3(e.p.x, ty, e.p.y)
+	horde.dmg_src = self
+	var me_ref: WeakRef = weakref(self)
 	match def.mode:
 		"hitscan":
 			G.fx.flash(mp, tp - mp, 1.3)
@@ -422,22 +428,22 @@ func _fire(e, to: Vector2) -> void:
 			G.fx.flash(mp, tp - mp, 2.6, true)
 			var tg := Vector3(e.p.x, 0.1, e.p.y)
 			var spl: float = def.splash
-			G.game.launch(mp, tg, clampf(mp.distance_to(tg) / 30.0, 0.2, 0.6), 1.2, Color(0.15, 0.15, 0.18), func(): G.game.blast(tg, spl, dmg))
+			G.game.launch(mp, tg, clampf(mp.distance_to(tg) / 30.0, 0.2, 0.6), 1.2, Color(0.15, 0.15, 0.18), func(): _blast_by(me_ref, tg, spl, dmg, {}, Color(1.0, 0.55, 0.15)))
 		"mortar":
 			G.fx.flash(mp, Vector3(dir.x, 2.0, dir.y), 2.4, true)
 			var tg2 := Vector3(e.p.x + e.v.x * 0.8, 0.1, e.p.y + e.v.y * 0.8)
 			var spl2: float = def.splash
-			G.game.launch(mp, tg2, 1.2, 11.0, Color(0.15, 0.15, 0.18), func(): G.game.blast(tg2, spl2, dmg))
+			G.game.launch(mp, tg2, 1.2, 11.0, Color(0.15, 0.15, 0.18), func(): _blast_by(me_ref, tg2, spl2, dmg, {}, Color(1.0, 0.55, 0.15)))
 		"rocket":
 			G.fx.flash(mp, tp - mp, 2.2, true)
 			var tg3 := Vector3(e.p.x, 0.4, e.p.y)
 			var spl3: float = def.splash
-			G.game.launch(mp, tg3, clampf(mp.distance_to(tg3) / 24.0, 0.25, 1.3), 2.0, Color(0.95, 0.95, 0.9), func(): G.game.blast(tg3, spl3, dmg), true)
+			G.game.launch(mp, tg3, clampf(mp.distance_to(tg3) / 24.0, 0.25, 1.3), 2.0, Color(0.95, 0.95, 0.9), func(): _blast_by(me_ref, tg3, spl3, dmg, {}, Color(1.0, 0.55, 0.15)), true)
 		"ice":
 			var tg4 := Vector3(e.p.x, 0.1, e.p.y)
 			var spl4: float = def.splash
 			var stun: float = def.stun
-			G.game.launch(mp, tg4, 0.5, 2.0, Color(0.7, 0.92, 1.0), func(): G.game.blast(tg4, spl4, dmg, {"stun": stun, "knock": 0.0, "element": "eis"}, Color(0.6, 0.88, 1.0)))
+			G.game.launch(mp, tg4, 0.5, 2.0, Color(0.7, 0.92, 1.0), func(): _blast_by(me_ref, tg4, spl4, dmg, {"stun": stun, "knock": 0.0, "element": "eis"}, Color(0.6, 0.88, 1.0)))
 		"chain":
 			var prev := mp
 			var cur = e
@@ -460,6 +466,19 @@ func _fire(e, to: Vector2) -> void:
 							bd = dd
 							nxt = o
 				cur = nxt
+	horde.dmg_src = null
+
+
+## V6 Paket B: Einschlag eines Geschosses – der Schaden zählt für den Turm, der es abgefeuert hat (falls es ihn noch gibt).
+static func _blast_by(ref: WeakRef, pos: Vector3, radius: float, dmg: float, opts: Dictionary, col: Color) -> void:
+	if G.game == null:
+		return
+	var src = ref.get_ref()
+	if G.horde != null:
+		G.horde.dmg_src = src
+	G.game.blast(pos, radius, dmg, opts, col)
+	if G.horde != null:
+		G.horde.dmg_src = null
 
 
 # ---------------------------------------------------------------- lahmlegen (Paket 11)

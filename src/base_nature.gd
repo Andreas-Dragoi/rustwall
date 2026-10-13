@@ -20,6 +20,8 @@ const BEACH_S := 63.0            # ab hier Sand
 const BROOK := [Vector2(22, -72), Vector2(33, -61), Vector2(45, -55), Vector2(51, -45), Vector2(53, -31), Vector2(52, -16),
 	Vector2(52, 0), Vector2(54, 13), Vector2(60, 21), Vector2(72, 26)]
 const BRIDGE := Vector2(52.0, 0.0)
+const POND := Vector2(36.0, -48.0)       # V6 Paket B: Tümpel neben dem Bach (begehbar, Spritzer beim Durchlaufen)
+const POND_R := 3.2
 const JETTY_AT := Vector2(-49.0, 44.6)
 const N_TUFT := [6000, 12000, 20000]
 const N_SMALL := [500, 1000, 1800]
@@ -143,6 +145,11 @@ static func in_sea(p: Vector2, margin := 0.0) -> bool:
 	return coast_s(p) > shore_at(p) + margin
 
 
+## V6 Paket B: Liegt der Punkt im Tümpel?
+static func in_pond(p: Vector2, margin := 0.0) -> bool:
+	return p.distance_to(POND) < POND_R + margin
+
+
 ## Liegt der Punkt im Bach?
 static func in_brook(p: Vector2, margin := 1.8) -> bool:
 	for i in BROOK.size() - 1:
@@ -170,6 +177,7 @@ func _make_static_mask() -> void:
 				var b := clampf((s - BEACH_S - n.get_noise_2d(p.x, p.y) * 1.5) / 2.5, 0.0, 1.0)
 				_static[(x + y * RES) * 4 + 2] = int(b * 255.0)
 	_stamp_line(_static, PackedVector2Array(BROOK), 1.9, 1, 0.55)
+	_stamp_line(_static, PackedVector2Array([POND, POND + Vector2(0.6, 0.3)]), POND_R, 1, 0.45, 0.12)     # Tümpel (V6 Paket B)
 	# Uferstreifen unter dem Steg
 	_stamp_line(_static, PackedVector2Array([JETTY_AT, JETTY_AT + Vector2(-2, 2)]), 2.5, 2, 0.5)
 
@@ -539,7 +547,7 @@ func _mmi(model: String, mat: Material, xforms: Array, vis_end := 0.0, shadow :=
 
 
 func _land_ok(p: Vector2) -> bool:
-	return not in_sea(p, -1.0) and absf(p.x) < 70.0 and absf(p.y) < 70.0
+	return not in_sea(p, -1.0) and absf(p.x) < 70.0 and absf(p.y) < 70.0 and not in_pond(p, 0.4)
 
 
 func _make_meadow() -> void:
@@ -750,7 +758,7 @@ func _make_ring(o: int, ng: int, gm: int) -> void:
 			if d < 3:
 				continue
 			var c: Vector2 = w.cell_min(x, y) + Vector2(1, 1)
-			if minf(absf(c.x), absf(c.y)) < 11.0 or in_sea(c, -4.0) or coast_s(c) > BEACH_S - 1.5:
+			if minf(absf(c.x), absf(c.y)) < 11.0 or in_sea(c, -4.0) or coast_s(c) > BEACH_S - 1.5 or in_pond(c, 3.0):
 				continue
 			var r := rng.randf()
 			if clear.get_noise_2d(c.x, c.y) > 0.3:
@@ -965,8 +973,10 @@ func make_forest(rng: RandomNumberGenerator) -> void:
 			continue
 		if minf(absf(p.x), absf(p.y)) < 11.0:
 			continue
-		if in_sea(p, -3.0) or coast_s(p) > BEACH_S - 2.0 or in_brook(p, 3.2):
+		if in_sea(p, -3.0) or coast_s(p) > BEACH_S - 2.0 or in_brook(p, 3.2) or in_pond(p, 5.5):
 			continue
+		if p.y > POND.y and absf(p.x - POND.x) < 9.0 and p.y - POND.y < 16.0:
+			continue                                         # Blick der Kamera (von Süden) auf den Tümpel frei halten
 		# Lichtungen: hier nur Wiese
 		if clear.get_noise_2d(p.x, p.y) > 0.35 and edge < 75.0:
 			continue
@@ -1007,6 +1017,11 @@ func make_forest(rng: RandomNumberGenerator) -> void:
 			if maxf(absf(p.x), absf(p.y)) < 47.0:
 				continue
 			w.scatter("p_fern" if k == 0 else "p_shrub_%d" % rng.randi_range(1, 3), Vector3(p.x, 0, p.y), rng.randf() * TAU, rng.randf_range(0.8, 1.2))
+	# V6 Paket B: Schilf und Farn rund um den Tümpel (Nordseite frei, dort geht man hinein)
+	for k2 in 9:
+		var ang := -PI * 0.15 + k2 * (PI * 1.3 / 8.0)
+		var q2 := POND + Vector2(cos(ang), sin(ang)) * (POND_R + rng.randf_range(0.5, 1.1))
+		w.scatter("p_fern" if k2 % 3 == 0 else "p_shrub_%d" % rng.randi_range(1, 3), Vector3(q2.x, 0, q2.y), rng.randf() * TAU, rng.randf_range(0.7, 1.1))
 
 
 # ---------------------------------------------------------------- Bäume fällen (Paket Welt)

@@ -1,0 +1,104 @@
+{
+ "0": {
+  "runs": 2,
+  "wins": 2,
+  "minutes": 11.1,
+  "kept": {
+   "wood": 309,
+   "stone": 44,
+   "coins": 180
+  },
+  "loot": {}
+ },
+ "1": {
+  "runs": 2,
+  "wins": 2,
+  "minutes": 11.3,
+  "kept": {
+   "wood": 534,
+   "stone": 26,
+   "coins": 236
+  },
+  "loot": {}
+ },
+ "2": {
+  "runs": 2,
+  "wins": 2,
+  "minutes": 10.4,
+  "kept": {
+   "stone": 137,
+   "metal": 133,
+   "fuel": 25,
+   "coins": 264
+  },
+  "loot": {
+   "parts": 3.5
+  }
+ },
+ "3": {
+  "runs": 2,
+  "wins": 2,
+  "minutes": 9.6,
+  "kept": {
+   "wood": 88,
+   "metal": 27,
+   "coins": 353
+  },
+  "loot": {
+   "parts": 4.0
+  }
+ },
+ "4": {
+  "runs": 2,
+  "wins": 2,
+  "minutes": 12.0,
+  "kept": {
+   "fuel": 90,
+   "metal": 416,
+   "cells": 52,
+   "coins": 123
+  },
+  "loot": {
+   "parts": 4.5
+  }
+ },
+ "5": {
+  "runs": 2,
+  "wins": 2,
+  "minutes": 12.6,
+  "kept": {
+   "metal": 121,
+   "stone": 1544,
+   "cells": 168,
+   "coins": 1246
+  },
+  "loot": {}
+ },
+ "6": {
+  "runs": 2,
+  "wins": 2,
+  "minutes": 11.8,
+  "kept": {
+   "cells": 758,
+   "metal": 1074,
+   "coins": 1506
+  },
+  "loot": {
+   "parts": 2.5,
+   "shards": 1.0
+  }
+ },
+ "7": {
+  "runs": 2,
+  "wins": 1,
+  "minutes": 13.0,
+  "kept": {
+   "cells": 134,
+   "stone": 192,
+   "metal": 7,
+   "coins": 274,
+   "fuel": 39
+  },
+  "loot": {}
+ }
+}

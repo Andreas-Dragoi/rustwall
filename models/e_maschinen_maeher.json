@@ -1,0 +1,89 @@
+{
+ "key": "maschinen_maeher",
+ "kind": "vat",
+ "role": "mass",
+ "verts": 628,
+ "tris": 472,
+ "width": 628,
+ "rows": 54,
+ "rpf": 1,
+ "fps": 10,
+ "bounds_min": [
+  -0.7175400438602699,
+  -1.0499999532699589,
+  -1.7391481091753198
+ ],
+ "bounds_size": [
+  1.5595399506386056,
+  2.6268082701364226,
+  3.3481481039301113
+ ],
+ "height": 1.3389999291896828,
+ "radius": 1.2094366985891452,
+ "clips": {
+  "idle": {
+   "row": 0,
+   "n": 8,
+   "dur": 0.8,
+   "loop": true,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "walk": {
+   "row": 8,
+   "n": 5,
+   "dur": 0.5,
+   "loop": true,
+   "stride": 1.05,
+   "hit": -1.0
+  },
+  "attack": {
+   "row": 13,
+   "n": 7,
+   "dur": 0.6,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.3
+  },
+  "hit": {
+   "row": 20,
+   "n": 4,
+   "dur": 0.3,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "death": {
+   "row": 24,
+   "n": 10,
+   "dur": 0.9,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "rev": {
+   "row": 34,
+   "n": 7,
+   "dur": 0.6,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "mow": {
+   "row": 41,
+   "n": 4,
+   "dur": 0.4,
+   "loop": true,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "spawn": {
+   "row": 45,
+   "n": 9,
+   "dur": 0.8,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  }
+ }
+}

@@ -106,6 +106,11 @@ static func battery_saver() -> bool:
 static func fps_target() -> int:
 	if G.autotest != "":
 		return 0
+	if preload("res://src/auto_quality.gd").measuring:          # Paket Q: Messung der Grafikstufe ohne Bremse
+		return 0
+	var user: int = preload("res://src/pc_input.gd").fps_cap()  # Paket Q: Bildratenbegrenzung am PC
+	if user >= 0 and not battery_saver():
+		return user
 	var mx := 60 if P.d.get("settings", {}).get("fps60", not G.web_mobile()) else 30
 	if not battery_saver():
 		return mx

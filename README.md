@@ -1,4 +1,4 @@
-# Rustwall (Version 5)
+# Rustwall (Version 6)
 
 Umsetzung des Spielkonzepts „Rustwall_Spielkonzept_V2.pdf“ in Godot 4.6 (GDScript, Mobile-Renderer).
 
@@ -95,6 +95,86 @@ Klicken und Ziehen „malen“. Im Baumodus bewegt WASD / der Stick die Kamera.
   Kosmetik-Shop, Wochenaufgaben, 28-Tage-Kalender, Nachrichten, Prestige, Außenbasis Stufe 4–5, Albtraum+.
 - **Englisch** als zweite Sprache (`locale/en.po`, Wahl in den Optionen).
 
+### Neu in Version 6 – Paket H (Helden, Waffen, Ausrüstung, Figuren)
+- **Neue Heldin Nele, die Taucherin** (Wasser/Eis, Harpunen): 15 Waffen, 3 Fähigkeiten (Strudel, Luftblase, Springflut),
+  Geschichte in 5 Kapiteln, Comic-Rufe; wird als zweite Rettung an der Schrottküste befreit (erst Yuki, dann Nele).
+- **Ausrüstungs-Sets:** 7 Sets zu je Helm, Weste, Glücksbringer mit Boni ab 2 und 3 Teilen; Helm, Weste und Glücksbringer
+  sind **am Modell sichtbar** (Helm ersetzt die eigene Kopfbedeckung). Alte Ausrüstung bekommt beim Laden ein Set.
+- **Waffenmodule:** Sockel je Waffe (1–3 nach Seltenheit), 10 Module (Schalldämpfer, Zielfernrohr, Schnelllader,
+  Trommelmagazin, Stabilisator, Wuchtgewicht, Element-Kerne Feuer/Eis/Gift/Blitz) – herstellen in der Werkstatt (Reiter
+  „Module“), Fund in Beutekisten, sichtbar am Waffenmodell.
+- **Waffen-Feinschliff:** Gift skaliert mit Stufe und Seltenheit, Schüsse kommen aus der Mündung des Modells, Überkopf-Schlag
+  für Hämmer, Wurfwaffen größer in der Hand, Wurfbahn als Punktlinie beim Zielen, Leuchtspur hinter Bumerang & Co.,
+  neue Symbole für Ziegelschleuder, Falkenruf, Magnetwerfer.
+- **Figuren:** Gesichter (Blinzeln, Jubel, Schmerz, Anstrengung), Siegerpose je Held (nach Flut-/Expeditionssieg und in der
+  Vorschau), Laufstil je Persönlichkeit, nachschwingende Haare, Tücher, Kittel. Hund, Katze und Vögel mit Blender-Clips.
+- **Waffen-Balance:** Messlauf `--autotest=dps` (Schaden/s jeder Waffe gegen jede Familie, Einzelziel und Gruppe) →
+  `docs/balance/`. Prüfungen: `--autotest=helden`.
+
+### Neu in Version 6 – Paket E (Geschichte, Zwischenszenen, Rettungen, Sprechblasen)
+- **Hauptgeschichte** über alle Gebiete (`docs/geschichte.md`): Woher kommt der Schleim (das Sternherz unter dem Krater,
+  geweckt von Adas Regen), was ist im Krater (Ring aus Stein, Schleimkönig), was ist mit der Vulkaninsel (Magmafürst Brodel).
+  Je Gebiet eine **Zwischenszene** beim ersten Betreten und eine nach dem ersten Bosssieg, **Abschlussszenen** nach
+  Schleimkönig (Akt 1) und Magmafürst (Akt 2): Texttafeln mit Kamerafahrt über eine eigene 3D-Bühne des Gebiets mit Helden,
+  Geretteten, Boss und Schleimlingen (`src/story_scene.gd`, `src/story_stage.gd`). Überspringbar, wieder ansehbar im
+  neuen Bildschirm **Chronik** (Menü „Chronik“). **Story-Ziele** als zweite Zeile der Ziele-Leiste.
+- **Rettungen:** Rosa, die Händlerin (Gegnerlager in der Staubebene → **Tauschladen**), Professor Moosbach (Schleim-Kokon im
+  Sumpfwerk → Forschung 25 % schneller), Knut, der Schmied (Käfig aus Eis am Frostpass → Waffen verbessern 20 % günstiger).
+  Sie ziehen mit eigenem Aussehen in die Basis und haben einen Tagesablauf wie die Bewohner.
+- **Sprechblasen:** Bewohner und Gerettete sagen je nach Lage etwas (Wetter, Tageszeit, Flut naht, Wunsch, Lob nach Sieg,
+  Klage nach Schaden, Stand der Geschichte), sparsam; beim Antippen ein Satz. Über 200 Sätze, Deutsch und Englisch.
+- **Auto-Expeditionen:** Bericht mit Gebietsbild und Held, Ereignisliste (Kisten, Rohstoffe, Erfahrung, selten ein Ei),
+  Gefahr und Verletzung (Held kurz nicht einsetzbar, heilbar mit Juwelen), Übersicht aller Helden (Bildschirm
+  „Auto-Expeditionen“) – mehrere gleichzeitig unterwegs.
+- **Helden-Gespräche** beim Expeditionsstart: der gespielte Held vor Ort, ein zweiter per Funk aus der Basis.
+- Prüfungen: `--autotest=geschichte`. Bilder einer Szene: `--story_scene=<szene> --story_panel=<n>`.
+### Neu in Version 6 – Paket M (Spielmodi)
+- **Bildschirm „Spielmodi“** im Menü (Knopf „Modi“) und im Bunker-Fenster: Reiter Turm, Überleben, Clan-Raid, Höhlen.
+- **Turm der Prüfungen:** 50 handgemachte Stockwerke in 5 Hallen (Moosgewölbe, Sandsteinhalle, Frostkammer, Rostschmiede,
+  Glutspitze) mit Aufgaben „Überlebe“, „Räume die Halle“, „Zeitdruck“, „Generator verteidigen“, „Ohne Fähigkeiten“,
+  „Nur Nahkampf“, „Ohne Heilung“ und einem Gebietsboss auf jedem 10. Stockwerk. Bis zu 3 Sterne (geschafft, Leben, Zeit),
+  erstmalige Belohnungen, Sterne-Truhen, Wochenwertung mit Rangliste (Server oder simuliert).
+- **Überlebensmodus:** endlose Wellen auf dem Schrottplatz mit Deckung, alle 5 Wellen Wahl aus 3 Verstärkungen
+  (11 Arten), Punkte, Bestwert, Wochenrangliste, Belohnungen für erstmals erreichte Wellen.
+- **Clan-Raid:** Leviathan der Woche mit Leben je Clanmitglied, 3 Angriffe pro Tag, Schaden des Clans wird summiert
+  (Server: `rw_raid_hit`, `rw_raid_get`; ohne Server simulierte Mitglieder), Belohnungsstufen 25/50/75/100 %.
+- **Höhlen** ab Gebiet 2: 1–2 Eingänge je Expedition, eigene dunkle Höhlenwelt aus Räumen und Gängen mit Fackeln,
+  Wächtern der Gebietsfamilie, Truhe und Erzader; Beute, Münzen und Besiegte zählen zur Expedition.
+- **Ladefläche der Pritsche:** zweiter Rucksack, der sichtbar beladen wird; am Depot (oder an der Außenbasis) abladen.
+- Prüfungen: `--autotest=modi`; Bots: `--autotest=turm --floor=1-10 --level=12`, `--autotest=ueberleben --waves=10`,
+  `--autotest=hoehle --area=1` (je mit `--fast=8`).
+
+### Neu in Version 6 – Paket Z2 (Gebiet 9 „Stadtruinen“)
+- **Gebiet 9 „Stadtruinen“** (ab Stufe 60, Weltkarte oben links): Straßenraster mit Kreuzungen, Autowracks, Bushaltestellen,
+  Litfaßsäulen, Laternen, Unkraut, Hochhausruinen; Quellen Elektroschrott (Metall), Kupferkabel (Bauteile), Akkus (Zellen),
+  Umspannkasten mit Bolzenschneider; Wahrzeichen „Gestürzter Fernsehturm“; Sperre Schuttberg; Außenbasis-Sonderbau
+  **Umspannwerk** (Stufen 1–5: Zellen-Produktion, tägliche Bauteile); Tagebuch, Nebenquest „Sicherungen für die Notrufsäule“.
+- **Dächer als Wege:** Dachhäuser mit Feuertreppe. Oben erreichen den Helden nur Flieger, Schützen und kletternde Funkenspinnen;
+  Reichweite +30 %, Schaden +15 %. Über die Kante springt man hinunter (`src/exp_stadt.gd`, `field.deck`, `hero.perch`).
+- **U-Bahn und Notstrom:** zwei Linien (Landezone/Mittelring ↔ Außenring), nur mit eingeschaltetem Generator und nach dem
+  Großangriff; Gegner fahren nicht mit. **Ampeln** an den Kreuzungen halten Maschinen bei Rot an.
+- **Blitzgewitter** (Gebiets-Ereignis): Stromausfall, Blitze in roten Kreisen, getroffene Maschinen gehen kurz aus.
+- **Gegnerfamilie „Maschinen“**: Rasenmäher-Bot, Funkenspinne, Bagger-Golem, Ampelwächter, Drohnenschwarm, Müllpresse,
+  Rollen Reparatur-Bot, Schild-Bot, Störsender, Miniboss Abrisskran, Boss **Bürgermeister Bolzen** (Stromstoß-Linien,
+  Phasen, Schwachstelle Akku). Schwäche Blitz/Wasser, Gift wirkungslos (`src/maschinen_ai.gd`).
+- **Akt 3** der Geschichte (Szenen „Lichter in der Stadt“, „Feierabend“), Musik `area_stadt` mit Gefahr-Lage, Umgebungston.
+- Prüfungen: `--autotest=zone2`; Bot: `--autotest=exp --setup=10 --area=8 --mission=nest --fast=8`;
+  Bilder: `--stadt=roof|stair|subway|gen|ampel|power|storm`.
+
+### Neu in Version 6 – Paket B (Basis und Flut)
+- Forschungsbaum im Labor (3 Äste × 11 Knoten, erste Knoten schon über die Werkstatt), Bildschirm „Forschung“.
+- Klügere Belagerung: Brecher suchen die schwächste Mauer, Flieger umgehen Luftabwehr, Leiterträger klettern über Mauern.
+- Wetter verändert die Flut (Regen, Nebel, Nacht), Flut-Rückblick mit Karte (auch für verpasste Fluten).
+- Layout-Code zum Teilen, „Layout gegen Flut testen“, sichtbare Mauerschäden mit „Alle reparieren“, seltene Funde, verletzte Bewohner,
+  Tümpel mit Spritzern, lokale Mitteilungen (vorbereitet) und Bewertungs-Hinweis.
+
+### Neu in Version 6 – Paket Q (Qualität)
+- Wirtschaftssimulation (`tools/wirtschaft_sim.py`, `docs/balance/wirtschaft.md`) und Flut-Messreihe (`docs/balance/flut.md`); Bunker 10 ist jetzt bezahlbar.
+- Web-Fassung über `tools/web_build.py` deutlich kleiner (verlustbehaftete Symbole, leichtere Musik nur fürs Web).
+- Automatische Qualitätsstufe, Farbfilter für Farbenblinde, Untertitel für wichtige Töne, Blitze abschwächen.
+- PC: Tasten umbelegen, Fenster-/Vollbild-Optionen; Gamepad inkl. Menüs. Store-Bilder und Vorschau-Video in `docs/store/`.
+- `.github/workflows/tests.yml`: Selbsttest und Bots bei jedem Hochladen.
+
 ## Wichtig: Was (noch) nicht echt ist
 
 - **Mitspieler sind simuliert.** Freunde, Clans, Ranglisten und Post laufen über `src/social.gd` mit erfundenen
@@ -184,6 +264,10 @@ godot --headless --path . res://scenes/ui_test.tscn -- --selftest --monkey
 
 `--selftest` prüft Spielregeln, Speichern/Laden, echte Mausklicks im Baumodus, alle Menüs, Übung, Flut
 (Sieg und Niederlage) und alle sechs Aufgaben, jede mit einem anderen Helden und Fahrzeug. Tests schreiben keinen Spielstand.
+
+Bei jedem Hochladen laufen Selbsttest (Deutsch und Englisch), Flut-Bot und Expeditions-Bot automatisch
+(`.github/workflows/tests.yml`). Messwerkzeuge für Wirtschaft, Flut-Schwierigkeit, Web-Größe und Store-Material: siehe
+`docs/qualitaet.md` (Paket Q). Barrierefreiheit, Tastenbelegung, Fenster und Gamepad stehen in den Einstellungen.
 
 Weitere Ordner: `blender/` (Modell-Skripte und .blend-Dateien), `tools/` (Musik- und Ton-Erzeugung), `models/`, `icons/`, `audio/`.
 

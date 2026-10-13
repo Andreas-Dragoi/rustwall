@@ -2510,6 +2510,323 @@ def _():
     return mix(jingle(["G4", "B4", "D5", "G5", ("B5", "D6", "G6")], "brass", 0.1, 0.9), (boom(0.5) * 0.2, 0.0, 1.0))
 
 
+# ==== V6: Paket B (Basis- und Flut-Tiefe)
+@snd("research_start", g=-4)
+def _():
+    d = 0.9
+    bubbles = [(bubble(420 + 90 * (i % 4), 0.08, 2.2) * 0.35, 0.05 + 0.09 * i, 1.0) for i in range(8)]
+    return mix(*bubbles, (bell(hz("G5"), 0.6, 4.0) * 0.25, 0.0, 1.0), (bell(hz("C6"), 0.6, 4.0) * 0.2, 0.12, 1.0), lp(noise(d), 600) * ar(d, 0.1, 0.5) * 0.08)
+
+
+@snd("research_done", g=-1)
+def _():
+    return mix(jingle(["C5", "E5", "G5", ("C6", "E6")], "bell", 0.09, 0.8), (sparkle(0.8, 3000, 8000, 12) * 0.22, 0.25, 1.0),
+               (bubble(600, 0.1, 2.0) * 0.25, 0.0, 1.0))
+
+
+@snd("ladder_place", g=-3)
+def _():
+    d = 0.35
+    knock = mix(pluck(hz("D3"), 0.25, 18.0, "tri", 0.5) * 0.7, bp(noise(0.06), 300, 2500) * dec(0.06, 60) * 0.6)
+    knock2 = mix(pluck(hz("A2"), 0.22, 20.0, "tri", 0.4) * 0.5, bp(noise(0.05), 250, 2000) * dec(0.05, 70) * 0.4)
+    return mix(knock, (knock2, 0.11, 1.0), lp(noise(d), 1200) * ar(d, 0.01, 0.2) * 0.1)
+
+
+@snd("ladder_climb", g=-8)
+def _():
+    d = 0.28
+    t = tt(d)
+    creak = osc(gliss(d, 210, 150) * (1.0 + 0.04 * np.sin(2 * np.pi * 37 * t)), "saw") * ar(d, 0.02, 0.18) * 0.25
+    return mix(bp(creak, 300, 1800), (click(0.02, 600, 2500, 160) * 0.5, 0.0, 1.0))
+
+
+@snd("repair_all", g=-3)
+def _():
+    hits = []
+    for i, f in enumerate(("E6", "D6", "E6", "G6")):
+        hits.append((mix(bell(hz(f), 0.25, 9.0, 3.1, 2.5) * 0.35, thump(0.08, 160, 70, 40) * 0.4), i * 0.13, 1.0))
+    return mix(*hits, (sparkle(0.5, 3000, 7000, 8) * 0.18, 0.5, 1.0))
+
+
+@snd("find_sparkle", g=-2)
+def _():
+    return mix(sparkle(0.9, 3500, 9000, 16) * 0.35, (jingle(["E6", "B6", "E7"], "bell", 0.07, 0.5) * 0.7, 0.05, 1.0))
+
+
+@snd("water_step", g=-6)
+def _():
+    d = 0.32
+    sp = bp(noise(d), 450, 3500) * ar(d, 0.004, 0.22) * 0.7
+    drops = [(bubble(900 + 300 * i, 0.04, 1.6) * 0.18, 0.04 + 0.05 * i, 1.0) for i in range(3)]
+    return mix(sp, lp(noise(d), 500) * ar(d, 0.003, 0.1) * 0.3, *drops)
+
+# ==== V6: Paket H (Helden, Waffen, Ausrüstung): Neles Waffen und Fähigkeiten, Waffenmodule, Neles Stimme
+V6H = {
+    "w_bubble": lambda: mix(*[(bubble(420 + 160 * i, 0.09, 2.4) * 0.6, i * 0.045, 1.0) for i in range(5)], (lp(noise(0.2), 900) * dec(0.2, 14) * 0.6, 0, 1.0)),
+    "w_ice_harpoon": lambda: mix(_shot(700, 180, 0.1, 3000, 0.08), (sparkle(0.35, 3500, 9000, 7) * 0.5, 0.03, 1.0), (bell(2600, 0.25, 12, 2.8, 1.2) * 0.25, 0.02, 1.0)),
+    "w_torpedo": lambda: mix(thump(0.2, 220, 70, 14) * 0.9, (whoosh(0.6, 400, 1800, 500, 0.3) * 0.5, 0.05, 1.0), (bubble(300, 0.12, 2.0) * 0.4, 0.1, 1.0)),
+    "w_net": lambda: mix(whoosh(0.4, 1200, 300, 700, 0.4) * 0.6, (sparkle(0.3, 2500, 7000, 6) * 0.35, 0.18, 1.0), (click(0.03, 700, 2500, 120) * 0.5, 0.0, 1.0)),
+    "w_kraken": lambda: mix(soft(brass(hz("C3"), 0.7) * 0.5 + brass(hz("G3"), 0.7) * 0.25, 1.2), (whoosh(0.5, 300, 1500, 400, 0.4) * 0.5, 0.25, 1.0), (bubble(250, 0.15, 2.0) * 0.4, 0.4, 1.0)),
+    "w_wave": lambda: mix(boom(0.7) * 0.5, (whoosh(1.0, 200, 2500, 900, 0.5) * 0.9, 0.0, 1.0), (bp(noise(1.0), 1500, 6000) * hann(1.0) * 0.4, 0.2, 1.0)),
+    "sk_strudel": lambda: mix(whoosh(1.0, 300, 1200, 500, 0.6) * 0.8, (tone(0.9, 200, 80, "sin") * hann(0.9) * 0.4, 0.1, 1.0), *[(bubble(500 + 90 * i, 0.08, 2.2) * 0.35, 0.2 + i * 0.09, 1.0) for i in range(6)]),
+    "sk_luftblase": lambda: mix(blub(0.5, 300, 800, 0.08, 9) * 0.6, (bubble(900, 0.12, 1.8) * 0.4, 0.35, 1.0), (bell(hz("E6"), 0.4, 8, 2.0, 0.8) * 0.25, 0.4, 1.0)),
+    "sk_springflut": lambda: mix(thump(0.4, 120, 45, 8) * 0.9, (whoosh(1.3, 150, 3000, 1100, 0.45), 0.05, 1.0), (bp(noise(1.2), 900, 5000) * hann(1.2) * 0.5, 0.3, 1.0)),
+    "module_fit": lambda: mix(click(0.03, 900, 4000, 120) * 0.8, (click(0.03, 1500, 6000, 150) * 0.7, 0.09, 1.0), (bell(1800, 0.15, 18, 2.0, 0.6) * 0.3, 0.12, 1.0)),
+    "module_remove": lambda: mix(click(0.03, 1500, 6000, 150) * 0.7, (whoosh(0.15, 2500, 900, 500, 0.3) * 0.3, 0.03, 1.0)),
+    "module_craft": lambda: mix(*[(thump(0.1, 400, 200, 28), i * 0.14, 0.7) for i in range(3)], (jingle(["E6", "B6"], "bell", 0.07, 0.35, 7.0), 0.45, 0.6)),
+    "module_found": lambda: mix(jingle(["D6", "A6", "D7"], "bell", 0.07, 0.45, 6.0), (sparkle(0.4, 3000, 8000, 6) * 0.3, 0.1, 1.0)),
+}
+for _n, _f in V6H.items():
+    snd(_n)(_f)
+snd("w_ink_loop", loop=True)((lambda: _loopn(200, 1600, 5, 0)))
+VOICE["nele"] = (250.0, 1.15, 0.08, 0.016)       # Nele: hell, etwas Vibrato
+HERO_ORDER_V.append("nele")
+for _k in WORDS:
+    snd("v_nele_%s" % _k, sr=VSR, full=True)((lambda k=_k: make_voice("nele", k)))
+
+
+# ==== V6: Paket E (Geschichte, Zwischenszenen, Rettungen, Sprechblasen, Auto-Expeditionen)
+V6E = {
+    # Zwischenszene beginnt: weicher Harfen-Aufgang mit Glöckchen
+    "story_open": lambda: mix(jingle(["C5", "E5", "G5", "C6", ("E6", "G6")], "pluck", 0.09, 0.9, 5.0) * 0.8, (sparkle(0.9, 3000, 8000, 10) * 0.18, 0.3, 1.0),
+                              (lp(noise(1.2), 700) * ar(1.2, 0.3, 0.8) * 0.06, 0.0, 1.0)),
+    # nächste Tafel: leises Umblättern
+    "story_page": lambda: mix(bp(noise(0.28), 900, 5000) * ar(0.28, 0.02, 0.2) * 0.5, (whoosh(0.22, 2400, 900, 600, 0.3) * 0.25, 0.03, 1.0)),
+    # Sprechblase taucht auf: kleines Plopp
+    "speech_pop": lambda: mix(bubble(700, 0.07, 2.0) * 0.7, (click(0.015, 1800, 5000, 260) * 0.25, 0.0, 1.0)),
+    # Funkspruch: zwei kurze Pieptöne mit Rauschen
+    "radio_blip": lambda: mix(tone(0.07, 1600, 1600, "sq") * ar(0.07, 0.003, 0.02) * 0.25, (tone(0.07, 2100, 2100, "sq") * ar(0.07, 0.003, 0.02) * 0.22, 0.1, 1.0),
+                              (bp(noise(0.25), 1500, 4500) * ar(0.25, 0.01, 0.15) * 0.12, 0.0, 1.0)),
+    # Tausch im Laden: Münzen klimpern, Kasse klingelt
+    "trade_deal": lambda: mix(*[(bell(hz(n), 0.25, 14.0, 3.2, 1.6) * 0.3, i * 0.06, 1.0) for i, n in enumerate(("E6", "G6", "B6", "E7"))],
+                              (bell(hz("C6"), 0.7, 5.0) * 0.35, 0.3, 1.0), (click(0.03, 900, 3000, 140) * 0.4, 0.28, 1.0)),
+    # Held kommt von einer Auto-Expedition zurück: fröhliches Horn
+    "auto_back": lambda: mix(jingle(["G4", "C5", "E5", ("G5", "C6")], "brass", 0.12, 0.7) * 0.7, (sparkle(0.6, 2500, 7000, 8) * 0.15, 0.35, 1.0)),
+    # Eis aufhacken: heller Schlag mit Splittern
+    "ice_hack": lambda: mix(click(0.03, 1500, 7000, 140) * 0.7, (bell(2900, 0.2, 18.0, 2.7, 1.4) * 0.3, 0.0, 1.0), (sparkle(0.25, 4000, 9000, 5) * 0.3, 0.02, 1.0)),
+    # Eiskäfig zerbricht: Krachen, klirrende Scherben
+    "rescue_ice_break": lambda: mix(boom(0.5) * 0.4, (sparkle(1.2, 3000, 10000, 26) * 0.45, 0.02, 1.0), (bp(noise(0.6), 2000, 8000) * dec(0.6, 7) * 0.4, 0.0, 1.0),
+                                    (bell(1800, 0.8, 6.0, 2.9, 1.8) * 0.2, 0.05, 1.0)),
+    # Schleim-Kokon platzt: dickes Blubb, Spritzer
+    "rescue_cocoon_pop": lambda: mix(blub(0.45, 160, 520, 0.1, 10) * 0.8, *[(bubble(400 + 140 * i, 0.08, 2.2) * 0.3, 0.08 + 0.05 * i, 1.0) for i in range(5)],
+                                     (lp(noise(0.5), 1400) * dec(0.5, 9) * 0.35, 0.02, 1.0)),
+    # Schmied am Amboss: metallischer Ping
+    "anvil_ring": lambda: mix(bell(1250, 0.6, 7.0, 2.76, 2.2) * 0.45, (bell(2480, 0.35, 11.0, 2.1, 1.0) * 0.2, 0.0, 1.0), (click(0.02, 1200, 6000, 220) * 0.6, 0.0, 1.0)),
+}
+for _n, _f in V6E.items():
+    snd(_n)(_f)
+# ==== V6: Paket M (Spielmodi: Turm der Prüfungen, Überleben, Clan-Raid, Höhlen, Ladefläche)
+@snd("tower_start", g=0)
+def _():
+    drums = [(thump(0.28, 120, 45, 11) * 0.9, t0, 1.0) for t0 in (0.0, 0.18, 0.36)]
+    gong = bell(hz("C3"), 1.6, 1.6, 2.4, 1.6) * 0.5
+    return soft(mix(*drums, (gong, 0.5, 1.0), (brass(hz("G3"), 0.7) * 0.35 + brass(hz("D4"), 0.7) * 0.25, 0.52, 1.0)), 1.2)
+
+
+@snd("tower_clear", g=-1)
+def _():
+    fan = jingle(["C5", "E5", "G5", ("C6", "E6", "G6")], "brass", 0.11, 0.9)
+    return mix(fan, (bell(hz("G6"), 1.0, 3.0) * 0.25, 0.35, 1.0), (sparkle(0.9, 3000, 8000, 14) * 0.22, 0.3, 1.0))
+
+
+@snd("surv_start", g=0)
+def _():
+    d = 1.4
+    t = tt(d)
+    siren = osc(500 + 220 * np.sin(2 * np.pi * 1.4 * t), "tri") * ar(d, 0.05, 0.3) * 0.35
+    drums = [(thump(0.25, 100, 40, 12) * 0.9, t0, 1.0) for t0 in (0.0, 0.35, 0.7, 0.85)]
+    return soft(mix(lp(siren, 2500), *drums), 1.2)
+
+
+@snd("surv_end", g=-1)
+def _():
+    fall = jingle(["G4", "E4", "C4", ("G3", "C4")], "brass", 0.16, 0.9)
+    return mix(fall, (boom(0.6) * 0.3, 0.55, 1.0))
+
+
+@snd("upgrade_offer", g=-2)
+def _():
+    d = 1.0
+    chord = mix(bell(hz("C5"), d, 2.5) * 0.3, (bell(hz("E5"), d, 2.5) * 0.3, 0.06, 1.0), (bell(hz("G5"), d, 2.5) * 0.3, 0.12, 1.0))
+    return mix(chord, (sparkle(0.9, 2500, 7000, 12) * 0.3, 0.05, 1.0), whoosh(0.6, 400, 2400, 500, 0.4) * 0.3)
+
+
+@snd("upgrade_pick", g=-1)
+def _():
+    up = osc(gliss(0.35, 300, 1400), "saw") * ar(0.35, 0.01, 0.15) * 0.25
+    return mix(lp(up, 4000), (jingle(["E6", "B6"], "bell", 0.07, 0.4), 0.18, 1.0), (sparkle(0.5, 3500, 9000, 8) * 0.3, 0.2, 1.0))
+
+
+@snd("gen_down", g=0)
+def _():
+    d = 1.3
+    t = tt(d)
+    whine = osc(gliss(d, 1400, 90), "saw") * ar(d, 0.01, 0.6) * 0.3
+    zaps = [(bp(noise(0.06), 2000, 8000) * dec(0.06, 60) * 0.6, t0, 1.0) for t0 in (0.0, 0.07, 0.19, 0.33)]
+    return soft(mix(lp(whine, 3000), *zaps, (boom(0.7) * 0.5, 0.15, 1.0)), 1.2)
+
+
+@snd("raid_tier", g=-1)
+def _():
+    return mix(jingle(["D5", "F#5", "A5", ("D6", "F#6")], "brass", 0.1, 0.8), (sparkle(0.7, 3000, 8000, 12) * 0.2, 0.25, 1.0), (bell(hz("D4"), 0.9, 2.0) * 0.25, 0.0, 1.0))
+
+
+@snd("cave_enter", g=-2)
+def _():
+    d = 1.6
+    deep = whoosh(1.2, 900, 120, 300, 0.5) * 0.6
+    steps = [(thump(0.12, 160, 70, 25) * 0.5, t0, 1.0) for t0 in (0.15, 0.5, 0.85)]
+    return echo(mix(deep, *steps, (lp(noise(d), 200) * ar(d, 0.3, 0.8) * 0.4, 0.0, 1.0)), 0.18, 0.45, 4, 1200)
+
+
+@snd("cave_exit", g=-2)
+def _():
+    creaks = [(bp(osc(gliss(0.18, 220, 160), "saw") * ar(0.18, 0.01, 0.1), 300, 1600) * 0.35, i * 0.22, 1.0) for i in range(4)]
+    up = whoosh(0.9, 200, 1800, 500, 0.4) * 0.5
+    return mix(*creaks, (up, 0.6, 1.0), (_vchirp(3200, 3900, 0.08, 0.0, SR) * 0.15, 1.3, 1.0), (_vchirp(3000, 3600, 0.07, 0.0, SR) * 0.12, 1.42, 1.0))
+
+
+@snd("cave_chest", g=-1)
+def _():
+    creak = bp(osc(gliss(0.45, 180, 120), "saw") * ar(0.45, 0.02, 0.2), 250, 1500) * 0.4
+    coins = [(bell(hz(n), 0.25, 9.0, 3.1, 2.5) * 0.3, 0.4 + i * 0.06, 1.0) for i, n in enumerate(("E6", "G6", "C7", "E7", "G6", "C7"))]
+    return mix(creak, *coins, (sparkle(0.6, 3500, 9000, 10) * 0.25, 0.45, 1.0))
+
+
+@snd("cave_ore", g=-2)
+def _():
+    cracks = [(mix(bell(hz(n), 0.4, 6.0, 2.7, 1.5) * 0.35, bp(noise(0.05), 2500, 9000) * dec(0.05, 70) * 0.5), i * 0.11, 1.0) for i, n in enumerate(("A5", "E6", "C#6", "A6"))]
+    return mix(*cracks, (sparkle(0.6, 3000, 8000, 10) * 0.25, 0.3, 1.0), (thump(0.2, 140, 60, 16) * 0.5, 0.0, 1.0))
+
+
+@snd("amb_cave", loop=True, sr=VSR, g=-4, ogg=True)
+def _():
+    r = rng()
+    x = _vbed(60, 260, LONG, 0.1, 0.5) * 0.28 + _vbed(400, 1400, LONG, 0.2, 0.7) * 0.04
+    for t0 in r.uniform(0, LONG, 14):                          # Tropfen mit Hall
+        f = r.uniform(900, 1800)
+        dr = bubble(f, 0.06, 2.6)[::2] * 0.5
+        _vput(x, dr, t0, 0.32)
+        _vput(x, dr * 0.35, t0 + 0.21, 0.32)
+        _vput(x, dr * 0.15, t0 + 0.43, 0.32)
+    for t0 in (4.0, 11.0):                                     # fernes Grollen
+        _vput(x, lp(rng().uniform(-1, 1, int(2.5 * VSR)), 120, 2, VSR) * hann(2.5, VSR), t0, 0.35)
+    return x
+
+
+@snd("bed_load", g=-2)
+def _():
+    thuds = [(mix(thump(0.16, 150, 70, 22) * 0.7, bp(noise(0.05), 600, 3000) * dec(0.05, 60) * 0.35), t0, 1.0) for t0 in (0.0, 0.12, 0.26)]
+    clang = bell(820, 0.3, 10.0, 2.4, 1.2) * 0.2
+    return mix(*thuds, (clang, 0.27, 1.0))
+
+
+@snd("bed_unload", g=-2)
+def _():
+    thuds = [(thump(0.18, 140, 60, 20) * 0.7, t0, 1.0) for t0 in (0.0, 0.1, 0.22, 0.31, 0.45)]
+    chain = [(click(0.02, 1500, 6000, 220) * 0.3, 0.05 + i * 0.035, 1.0) for i in range(10)]
+    return mix(*thuds, *chain)
+
+
+# ==== V6: Paket Z2 (Stadtruinen: Umgebung, Gewitter, Dächer, U-Bahn, Notstrom, Ampeln, Maschinen e_maschinen_*)
+@snd("amb_x_stadt", loop=True, sr=VSR, g=-4, ogg=True)
+def _():
+    r = rng()
+    t = tt(LONG, VSR)
+    x = _vbed(60, 400, LONG, 0.12, 0.5) * 0.35                           # Wind zwischen den Ruinen
+    x += _vbed(900, 2600, LONG, 0.3, 0.6) * 0.06
+    x += np.sin(2 * np.pi * 50 * t) * (0.5 + 0.5 * np.sin(2 * np.pi * t / LONG * 2)) * 0.03          # Brummen alter Leitungen
+    for t0 in r.uniform(0, LONG - 1.0, 14):                              # ferne Metallgeräusche
+        f = r.uniform(300, 900)
+        _vput(x, lp(bell(f, 0.8, 4.0, 2.7, 1.4), 2500)[::2] * 0.18, t0, r.uniform(0.3, 0.8))
+    for t0 in r.uniform(0, LONG - 0.3, 10):                              # Spatzen
+        _vput(x, _vchirp(2600, 3400, 0.07, 0.0, VSR) * 0.12, t0, r.uniform(0.3, 0.7))
+    for t0 in (5.0, 13.0):                                               # Lautsprecher knackt
+        _vput(x, bp(r.uniform(-1, 1, int(0.25 * VSR)), 800, 3000, 2, VSR) * hann(0.25, VSR) * 0.18, t0, 1.0)
+    return x
+
+
+@snd("ev_amb_storm", loop=True, sr=VSR, g=-2, ogg=True)
+def _():
+    r = rng()
+    d = 8.0
+    x = _vbed(800, 6000, d, 0.6, 0.5) * 0.4 + _vbed(80, 400, d, 0.2, 0.6) * 0.4            # Regen und Wind
+    for t0 in (1.5, 5.2):                                                                   # fernes Grollen
+        _vput(x, lp(r.uniform(-1, 1, int(2.2 * VSR)), 140, 2, VSR) * hann(2.2, VSR) * 0.9, t0, 1.0)
+    return x
+
+
+def _zap(d, f0=1800, f1=400):
+    t = tt(d)
+    buzz = osc(gliss(d, f0, f1) * (1 + 0.3 * np.sign(np.sin(2 * np.pi * 60 * t))), "saw") * dec(d, 9.0)
+    return soft(mix(bp(buzz, 300, 6000) * 0.5, (bp(noise(d), 2500, 9000) * dec(d, 22.0) * 0.6, 0, 1.0)), 1.6)
+
+
+ZS = {
+    "ev_thunder": lambda: mix(_zap(0.25, 3000, 800), (boom(2.2) * 1.1, 0.05, 1.0), (lp(noise(2.6), 120) * ar(2.6, 0.2, 1.8) * 3.0, 0.2, 1.0)),
+    "ev_thunder_far": lambda: lp(noise(2.4), 110) * ar(2.4, 0.4, 1.6) * 2.2,
+    "ev_thunder_warn": lambda: mix(*[(bp(noise(0.05), 3000, 9000) * dec(0.05, 60) * 0.5, k * 0.13, 1.0 - 0.1 * k) for k in range(6)], (osc(gliss(0.9, 200, 900), "saw") * ar(0.9, 0.3, 0.1) * 0.12, 0.0, 1.0)),
+    "ev_lightning_strike": lambda: mix(_zap(0.35, 4000, 600) * 1.2, (boom(1.4), 0.03, 1.0), (crackle(0.9, 200, 3500) * dec(0.9, 4.0) * 0.6, 0.1, 1.0)),
+    "hit_fuse": lambda: mix(click(0.03, 1500, 6000, 120), (_zap(0.12, 2500, 1200) * 0.5, 0.01, 1.0), (thump(0.1, 220, 110, 25) * 0.6, 0.0, 1.0)),
+    "roof_up": lambda: mix(*[(bell(hz(n), 0.3, 9.0, 2.0, 1.0) * 0.25, i * 0.07, 1.0) for i, n in enumerate(("C5", "E5", "G5"))], (whoosh(0.3, 400, 1800, 400, 0.3) * 0.3, 0.0, 1.0)),
+    "roof_land": lambda: mix(thump(0.18, 110, 50, 16) * 1.0, (bp(noise(0.25), 400, 3000) * dec(0.25, 14) * 0.6, 0.0, 1.0), (click(0.02, 800, 4000, 150) * 0.4, 0.0, 1.0)),
+    "gen_start": lambda: mix(*[(thump(0.12, 90, 60, 20) * 0.7, k * 0.16, 1.0) for k in range(4)], (lp(osc(gliss(1.6, 40, 95), "saw") * ar(1.6, 0.4, 0.3), 600) * 0.8, 0.4, 1.0), (bell(hz("A5"), 0.4, 8.0) * 0.25, 1.6, 1.0)),
+    "ubahn_ride": lambda: mix(whoosh(1.4, 200, 1600, 500, 0.5) * 0.7, *[(click(0.03, 300, 2000, 90) * 0.6, 0.2 + k * 0.18, 1.0) for k in range(6)], (lp(noise(1.6), 300) * ar(1.6, 0.5, 0.6) * 1.2, 0.0, 1.0)),
+    "ubahn_arrive": lambda: mix(jingle(["E5", "C5", "G5"], "bell", 0.18, 0.6, 5.0) * 0.6, (whoosh(0.8, 1600, 300, 500, 0.4) * 0.5, 0.0, 1.0)),
+    "ampel_red": lambda: mix(tone(0.12, 880, 880, "sq") * ar(0.12, 0.005, 0.03) * 0.2, (tone(0.12, 880, 880, "sq") * ar(0.12, 0.005, 0.03) * 0.2, 0.2, 1.0), (click(0.02, 800, 3000), 0.0, 0.5)),
+    "ampel_green": lambda: mix(*[(tone(0.06, 1320, 1320, "sq") * ar(0.06, 0.003, 0.02) * 0.16, k * 0.09, 1.0) for k in range(5)]),
+    "spark_zap": lambda: _zap(0.22, 3200, 900),
+    "spider_climb": lambda: mix(*[(click(0.025, 2000, 7000, 160) * 0.5, k * 0.07, 1.0) for k in range(7)]),
+    "scoop_throw": lambda: mix(whoosh(0.5, 300, 1400, 600, 0.4) * 0.6, (lp(osc(gliss(0.5, 120, 70), "saw"), 500) * ar(0.5, 0.05, 0.2) * 0.4, 0.0, 1.0)),
+    "scoop_impact": lambda: mix(boom(0.9) * 0.8, (bp(noise(0.7), 400, 4000) * dec(0.7, 6.0) * 0.6, 0.02, 1.0), *[(click(0.03, 600, 3000, 90) * 0.4, 0.05 + k * 0.08, 1.0) for k in range(4)]),
+    "wrecking_ball": lambda: mix(whoosh(0.6, 300, 1200, 500, 0.5) * 0.5, (boom(1.6) * 1.1, 0.5, 1.0), (bell(140, 1.2, 3.0, 2.3, 1.2) * 0.4, 0.5, 1.0)),
+    "boss_zap": lambda: mix(_zap(0.9, 2600, 200) * 1.1, (lp(osc(gliss(1.0, 60, 140), "saw"), 800) * ar(1.0, 0.2, 0.4) * 0.6, 0.0, 1.0), (bell(hz("C6"), 0.6, 6.0) * 0.2, 0.3, 1.0)),
+}
+for _n, _f in ZS.items():
+    snd(_n)(_f)
+
+
+def _step_asphalt(i):
+    return mix(click(0.03, 900 + 120 * i, 5000, 140) * 0.7, (thump(0.05, 140 + 10 * i, 80, 50.0) * 0.6, 0.0, 1.0), (bp(noise(0.06), 3000, 9000) * dec(0.06, 50) * 0.25, 0.0, 1.0))
+
+
+for _i in range(3):
+    REG.append(("step_asphalt_%d" % (_i + 1), (lambda i=_i: _step_asphalt(i)), {"g": -4}))
+
+
+def _robot_voice(f, d, up=1.0):
+    """Maschinen: blechernes Piepsen (gestufte Tonhöhe), darunter ein knatternder Motor."""
+    t = tt(d)
+    fr = gliss(d, f, f * up)
+    steps = np.floor(fr / 60.0) * 60.0
+    x = osc(steps, "sq") * 0.4 + osc(steps * 1.5, "tri") * 0.25
+    motor = lp(osc(48 + 6 * np.sin(2 * np.pi * 7 * t), "saw"), 400) * 0.35
+    return soft(mix(bp(x, 300, 4000) * hann(d) ** 0.4, (motor * hann(d), 0.0, 1.0)), 1.5) * 0.7
+
+
+def _masch(what, v):
+    f = 420.0 * (1.0 + 0.1 * v)
+    if what == "spawn":
+        return mix(_robot_voice(f, 0.45, 1.6), (click(0.03, 800, 5000, 120), 0.0, 0.8), (_zap(0.15, 2000, 900) * 0.3, 0.3, 1.0))
+    if what == "attack":
+        return mix(_robot_voice(f * 1.2, 0.18, 0.7), (click(0.03, 600, 4000, 90) * 0.8, 0.12, 1.0), (whoosh(0.15, 1500, 500, 600, 0.3) * 0.4, 0.02, 1.0))
+    if what == "hit":
+        return mix(click(0.03, 1500 + 400 * v, 7000, 110), (bell(900 + 300 * v, 0.2, 18.0, 2.4, 1.0) * 0.35, 0.0, 1.0), (_robot_voice(f * 1.5, 0.08, 0.8) * 0.5, 0.0, 1.0))
+    if what == "death":
+        return mix(_robot_voice(f, 0.6, 0.25), (_zap(0.3, 2500, 300) * 0.6, 0.1, 1.0), *[(click(0.03, 500, 3000, 90) * 0.6, 0.3 + k * 0.09, 1.0) for k in range(4)])
+    if what == "special":
+        return mix(_robot_voice(f * 0.9, 0.5, 1.8), (bp(noise(0.5), 2000, 7000) * hann(0.5) * 0.2, 0.0, 1.0))
+    if what == "shot":
+        return mix(_zap(0.18, 3000, 1200) * 0.7, (_robot_voice(f * 2, 0.08, 1.2) * 0.4, 0.0, 1.0))
+    return mix(*[(_robot_voice(f * 1.6, 0.08, 1.3), i * 0.11, 1.0 - i * 0.15) for i in range(4)])
+
+
+for _what, _nv in (("spawn", 1), ("attack", 2), ("hit", 3), ("death", 2), ("special", 1), ("shot", 1), ("laugh", 1)):
+    for _v in range(_nv):
+        _nm = "e_maschinen_%s" % _what + ("_%d" % (_v + 1) if _nv > 1 else "")
+        snd(_nm, g=-2)((lambda what=_what, v=_v: _masch(what, v)))
+
+
 # ------------------------------------------------------------------ Hauptprogramm
 def main():
     flt = sys.argv[1] if len(sys.argv) > 1 else ""

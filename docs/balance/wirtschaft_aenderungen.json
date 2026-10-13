@@ -1,0 +1,4 @@
+[
+ "`D.bunker_cost`: Holz und Stein des Bunkers wachsen ab Stufe 8 je Stufe um den Faktor `BUNKER_LATE_RES` = 0,7 langsamer (Stufe 8: 13 830 statt 19 750 Holz, Stufe 9: 20 810 statt 42 470, Stufe 10: 31 320 statt 91 310; Stein entsprechend). Grund: Das größte mögliche Lager (vier Lager auf Stufe 9, beide Lager-Forschungen) fasst bei Bunker 9 höchstens etwa 50 000 Holz/Stein – Bunker 10 war damit **unbezahlbar**, Bunker 9 nur mit voller Lager-Forschung. Münzen und Metall bleiben unverändert (Münzen sind ohnehin der Engpass, siehe oben).",
+ "Keine weitere Änderung nötig: Mit dieser Korrektur erreicht der Normalspieler Bunker 5 an Tag 5–6 und Bunker 10 an Tag ~93 (Ziel 7 bzw. ~90). Der Gelegenheitsspieler bleibt mit Bunker 5 an Tag ~9 und Bunker 9 nach 3 Monaten im erwartbaren Rahmen."
+]

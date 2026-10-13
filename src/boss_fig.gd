@@ -26,10 +26,65 @@ func setup(key: String, bi: Dictionary) -> void:
 	ap = _find_ap(model)
 	if ap != null:
 		var names := ap.get_animation_list()
-		if names.size() > 0:
+		if names.size() > 1:
+			# Blender exportiert je Körperteil eine eigene Animation (arm_l, head, …) auf derselben Zeitleiste; jede enthält
+			# Spuren für alle Teile, bewegt aber nur ihr eigenes. Ein AnimationPlayer spielt nur eine davon – sonst bewegte sich
+			# nur ein Teil. Darum je Teil die Spur nehmen, die sich wirklich bewegt, und alles zu einer Animation zusammenlegen.
+			var lib := AnimationLibrary.new()
+			lib.add_animation("all", _merged(String(model.scene_file_path), ap))
+			ap.add_animation_library("rw", lib)
+			ap.play("rw/all")
+			ap.pause()
+		elif names.size() > 0:
 			ap.play(names[0])
 			ap.pause()
 	_seek()
+
+
+static var _merge_cache := {}
+
+
+## Wie stark sich eine Spur bewegt (Summe der Abstände aufeinanderfolgender Schlüssel).
+static func _motion(a: Animation, ti: int) -> float:
+	var n := a.track_get_key_count(ti)
+	var m := 0.0
+	for k in range(1, n):
+		var v0 = a.track_get_key_value(ti, k - 1)
+		var v1 = a.track_get_key_value(ti, k)
+		if v0 is Vector3:
+			m += (v1 - v0).length()
+		elif v0 is Quaternion:
+			m += (v0 as Quaternion).angle_to(v1)
+		elif v0 is float or v0 is int:
+			m += absf(float(v1) - float(v0))
+		elif v0 != v1:
+			m += 1.0
+	return m
+
+
+## Je Teil (Pfad + Spurart) die bewegteste Spur aller Teil-Animationen, als eine Animation (je Modell nur einmal gebaut).
+static func _merged(key: String, player: AnimationPlayer) -> Animation:
+	if key != "" and _merge_cache.has(key):
+		return _merge_cache[key]
+	var best := {}                       # "pfad|art" -> [Animation, Spur, Bewegung]
+	var length := 0.0
+	for nm in player.get_animation_list():
+		if String(nm) == "RESET":
+			continue
+		var a: Animation = player.get_animation(nm)
+		length = maxf(length, a.length)
+		for ti in a.get_track_count():
+			var k := "%s|%d" % [str(a.track_get_path(ti)), a.track_get_type(ti)]
+			var mv := _motion(a, ti)
+			if not best.has(k) or mv > float(best[k][2]):
+				best[k] = [a, ti, mv]
+	var out := Animation.new()
+	for k in best:
+		(best[k][0] as Animation).copy_track(int(best[k][1]), out)
+	out.length = length
+	if key != "":
+		_merge_cache[key] = out
+	return out
 
 
 func _find_ap(n: Node) -> AnimationPlayer:

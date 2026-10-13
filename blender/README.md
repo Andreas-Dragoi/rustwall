@@ -243,3 +243,46 @@ Neue Clips in `anim_human.py` (`c_welt`): `wipe_brow` (Stirn wischen), `shoo` (H
 
 Die Lavaströme selbst sind kein Blender-Modell: `src/exp_vulkan.gd` baut je Arm einen Streifen mit `shaders/lava.gdshader`
 (Uniform `heat` 0 = Kruste … 1 = fließend, `warn` = Risse glühen).
+
+## Paket Z2: Stadtruinen (Gebiet 9)
+
+| Skript | Modelle |
+|---|---|
+| `stadt.py` | Kulissen `p_tree_city_1/2`, `p_st_rubble_1…3`, Straßenkacheln `p_st_road`/`p_st_cross` (8 × 8 m), `p_st_car_1/2`, `p_st_bushalt`, `p_st_litfass`, `p_st_laterne`, `p_st_weed`, `p_st_hochhaus_1/2`; Dachhäuser `p_st_roof_1/2` (Haus x ±5, y ±4, Dach auf 3,4 m, Feuertreppe x 1…5, y −8…−4 – die Maße stehen auch in `src/exp_stadt.gd`); Schaltteile `p_st_ampel` (`red_glow`, `yellow_glow`, `green_glow`), `p_st_generator` (`lamp_glow`, `fan`), `p_st_ubahn` (`sign_glow`, `gate`, Leerobjekt `door`); Quellen `n_ewaste_1…3`, `n_copper`, `n_akku`, `n_src_stadt`; Wahrzeichen `lm_stadt`, Sperre `x_barrier_stadt`, Spezialbau `o_special_stadt` (Umspannwerk, lv2–lv5), Symbole `tool_cutter`, `area_stadt`, Trophäe `b_trophy_bolzen` |
+| `enemies_maschinen.py` | Maschinen: `maschinen_maeher`, `_funkenspinne`, `_baggergolem`, `_ampelwaechter`, `_drohne`, `_muellpresse`, Rollen `_reparaturbot` (healer), `_schildbot` (shield), `_stoersender` (jammer), Miniboss `_abrisskran`, Boss `boss_maschinen` (Bürgermeister Bolzen) |
+
+## V6 Paket B: Basis- und Flut-Tiefe
+
+Skript: `python3 blender/basis6.py [namen…]` (ohne Namen: alles).
+
+| Name | Bedeutung | Hinweise |
+|---|---|---|
+| `wall_dmg_<0..2>_<1\|2>` | Schaden über einem Mauerpfosten (Holz/Stein/Metall; 1 = leicht: Ruß, Risse, Brocken; 2 = schwer: Löcher, Trümmer, Notbrett) | ein Mesh `body`, per MultiMesh gezeichnet (`src/basis_life.gd`), Maße wie `wall_post_<n>` |
+| `fx_ladder` | Sturmleiter der Belagerer, 2,6 m, Ursprung am Fuß, lange Achse oben | im Spiel 1,2-fach (`src/siege.gd`) |
+| `c_bandage` | Kopfverband verletzter Bewohner (Band unter dem Helm, Pflasterkreuz oben) | hängt an `head` (BoneAttachment3D), Ursprung = Kopfgelenk |
+| `ui_research`, `ui_replay`, `ui_rain`, `ui_fog`, `ui_moon`, `ui_sun` | Symbole Forschung, Flut-Rückblick, Wetter | Stil wie `ui_icons.py` |
+## Paket H (V6): Helden, Ausrüstung, Module, Tiere
+
+| Skript | Modelle |
+|---|---|
+| `heroes.py` | Helden zusätzlich mit Mesh `hat` (eigene Kopfbedeckung, Godot blendet sie bei angelegtem Helm aus), fünf Gesichts-Meshes `face_normal`, `face_blink`, `face_joy`, `face_pain`, `face_strain` (Pixel-Platten vor dem Gesicht, an `head` gebunden) und Knochen `spring_hair`, `spring_scarf`, `spring_coat_l/r`, `spring_belt` (nachschwingend). Der Siedler bleibt ein Mesh. Neu: `hero_nele`. Danach `liveops_skins.py` erneut ausführen. |
+| `anim_human.py` | Siegerposen `<held>_victory`, Laufstile `gait_<held>` (additiv, nur Rumpf und Kopf, ein Lauf-Zyklus lang), Neles `nele_skill_1/2`, `nele_special`, echter Überkopf-Schlag `fire_slam` |
+| `gear_sets.py` | `gear_<set>_<helmet|vest|charm>` für 7 Sets (bote, feuerwehr, bau, erfinder, jaeger, fest, tiefsee); Helm/Weste als Voxel-Schale im Raster der Figur, Ursprung am Gelenk (head, chest, hips) |
+| `weapon_mods.py` | `mod_<schlüssel>`: silencer, scope, loader, drum, grip, weight, core_feuer/eis/gift/blitz; Ursprung = Befestigungspunkt, leuchtende Teile `lens_glow` |
+| `weapons_v6_nele.py` | Neles 15 Waffen `w_n_*` (Regeln wie `weapons_v4_kit.py`) |
+| `animals_rig.py` | `a_dog_rig`, `a_cat_rig`, `a_bird_rig`: Formen aus `animals.py` mit Skelett und Clips (`idle`, `walk`, `run`, `sit`, `bark` / `sleep` / `peck`, `fly`); `src/animal_anim.gd` wählt sie |
+
+Neu gezeichnet (deutlicher): `w_b_brick` (Ziegel mit Löchern), `w_y_hawk` (Falke mit gespreizten Flügeln auf dem Handschuh), `w_a_magnet` (senkrechtes Hufeisen).
+
+## Paket M (V6): Spielmodi (`modi.py`)
+
+| Modelle | Inhalt |
+|---|---|
+| `mt_floor_1..5`, `mt_wall_1..5`, `mt_pillar_1..5` | Turm-Arena je 10er-Block (Moosgewölbe, Sandsteinhalle, Frostkammer, Rostschmiede, Glutspitze); Säulen mit `flame_glow`, Funken `fx_spark` |
+| `mt_gate`, `mt_generator` | Arenator; Generator mit `spin_ring`, `core_glow`, `lamp_glow` |
+| `sv_barrier`, `sv_crates`, `sv_wreck`, `sv_container`, `sv_sandbags`, `sv_tower`, `sv_fence`, `sv_gate`, `sv_lamp` | Deckung und Schmuck der Überlebenskarte |
+| `cv_<wurzel\|sand\|eis\|glut>_floor/_hall/_wall_1/_wall_2/_rock/_deco_1/_deco_2/_entry/_ore` | Höhlen-Bausteine je Thema; `_entry` mit Leerobjekt `mouth` und `torch_glow_l/r`, `_ore` mit `ore_glow` |
+| `cv_torch`, `cv_exit` | Wandfackel (Leerobjekt `light`), Ausgang mit `beam_glow` |
+| `v_pickup_rack` | Gestell der Ladefläche der Pritsche |
+| `ui_tower`, `ui_survival`, `ui_raid`, `ui_cave` | Symbole |
+

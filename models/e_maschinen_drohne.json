@@ -1,0 +1,81 @@
+{
+ "key": "maschinen_drohne",
+ "kind": "vat",
+ "role": "air",
+ "verts": 516,
+ "tris": 412,
+ "width": 516,
+ "rows": 46,
+ "rpf": 1,
+ "fps": 10,
+ "bounds_min": [
+  -0.806773652674962,
+  -0.43745190399449874,
+  -0.9296351369495419
+ ],
+ "bounds_size": [
+  1.7992648857589386,
+  2.1802009643536335,
+  1.9529415465052593
+ ],
+ "height": 1.1874999850988388,
+ "radius": 0.9299620991245384,
+ "clips": {
+  "idle": {
+   "row": 0,
+   "n": 6,
+   "dur": 0.6,
+   "loop": true,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "walk": {
+   "row": 6,
+   "n": 6,
+   "dur": 0.6,
+   "loop": true,
+   "stride": 2.28,
+   "hit": -1.0
+  },
+  "attack": {
+   "row": 12,
+   "n": 6,
+   "dur": 0.5,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.26666666666666666
+  },
+  "hit": {
+   "row": 18,
+   "n": 4,
+   "dur": 0.3,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "death": {
+   "row": 22,
+   "n": 9,
+   "dur": 0.8,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "zap": {
+   "row": 31,
+   "n": 6,
+   "dur": 0.5,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.3
+  },
+  "spawn": {
+   "row": 37,
+   "n": 9,
+   "dur": 0.8,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  }
+ }
+}

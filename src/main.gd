@@ -68,6 +68,8 @@ func _ready() -> void:
 		menu.show_menu()
 	if G.arg("memdbg") != "":
 		_memdbg()
+	preload("res://src/a11y.gd").apply(self)                 # Paket Q: Farbfilter, Untertitel, Blitze
+	preload("res://src/auto_quality.gd").maybe_start(self)    # Paket Q: Grafikstufe beim ersten Start messen
 
 
 ## Testhilfe: Speicherverbrauch ausgeben (--memdbg=1)
@@ -148,7 +150,9 @@ func _swap(w: Node3D) -> void:
 	add_child(w)
 	move_child(w, 0)
 	preload("res://src/liveops_world.gd").attach(w)          # Paket L: Feiertage, Skins, Hüte, Eier, Weltboss
+	preload("res://src/modi_exp.gd").attach(w)              # V6 Paket M: Höhlen und Ladefläche in der Expedition
 	hud.set_world(w)
+	preload("res://src/story.gd").attach(w)                   # V6 Paket E: Geschichte, Gerettete, Sprechblasen
 	_fade.color.a = 1.0
 	var tw := create_tween()
 	tw.tween_property(_fade, "color:a", 0.0, 0.45)
@@ -170,7 +174,7 @@ func start_expedition(area: int, mission: String, diff: int) -> void:
 	e.init(area, mission, diff)
 	_swap(e)
 	loading.done()
-	P.toast.emit("%s: %s" % [D_name(area), P.D.MISSIONS[e.mission].text])
+	P.toast.emit("%s: %s" % [tr(D_name(area)), tr(String(P.D.MISSIONS[e.mission].text))])   # Teile einzeln übersetzen (Englisch)
 
 
 func D_name(area: int) -> String:

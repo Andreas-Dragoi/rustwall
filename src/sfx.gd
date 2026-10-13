@@ -14,6 +14,7 @@ const MAX_PER_FRAME := 6
 const NEAR := 9.0              # bis hier volle Lautstärke (Meter um die Bildmitte)
 const FAR := 46.0              # ab hier stumm
 const LOOP_FADE := 0.18
+const Captions = preload("res://src/captions.gd")      # Paket Q: Untertitel für wichtige Töne
 
 ## Alte Namen (und Sammelnamen), für die es keine eigene Datei gibt.
 const ALIAS := {
@@ -28,6 +29,7 @@ const ALIAS := {
 const WARM := ["click", "w_rifle", "w_burst", "slime_hit", "pop_small", "pop_big", "coin", "coin_drop", "step_grass", "hurt",
 	"reload", "reload_done", "explosion_small", "explosion_big", "t_mg", "t_cannon", "wall_hit_wood", "struct_hit", "spit", "wave"]
 
+var _cap_at := false                   # Paket Q: Untertitel schon aus play_at gemeldet
 var _cache := {}                       # Name -> Array der Varianten (leer = gibt es nicht)
 var _jitter := {}                      # Name -> bool: Tonhöhe leicht würfeln (nur kurze Klänge)
 var _pick := {}                        # Name -> zuletzt gespielte Variante
@@ -102,6 +104,8 @@ func ground(theme: Dictionary) -> String:
 			return "step_snow"
 		"vulkan":
 			return "step_sand"                 # Asche und Lavakies
+		"stadt":
+			return "step_asphalt" if has("step_asphalt") else "step_sand"      # Paket Z2: Asphalt und Schutt
 	return "step_grass"
 
 
@@ -122,6 +126,8 @@ func ambience(theme: Dictionary) -> String:
 			return "amb_crater"
 		"vulkan":
 			return "amb_x_vulkan" if has("amb_x_vulkan") else "amb_crater"
+		"stadt":
+			return "amb_x_stadt" if has("amb_x_stadt") else "amb_desert"
 	return "amb_meadow"
 
 
@@ -130,6 +136,8 @@ func has(sound: String) -> bool:
 
 
 func play(sound: String, vol_db := 0.0, pitch := 1.0, min_gap := 0.045) -> void:
+	if Captions.enabled and not _cap_at:                     # Paket Q: Untertitel (auch bei leisem Ton)
+		Captions.heard(sound)
 	if (sound == "win" or sound == "lose") and Music.has_stinger(sound):
 		if _log_on:
 			_log[sound] = int(_log.get(sound, 0)) + 1
@@ -195,6 +203,16 @@ func play(sound: String, vol_db := 0.0, pitch := 1.0, min_gap := 0.045) -> void:
 
 ## Klang an einem Ort der Welt: je weiter von der Bildmitte entfernt, desto leiser; weit weg gar nicht.
 func play_at(sound: String, pos: Vector3, vol_db := 0.0, pitch := 1.0, min_gap := 0.045) -> void:
+	if Captions.enabled:                                     # Paket Q: Untertitel mit Richtung
+		Captions.heard(sound, pos)
+		_cap_at = true
+		_play_at(sound, pos, vol_db, pitch, min_gap)
+		_cap_at = false
+		return
+	_play_at(sound, pos, vol_db, pitch, min_gap)
+
+
+func _play_at(sound: String, pos: Vector3, vol_db := 0.0, pitch := 1.0, min_gap := 0.045) -> void:
 	var cam = G.cam
 	if cam == null or not is_instance_valid(cam):
 		play(sound, vol_db, pitch, min_gap)

@@ -6,6 +6,7 @@ const UI = preload("res://src/ui.gd")
 const Legal = preload("res://src/screens/legal.gd")
 const Store = preload("res://src/store.gd")
 const I18N = preload("res://src/i18n.gd")
+const SQ = preload("res://src/screens/settings_q.gd")     # Paket Q: Barrierefreiheit, Tasten, Fenster, Gamepad
 
 const QUALITY := ["Niedrig", "Mittel", "Hoch"]
 const KEYS_PC := [["W A S D", "Laufen"], ["Maus", "Zielen (linke Taste halten: selbst zielen)"], ["Q  E  R", "Fähigkeiten"], ["F", "Kommandanten-Fähigkeit"],
@@ -65,6 +66,9 @@ func build() -> Control:
 	a.add_child(_toggle("Regen in der Basis", "rain", false))
 	a.add_child(S.hint("Bei schwächeren Geräten helfen „Niedrig“ und 30 Bilder pro Sekunde. Das schont auch den Akku.", 18))
 	left.add_child(UI.panel(a, UI.NAVY, UI.EDGE, 22, 20))
+	left.add_child(UI.panel(preload("res://src/basis_ui.gd").notify_settings(S), UI.NAVY, UI.EDGE, 22, 20))     # V6 Paket B
+	left.add_child(UI.panel(SQ.access(S), UI.NAVY, UI.EDGE, 22, 20))      # Paket Q: Barrierefreiheit
+	left.add_child(UI.panel(SQ.auto_q(S), UI.NAVY, UI.EDGE, 22, 20))      # Paket Q: Grafikstufe automatisch
 
 	# ---- Testmodus (mit Server nur in Entwickler-Fassungen: sonst ließe sich die Zeit vorspulen)
 	var t := UI.vbox(10, [UI.hbox(12, [UI.pic("ui_wrench", 44.0), S.head("Testmodus", 30)]), S.hint("Nur zum Ausprobieren: Zeit vorspulen und Spielstände vorbereiten.", 18)])
@@ -114,7 +118,10 @@ func build() -> Control:
 	var right := UI.vbox(12)
 	right.add_child(UI.panel(_online(), UI.NAVY, UI.EDGE, 22, 20))
 	right.add_child(UI.panel(_privacy(), UI.NAVY, UI.EDGE, 22, 20))
-	right.add_child(UI.panel(_keys("Steuerung am PC", KEYS_PC), UI.NAVY, UI.EDGE, 22, 20))
+	right.add_child(UI.panel(SQ.keys(S), UI.NAVY, UI.EDGE, 22, 20))       # Paket Q: Tasten ändern (statt fester Liste KEYS_PC)
+	if preload("res://src/pc_input.gd").is_pc():
+		right.add_child(UI.panel(SQ.window(S), UI.NAVY, UI.EDGE, 22, 20))  # Paket Q: Fenster, VSync, Bildrate
+	right.add_child(UI.panel(SQ.pad(S), UI.NAVY, UI.EDGE, 22, 20))        # Paket Q: Gamepad
 	right.add_child(UI.panel(_keys("Steuerung am Handy", KEYS_TOUCH), UI.NAVY, UI.EDGE, 22, 20))
 	right.add_child(UI.info_box(Store.note() + (" Mitspieler sind echt (Server verbunden)." if P.social.online() else " Ohne Server sind die Mitspieler simuliert."), 20))
 	var rm := MarginContainer.new()

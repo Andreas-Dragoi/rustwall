@@ -59,6 +59,7 @@ var _wish_icon: Sprite3D
 var _barrow: Node3D
 var _squeak_t := 0.0
 var cheers_walking := 0          # (Test) Jubel im Gehen, ohne anzuhalten
+var injured := false             # V6 Paket B: verletzt nach der Flut (Verband, langsamer; basis_life.gd)
 
 
 func _init(b, node: Node3D, i: int) -> void:
@@ -273,6 +274,8 @@ func _walk(dt: float, nav, others: Array, hero_pos) -> void:
 		return
 	var st := step()
 	var sp: float = RUN if bool(st.get("run", false)) else WALK
+	if injured:
+		sp = WALK * 0.55                 # V6 Paket B: humpelt (DB.INJURY_SPEED)
 	var tgt: Vector2 = path[pi]
 	var to := tgt - pos
 	var d := to.length()

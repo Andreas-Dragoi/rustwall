@@ -65,7 +65,7 @@ static func hud_banner(hud: CanvasLayer, parent: Control) -> void:
 		var extra := ""
 		if bool(LO.event_def().get("community", false)):
 			extra = " · %d %%" % int(LO.boss_progress() * 100.0)
-		sub.text = "%s · noch %s%s" % [String(LO.event_def().effect), UI.time_text(LO.week_left()), extra]
+		sub.text = ("%s · noch %s" % [String(LO.event_def().effect), UI.time_text(LO.week_left())]) + extra     # keine zwei %s direkt hintereinander (stört die englische Vorlagen-Erkennung)
 		bang.visible = LO.event_claimable() > 0)
 
 

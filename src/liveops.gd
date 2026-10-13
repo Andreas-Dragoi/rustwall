@@ -255,6 +255,14 @@ static func start_raid() -> String:
 	var b := boss_state()
 	b.tries = int(b.tries) + 1
 	b.tries_total = int(b.tries_total) + 1
+	raid_fight(w, "")
+	P.toast.emit("Der Schleim-Leviathan greift an! %d Sekunden – richte so viel Schaden an wie möglich." % int(DL.BOSS_TIME))
+	return ""
+
+
+## Gemeinsame Kampfwelt für Weltboss und Clan-Raid (V6 Paket M): Leviathan vor dem Bunker, BOSS_TIME Sekunden.
+## kind: "" = Weltboss-Woche, "clan" = Clan-Raid (Abrechnung in src/modi.gd).
+static func raid_fight(w, kind: String) -> void:
 	raid_dmg = 0.0
 	w.start_flood(true)
 	w._queue.clear()
@@ -271,15 +279,18 @@ static func start_raid() -> String:
 	w.horde.boss = e
 	w.horde.boss_name = String(D.enemy("boss_leviathan").name)
 	w.set_meta("raid_t", 0.0)
-	P.toast.emit("Der Schleim-Leviathan greift an! %d Sekunden – richte so viel Schaden an wie möglich." % int(DL.BOSS_TIME))
+	if kind != "":
+		w.flood["raid_kind"] = kind
 	Sfx.play("worldboss_horn", -2.0)
 	Music.set_mood("boss")
 	P.mark()
-	return ""
 
 
 ## Ergebnis eines Weltboss-Angriffs (aus base_world._finish). raid_dmg setzt liveops_world.gd.
 static func raid_result(_win: bool, kills: int) -> Dictionary:
+	var gw = G.main.world if G.main != null else null
+	if gw != null and gw.get("flood") is Dictionary and String(gw.flood.get("raid_kind", "")) == "clan":
+		return load("res://src/modi.gd").raid_result(_win, kills)         # V6 Paket M: Clan-Raid
 	var b := boss_state()
 	var dmg := int(raid_dmg)
 	b.dmg = int(b.dmg) + dmg

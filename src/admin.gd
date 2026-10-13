@@ -167,6 +167,7 @@ func _fill() -> void:
 	_row([_btn("Tageszeit: " + (Weather.force if Weather.force != "" else "Uhr"), cycle_daytime), _btn("Regen jetzt / aus", toggle_rain)])
 	_row([_btn("Alle Begleiter geben", give_companions, "gold"), _btn("Begleiter +1 Stufe", companion_level)])
 	preload("res://src/liveops_admin.gd").fill(self)        # Paket L: Live-Betrieb
+	preload("res://src/basis_admin.gd").fill(self)          # V6 Paket B: Forschung, Wetter, Schäden, Verletzte
 	_sc.set_deferred("scroll_vertical", keep)
 
 

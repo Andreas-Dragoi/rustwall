@@ -1,0 +1,81 @@
+{
+ "key": "maschinen_abrisskran",
+ "kind": "vat",
+ "role": "miniboss",
+ "verts": 926,
+ "tris": 936,
+ "width": 926,
+ "rows": 68,
+ "rpf": 1,
+ "fps": 10,
+ "bounds_min": [
+  -2.4051684371731046,
+  -4.1349999111890785,
+  -2.1055339731316325
+ ],
+ "bounds_size": [
+  4.679997671534508,
+  9.962060759058975,
+  5.52290942688873
+ ],
+ "height": 4.648802757263184,
+ "radius": 2.7865749566934612,
+ "clips": {
+  "idle": {
+   "row": 0,
+   "n": 12,
+   "dur": 1.2,
+   "loop": true,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "walk": {
+   "row": 12,
+   "n": 10,
+   "dur": 1.0,
+   "loop": true,
+   "stride": 1.3,
+   "hit": -1.0
+  },
+  "attack": {
+   "row": 22,
+   "n": 8,
+   "dur": 0.7,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.36666666666666664
+  },
+  "hit": {
+   "row": 30,
+   "n": 4,
+   "dur": 0.3,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "death": {
+   "row": 34,
+   "n": 11,
+   "dur": 1.0,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "skill": {
+   "row": 45,
+   "n": 14,
+   "dur": 1.3,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.9
+  },
+  "spawn": {
+   "row": 59,
+   "n": 9,
+   "dur": 0.8,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  }
+ }
+}

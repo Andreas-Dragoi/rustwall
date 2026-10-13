@@ -122,7 +122,7 @@ func _skills() -> void:
 			seen[nm] = true
 			if lib.has_animation(nm):
 				T._check(lib.get_animation(nm).length <= 1.05, "Fähigkeiten-Clip %s ist kurz" % nm)
-	T._check(seen.size() == 18, "18 Fähigkeiten-Clips (%d)" % seen.size())
+	T._check(seen.size() == D.HERO_ORDER.size() * 3, "%d Fähigkeiten-Clips (%d)" % [D.HERO_ORDER.size() * 3, seen.size()])
 
 
 # ---------------------------------------------------------------- Fußfestigkeit

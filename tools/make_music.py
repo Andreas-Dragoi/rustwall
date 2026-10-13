@@ -1032,6 +1032,10 @@ AREA_SONGS = {
 AREA_SONGS["vulkan"] = dict(tonic="C", mode="phrygdom", bpm=108, style="march", lead=i_brass, lead2=i_choir, arp=i_marimba, arp_kind="alt", pad=i_strings,
                             bass=i_lowbass, bass_kind="eighth", calm="toms", fight="epic", fight_bass="eighth", stab=i_brass, seed=88,
                             A=["1", "2", "1", "7", "1", "6", "2", "1"], B=["6", "7", "1", "1", "4", "2", "2", "1"], C=["4", "5", "1", "6", "4", "2", "7", "1"])
+# V6: Stadtruinen (Paket Z2) – treibender Synth-Puls wie ein Stromnetz, Spieluhr-Arpeggio wie alte Ampeln, Trompete als Durchsage
+AREA_SONGS["stadt"] = dict(tonic="B", mode="dorian", bpm=114, style="drive", lead=i_lead, lead2=i_trumpet, arp=i_musicbox, arp_kind="up", pad=i_pad,
+                           bass=i_bass, bass_kind="eighth", calm="soft", fight="epic", fight_bass="eighth", stab=i_stab, seed=99,
+                           A=["1", "7", "4", "5", "1", "7", "6", "5"], B=["4", "5", "1", "6", "4", "5", "2", "5"], C=["6", "4", "1", "5", "6", "7", "4", "1"])
 
 
 def area_song(akey, bars_target_s=140.0):

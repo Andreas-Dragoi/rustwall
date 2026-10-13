@@ -23,6 +23,9 @@ var cells := {}                       # Zellindex -> Objekt mit .alive, .mid, .c
 var dirty := true
 var rebuilds := 0
 var has_goal := false
+var deck := PackedByteArray()         # Paket Z2 (Stadtruinen): 1 = Dach, 2 = Feuertreppe oben, 3 = Treppenfuß – für Gegner fest, der Held darf hinauf
+var deck_up := false                  # Paket Z2: der Held steht auf Treppe oder Dach (dann darf er weiter hinauf)
+var deck_lock := false                # Paket Z2: im Fahrzeug keine Treppe
 
 
 func _init(origin: Vector2, width: int, height: int, cell_size: float) -> void:
@@ -182,6 +185,15 @@ func blocks_player(p: Vector2, hover := false) -> bool:
 	return s != null and s.alive and s.blocks_player
 
 
+## Paket Z2: wie blocks_player, aber für den Helden – Feuertreppen (vom Fuß aus) und Dächer (von der Treppe aus) sind begehbar.
+func blocks_hero(p: Vector2, hover := false) -> bool:
+	if not deck.is_empty() and not deck_lock:
+		var i := idx(p)
+		if i >= 0 and i < deck.size() and deck[i] != 0 and (deck[i] == 3 or deck_up):
+			return false
+	return blocks_player(p, hover)
+
+
 func dir_at(p: Vector2) -> Vector2:
 	var i := idx(p)
 	if i < 0 or not has_goal:
@@ -206,6 +218,7 @@ func update_if_dirty() -> void:
 
 
 var slice_us := 0                     # > 0: update_if_dirty() rechnet höchstens so viele µs je Aufruf (Expedition)
+var cost_fn := Callable()             # V6 Paket B: eigene Kosten je Mauer/Gebäude (Brecher-Feld der Belagerung, siege.gd)
 var _job := {}
 const _NX := [1, -1, 0, 0, 1, 1, -1, -1]
 const _NZ := [0, 0, 1, -1, 1, -1, 1, -1]
@@ -265,10 +278,11 @@ func _job_step(budget_us: int) -> void:
 			for x in w:
 				var i := r0 + x
 				cost[i] = BIG if solid[i] == 1 else base[i]
+		var use_fn := cost_fn.is_valid()
 		for i in cells:
 			var s = cells[i]
 			if s.alive and solid[i] == 0:
-				cost[i] = s.cost
+				cost[i] = s.cost if not use_fn else float(cost_fn.call(s))
 		_job.c = -1
 		var gi: int = int(_job.gi)
 		dist2[gi] = 0.0

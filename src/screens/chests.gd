@@ -214,6 +214,8 @@ func _piece_card(p: Dictionary, index: int, animate: bool) -> Control:
 			ic = UI.pic("ui_badge", 104.0)
 		"egg":                               # Paket Welt: Begleiter-Ei
 			ic = UI.pic("p_egg", 104.0, "ui_heart")
+		"module":                            # Paket H: Waffenmodul
+			ic = UI.pic("mod_" + String(p.get("key", "")), 104.0, "ui_build")
 		"blueprint":                         # V4: Bauplan einer Waffe (bläulich wie eine Blaupause)
 			ic = UI.pic("w_" + String(p.get("key", "")), 104.0, "sword")
 			ic.modulate = Color(0.55, 0.8, 1.0)

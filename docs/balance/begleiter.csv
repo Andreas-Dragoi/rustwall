@@ -1,0 +1,13 @@
+begleiter;tragkraft1;tragkraft10;leben1;leben10;tempo;faehigkeiten
+kistenbein;50;86;120;228;6.0;Münzsammler 3.5
+esel;90;154;180;342;5.6;Starker Rücken 0.3
+schnecke;110;189;260;494;4.2;Sichere Ladung 0.85
+kaefer;60;103;160;304;5.0;Baut selbst ab 2.6, Gebietsvorteil ["staub", 0.3]
+ziege;70;120;150;285;6.5;Steinbrecher 0.35, Gebietsvorteil ["frost", 0.5]
+drohne;40;68;90;171;8.5;Münzsammler 7.0, Späher 0.25
+biber;55;94;150;285;5.0;Nagezähne 0.5, Gebietsvorteil ["sumpf", 0.3]
+waschbaer;50;86;130;247;6.2;Spürnase 2.0, Schatzsucher 1.0
+golem;130;223;340;646;4.4;Kämpfer 14.0
+husky;80;137;170;323;7.5;Antreiber 0.1, Gebietsvorteil ["frost", 0.4]
+eule;30;51;80;152;7.0;Späher 0.6, Schatzsucher 1.0
+gluehwurm;30;51;80;152;7.0;Laterne 9.0, Heiler 0.012

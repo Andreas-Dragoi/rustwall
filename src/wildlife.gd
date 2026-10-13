@@ -10,6 +10,7 @@ extends Node3D
 const D = preload("res://src/data.gd")
 const Models = preload("res://src/models.gd")
 const Nature = preload("res://src/base_nature.gd")
+const AA = preload("res://src/animal_anim.gd")          # Paket H: Blender-Clips für Hund, Katze, Vögel
 
 const SCALE := 1.6               # Tiere etwas größer als echt, damit man sie aus der Spielsicht erkennt
 const N_BUTTERFLY := [30, 50, 80]
@@ -95,7 +96,7 @@ func _spawn_all() -> void:
 func _add(kind: String, model: String, p: Vector3) -> void:
 	if not Models.has_glb(model):
 		return
-	var n := Models.glb(model)
+	var n := Models.glb(AA.model_for(kind, model))
 	n.scale = Vector3.ONE * SCALE
 	n.position = p
 	n.rotation.y = _rng.randf() * TAU
@@ -108,6 +109,9 @@ func _add(kind: String, model: String, p: Vector3) -> void:
 		"body": Models.find(n, "body"), "head": Models.find(n, "head"), "tail": Models.find(n, "tail"),
 		"wl": Models.find(n, "wing_l"), "wr": Models.find(n, "wing_r"), "ears": Models.find(n, "ears"), "hidden": false,
 		"legs": [Models.find(n, "leg_fl"), Models.find(n, "leg_br"), Models.find(n, "leg_fr"), Models.find(n, "leg_bl")], "follow": 0.0, "from": p, "k": 0.0}
+	var ap := AA.player_of(n)
+	if ap != null:
+		a["ap"] = ap
 	if kind in ["bird", "gull"]:
 		a.st = "fly" if kind == "gull" else "sit"
 	if kind == "cat":
@@ -741,6 +745,8 @@ func _process(dt: float) -> void:
 	if _alarm:
 		for a in animals:
 			_tick_alarm(a, dt)
+			if a.has("ap"):
+				AA.update(a, dt)
 	else:
 		for a in animals:
 			if not a.n.visible and a.st != "gone":
@@ -752,6 +758,8 @@ func _process(dt: float) -> void:
 					_tick_gull(a, dt)
 				_:
 					_tick_ground(a, dt)
+			if a.has("ap"):
+				AA.update(a, dt)
 	_tick_butterflies(dt)
 	var night: bool = w.daytime in ["abend", "nacht"]
 	_fireflies.emitting = night and not _alarm

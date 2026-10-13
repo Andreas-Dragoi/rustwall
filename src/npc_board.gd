@@ -500,6 +500,8 @@ func tap(sp: Vector2) -> bool:
 		txt += "\nWunsch: „%s“" % String(best.wish.text)
 	if best.hero_key != "":
 		txt += "\n„%s“" % _first_sentence(String(D.HEROES[best.hero_key].get("story", "")))
+	else:
+		txt += "\n„%s“" % preload("res://src/chatter.gd").tap_line(best, self)      # V6 Paket E: ein Satz je nach Lage
 	best.show_sign(txt)
 	best.bubble("ui_info")
 	Sfx.play("click", -10.0)
@@ -552,6 +554,10 @@ func _next(n) -> Dictionary:
 		return _guard_post(n, true) if n.job == "wache" else _alarm_task(n)
 	if _night and n.night_home:
 		return _night_task(n)
+	if n.injured and w.get("life") != null:                 # V6 Paket B: Verletzte gehen zum Verarzten in den Bunker
+		var ct: Dictionary = w.life.care_task(self, n)
+		if not ct.is_empty():
+			return ct
 	var rt := _routine_task(n)
 	if not rt.is_empty():
 		return rt
@@ -815,6 +821,8 @@ func release(n) -> void:
 # ================================================================= Paket Welt: echte Bäume, Tagesablauf, Wünsche
 ## Ein Bewohner hat einen Schritt beendet (npc.gd): gefällter Baum fällt um, Laterne wird angezündet.
 func step_done(n, st: Dictionary) -> void:
+	if st.has("care"):
+		preload("res://src/basis_state.gd").cared(String(n.name))      # V6 Paket B: verarztet
 	if st.has("tree"):
 		var pl: Dictionary = st.tree
 		if w.nature != null and w.nature.has_method("fell_tree"):

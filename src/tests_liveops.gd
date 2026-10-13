@@ -13,7 +13,7 @@ const Models = preload("res://src/models.gd")
 const CD = preload("res://src/companion_data.gd")
 const CompanionPose = preload("res://src/companion_pose.gd")
 const Humanoid = preload("res://src/humanoid.gd")
-const PORT := 7594
+var PORT: int = 7594 + 2 * (absi(ProjectSettings.globalize_path("res://").hash()) % 300)   # je Arbeitskopie ein eigener Port (parallele Testläufe)
 
 var T: Node
 

@@ -9,6 +9,7 @@ const HudGuide = preload("res://src/hud_guide.gd")     # Paket F: Tutorial, Ziel
 const Guide = preload("res://src/guide.gd")
 const DF = preload("res://src/data_fuehrung.gd")
 const LOU = preload("res://src/liveops_ui.gd")         # Paket L: Ereignis-Banner, Saison-Knopf
+const BasisUI = preload("res://src/basis_ui.gd")        # V6 Paket B: Wetter, Rückblick, Reparatur, Aufbauten, Bewertung
 
 var root: Control
 var world: Node3D
@@ -84,7 +85,7 @@ var _tip_panel: Control
 var _sel_last_id := ""
 
 const MENU_ICON := {"heroes": "ui_helmet", "chests": "ui_chest", "quests": "ui_quest", "workshop": "ui_hammer", "garage": "ui_garage",
-	"social": "ui_mail", "clan": "ui_clan", "settings": "ui_gear", "begleiter": "comp_kistenbein", "hilfe": "ui_help", "saison": "ui_season", "garderobe": "ui_wardrobe"}
+	"social": "ui_mail", "clan": "ui_clan", "settings": "ui_gear", "begleiter": "comp_kistenbein", "hilfe": "ui_help", "saison": "ui_season", "garderobe": "ui_wardrobe", "forschung": "ui_research", "chronik": "ui_chronik", "modi": "ui_tower"}
 const CAT_ICON := {"def": "ui_target", "wall": "ui_shield", "trap": "ui_alarm", "prod": "ui_gear", "special": "ui_star", "deco": "ui_flag"}
 const GLASS := Color(0.07, 0.19, 0.37, 0.94)
 
@@ -125,7 +126,7 @@ func modal_open() -> bool:
 
 
 func damage_flash() -> void:
-	_flash_a = 0.3
+	_flash_a = 0.3 * preload("res://src/a11y.gd").flash_k     # Paket Q: Blitze abschwächen
 
 
 func toast(text: String) -> void:
@@ -323,8 +324,11 @@ func _build_peace() -> void:
 	col.add_child(_quest_btn)
 	col.add_child(LOU.season_button(self))                   # Paket L: Saison, Ereignis, Garderobe
 	col.add_child(_menu_btn("Werkstatt", "workshop", "werkstatt"))
+	col.add_child(_menu_btn("Forschung", "forschung", ""))         # V6 Paket B
 	col.add_child(_menu_btn("Garage", "garage", "garage"))
 	col.add_child(_menu_btn("Begleiter", "begleiter", ""))
+	col.add_child(_menu_btn("Chronik", "chronik", ""))             # V6 Paket E: Geschichte
+	col.add_child(_menu_btn("Modi", "modi", ""))                  # V6 Paket M: Turm, Überleben, Clan-Raid
 	col.add_child(_mail_btn)
 	col.add_child(_menu_btn("Clan", "clan", "clanhalle"))
 	col.add_child(_menu_btn("Hilfe", "hilfe", ""))
@@ -357,7 +361,7 @@ func _build_peace() -> void:
 	_warn.size_flags_horizontal = Control.SIZE_SHRINK_END
 	_warn.visible = false
 	UI.ignore_mouse(_warn)
-	var bv := UI.vbox(10, [_warn, _all_btn, bh])
+	var bv := UI.vbox(10, [_warn, BasisUI.bar(self), _all_btn, bh])
 	_peace.add_child(bv)
 	_anchor(bv, Control.PRESET_BOTTOM_RIGHT, Vector2(-24, -24))
 	_update_res()
@@ -608,7 +612,7 @@ func _sel_window(b: Dictionary) -> Control:
 		var t: Dictionary = D.TOWERS[def.tower]
 		var dps: float = float(t.damage) * float(t.rpm) / 60.0 * pow(D.TOWER_DMG_GROWTH, lv - 1)
 		stats.add_child(UI.stat_row("ui_sword", "Schaden pro Sekunde", str(int(dps)), 24))
-		stats.add_child(UI.stat_row("ui_target", "Reichweite", "%d m" % int(t.range), 24))
+		stats.add_child(UI.stat_row("ui_target", "Reichweite", "%d m" % int(float(t.range) * world.tower_range_k()), 24))
 	if float(def.get("hp", 0.0)) > 0.0 and key != "bunker":
 		var hp := float(def.hp) * pow(1.18, lv - 1)
 		if def.cat == "wall":
@@ -622,7 +626,7 @@ func _sel_window(b: Dictionary) -> Control:
 	if key == "training":
 		stats.add_child(UI.stat_row("ui_star", "Erfahrung pro Stunde", "+%d" % int(P.train_rate()), 24))
 	if key == "bunker":
-		stats.add_child(UI.stat_row("ui_heart", "Haltbarkeit", str(int(D.bunker_hp(lv))), 24))
+		stats.add_child(UI.stat_row("ui_heart", "Haltbarkeit", str(int(D.bunker_hp(lv) * (1.0 + BasisUI.R.bonus("bunker_hp")))), 24))
 		var dprice := P.drone_price()
 		var drow := UI.stat_row("ui_drone", "Baudrohnen", str(P.drones_total()), 24)
 		if dprice > 0:
@@ -638,6 +642,7 @@ func _sel_window(b: Dictionary) -> Control:
 		v.add_child(_aim_row(id, b))
 	# ---- Bauzeit oder Ausbau
 	var btns := UI.hbox(10)
+	BasisUI.sel_rows(self, v, btns, b)                     # V6 Paket B: Schaden/Reparieren, Fund, Tüftelecke
 	if key == "training" and not (busy and not b.get("up", false)):
 		v.add_child(_trainee_row())
 		var tb := UI.button("Waffen testen (Übungsplatz)", func(): G.main.start_training(), "gold", 24, "ui_target")   # Paket Welt
@@ -740,6 +745,7 @@ func _sel_window(b: Dictionary) -> Control:
 	if def.cat != "obstacle":
 		btns.add_child(UI.button("Verschieben", func(): world.begin_move(id), "dark", 25))
 	if key == "bunker":
+		btns.add_child(UI.button("Spielmodi", func(): _open("modi"), "gold", 25, "ui_tower"))     # V6 Paket M
 		var lay := UI.hbox(8, [UI.label("Aufbau der Basis:", 20, UI.TEXT)])
 		for slot in 3:
 			var sl: int = slot
@@ -747,6 +753,7 @@ func _sel_window(b: Dictionary) -> Control:
 			var lb := UI.button("laden", func(): P.load_layout(sl), "dark", 20)
 			lb.disabled = P.d.layouts[sl] == null
 			lay.add_child(lb)
+		lay.add_child(UI.button("Aufbauten …", func(): BasisUI.layouts_dialog(self), "gold", 20, "ui_map"))     # V6 Paket B
 		v.add_child(lay)
 	if def.cat in ["wall", "deco", "trap"]:
 		btns.add_child(UI.button("Entfernen", func():
@@ -1053,8 +1060,8 @@ func _show_build() -> void:
 		var def: Dictionary = D.BUILDINGS[key]
 		if def.cat != _build_cat:
 			continue
-		if def.has("trophy") and P.max_count(key) <= 0:
-			continue                                          # Boss-Trophäe erst nach dem ersten Sieg
+		if (def.has("trophy") or def.has("story")) and P.max_count(key) <= 0:
+			continue                                          # Boss-Trophäe erst nach dem ersten Sieg, Tauschladen erst nach der Rettung (V6 Paket E)
 		var locked: bool = int(def.unlock) > P.bunker_level() and not G.ch("nolimit")
 		var why := P.can_build(key)
 		var have := P.count(key)
@@ -1195,6 +1202,7 @@ func _ask_flood() -> void:
 		stats.add_child(UI.stat_row("ui_alarm", String(fd.guest_text), "", 26, UI.ORANGE))
 	if fd.boss:
 		stats.add_child(UI.hbox(14, [UI.enemy_pic(D.E_BOSS, 52.0), UI.label("In der letzten Welle kommt ein Boss!", 26, UI.RED)]))
+	BasisUI.weather_rows(stats, fd)                       # V6 Paket B: Wetter der Flut
 	# Wellen-Vorschau: gleiche Wellen zusammengefasst
 	var wv := UI.vbox(0, [UI.label("Wellen-Vorschau", 21, UI.SKY)])
 	var n := int(fd.waves)
@@ -1333,6 +1341,7 @@ func _build_battle() -> void:
 		v.add_child(UI.hbox(12, [UI.pic("ui_flood", 52.0), UI.label("Welle", 30), _wave_label, UI.spacer(true, Vector2(16, 0)), UI.pill(UI.hbox(8, [UI.enemy_pic(0, 40.0), _left_label]))]))
 		_bunker_bar = UI.bar(1.0, D.C_BAR_BLUE, Vector2(380, 32))
 		v.add_child(UI.hbox(10, [UI.building_pic("bunker", 56.0, P.bunker_level()), _bunker_bar]))
+		BasisUI.battle_weather(v, world)                  # V6 Paket B: Wetter der Flut
 	v.add_child(UI.sep(false, Color(UI.EDGE, 0.4)))
 	# Held
 	_hero_bar = UI.bar(1.0, D.C_BAR_RED, Vector2(320, 28))
@@ -1599,6 +1608,8 @@ func _show_result() -> void:
 		var cb := UI.button("Kisten öffnen", func(): _leave_result("chests"), "gold", 32, "ui_chest")
 		cb.custom_minimum_size = Vector2(340, 92)
 		hb.add_child(cb)
+	BasisUI.result_extra(self, body, hb, r)              # V6 Paket B: Zusatzbeute, Verletzte, Rückblick
+	load("res://src/modi_ui.gd").result_extra(self, body, hb, r)     # V6 Paket M: Turm, Überleben, Clan-Raid
 	v.add_child(hb)
 	_show_modal(v, 0.45, UI.GOLD if win else UI.RED)
 
@@ -1687,6 +1698,8 @@ func _leave_result(screen: String) -> void:
 		world.back_to_peace()
 		if screen != "":
 			_open(screen)
+		else:
+			BasisUI.after_result(self)                    # V6 Paket B: „Gefällt dir Rustwall?“
 
 
 func _process(dt: float) -> void:
@@ -1769,6 +1782,11 @@ class MiniMap extends Control:
 					draw_circle(q, 5.0, Color("FFD23E"))
 				"vehicle":
 					draw_rect(Rect2(q - Vector2(4, 4), Vector2(8, 8)), Color("9FB3CC"))
+				"subway":                                # Paket Z2: U-Bahn-Eingang (Stadtruinen)
+					draw_rect(Rect2(q - Vector2(6, 6), Vector2(12, 12)), Color("2A6AD0"))
+					draw_rect(Rect2(q - Vector2(2, 4), Vector2(4, 8)), Color.WHITE)
+				"gen":                                   # Paket Z2: Notstrom-Generator
+					draw_circle(q, 5.0, Color("F2B81E"))
 		var hp: Vector2 = c + world.hero.pos2() * k
 		var f: Vector2 = world.hero.facing()
 		draw_colored_polygon(PackedVector2Array([hp + f * 10.0, hp + f.orthogonal() * 6.0 - f * 5.0, hp - f.orthogonal() * 6.0 - f * 5.0]), Color.WHITE)

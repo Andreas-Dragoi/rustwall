@@ -29,22 +29,27 @@ def a_zapper():
 
 
 def a_magnet():
+    """Paket H: deutlicher – großer roter Hufeisenmagnet senkrecht vorn (von der Seite als U zu sehen), silberne Pole,
+    blaue Feldlinien und eine Magnetscheibe zwischen den Polen."""
     p = Part()
     z = 0.13
-    p.box((0.14, 0.36, 0.18), (0, -0.04, z), WHITE, bevel=0.06, segs=3)
-    p.box((0.146, 0.2, 0.04), (0, -0.04, z + 0.06), VIO, bevel=0.012, segs=1)
-    Y(p, 0.05, -0.2, -0.36, z, DGREY, sides=10)
-    # Hufeisenmagnet: zwei Schenkel nach vorn, Bogen hinten
-    sweep(p, [(-0.13, -0.6, z), (-0.13, -0.44, z)], 0.05, RED, sides=8)
-    sweep(p, [(0.13, -0.6, z), (0.13, -0.44, z)], 0.05, RED, sides=8)
-    sweep(p, [(-0.13, -0.44, z), (-0.09, -0.36, z), (0.0, -0.33, z), (0.09, -0.36, z), (0.13, -0.44, z)], 0.05, RED, sides=8)
-    for sx in (-1, 1):
-        Y(p, 0.052, -0.6, -0.68, z, GREY_L, sides=8, x=sx * 0.13)                  # Polschuhe
-    p.cyl(0.08, 0.03, (0, -0.62, z), GREY, r=rot(0, 90, 0), sides=14)              # Scheibe
-    p.cyl(0.03, 0.035, (0, -0.62, z), YEL, r=rot(0, 90, 0), sides=10)
+    p.box((0.14, 0.34, 0.18), (0, -0.0, z), WHITE, bevel=0.06, segs=3)
+    p.box((0.146, 0.2, 0.04), (0, -0.0, z + 0.06), VIO, bevel=0.012, segs=1)
+    Y(p, 0.05, -0.16, -0.3, z, DGREY, sides=10)
+    zc, rr = z, 0.13                                                                # U im Längsschnitt (Y-Z-Ebene)
+    sweep(p, [(0, -0.6, zc + rr), (0, -0.42, zc + rr)], 0.055, RED, sides=10)
+    sweep(p, [(0, -0.6, zc - rr), (0, -0.42, zc - rr)], 0.055, RED, sides=10)
+    pts = [(0, -0.42 + rr * math.sin(math.radians(a)), zc + rr * math.cos(math.radians(a))) for a in range(0, 181, 20)]
+    sweep(p, pts, 0.055, RED, sides=10)
+    for s in (1, -1):
+        Y(p, 0.058, -0.6, -0.7, zc + s * rr, GREY_L, sides=10)                        # Pole
+    p.cyl(0.07, 0.03, (0, -0.66, zc), "6F7C96", r=rot(0, 90, 0), sides=14)          # Scheibe
+    p.cyl(0.028, 0.035, (0, -0.66, zc), YEL, r=rot(0, 90, 0), sides=10)
+    for s in (1, -1):                                                               # Feldlinien
+        sweep(p, [(s * 0.07, -0.7, zc + rr), (s * 0.12, -0.76, zc), (s * 0.07, -0.7, zc - rr)], 0.008, "7FC8FF", sides=4)
     grip(p, NAVY)
     trigger(p)
-    done("a_magnet", p, (0, -0.68, z))
+    done("a_magnet", p, (0, -0.7, z), yaw=-80, pitch=8, tilt=10)
 
 
 def a_laser():

@@ -24,7 +24,7 @@ Sawmill, quarry, scrap press, refinery: gather resources, upgrade buildings thro
 Once a week the great flood rolls in: flyers, brutes, bosses. Ten tower types – from the machine gun to the Tesla coil – and your hero with special skills decide between victory and defeat.
 
 **Explore the world**
-Eight areas from Green Vale to Volcano Isle: drive out in your vehicle, collect loot, free outposts and defeat mighty bosses.
+Nine areas from Green Vale to the City Ruins: drive out in your vehicle, collect loot, free outposts and defeat mighty bosses.
 
 **Heroes, weapons and companions**
 Six heroes with 15 weapons each, talents and gear. Twelve companions carry loot, fight alongside you or sniff out treasure.

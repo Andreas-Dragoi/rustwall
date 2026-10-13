@@ -24,6 +24,12 @@ const TestsWelt = preload("res://src/tests_welt.gd")
 const TestsZone = preload("res://src/tests_zone.gd")
 const TestsLiveops = preload("res://src/tests_liveops.gd")
 const TestsSprache = preload("res://src/tests_sprache.gd")
+const TestsBasis6 = preload("res://src/tests_basis6.gd")
+const TestsHelden = preload("res://src/tests_helden.gd")
+const TestsGeschichte = preload("res://src/tests_geschichte.gd")
+const TestsModi = preload("res://src/tests_modi.gd")
+const TestsZone2 = preload("res://src/tests_zone2.gd")
+const TestsQualitaet = preload("res://src/tests_qualitaet.gd")
 
 var _t := 0.0
 var _shot_i := 0
@@ -108,6 +114,14 @@ func begin() -> void:
 		print("SELFTEST ZONE %s (%d Fehler)" % ["OK" if _fails == 0 else "FEHLER", _fails])
 		get_tree().quit()
 		return
+	if G.autotest == "zone2":            # nur die Prüfungen von Paket Z2 (src/tests_zone2.gd, Stadtruinen)
+		G.autotest = ""
+		G.selftest = true
+		Engine.time_scale = 8.0
+		await TestsZone2.new(self).run()
+		print("SELFTEST ZONE2 %s (%d Fehler)" % ["OK" if _fails == 0 else "FEHLER", _fails])
+		get_tree().quit()
+		return
 	if G.autotest == "begleiter":        # nur die Prüfungen von Paket B (src/tests_begleiter.gd)
 		G.autotest = ""
 		await TestsBegleiter.new(self).run()
@@ -152,10 +166,54 @@ func begin() -> void:
 		print("SELFTEST SPRACHE %s (%d Fehler)" % ["OK" if _fails == 0 else "FEHLER", _fails])
 		get_tree().quit()
 		return
+	if G.autotest == "basis":            # nur die Prüfungen von V6 Paket B (src/tests_basis6.gd)
+		G.autotest = ""
+		G.selftest = true
+		Engine.time_scale = 8.0
+		await TestsBasis6.new(self).run()
+		print("SELFTEST BASIS %s (%d Fehler)" % ["OK" if _fails == 0 else "FEHLER", _fails])
+		get_tree().quit()
+		return
 	if G.autotest == "online":           # nur die Prüfungen von Paket O (src/tests_online.gd)
 		G.autotest = ""
 		await TestsOnline.new(self).run()
 		print("SELFTEST ONLINE %s (%d Fehler)" % ["OK" if _fails == 0 else "FEHLER", _fails])
+		get_tree().quit()
+		return
+	if G.autotest == "helden":           # nur die Prüfungen von Paket H (src/tests_helden.gd)
+		G.autotest = ""
+		G.selftest = true
+		Engine.time_scale = 8.0
+		await TestsHelden.new(self).run()
+		print("SELFTEST HELDEN %s (%d Fehler)" % ["OK" if _fails == 0 else "FEHLER", _fails])
+		get_tree().quit()
+		return
+	if G.autotest == "geschichte":       # nur die Prüfungen von Paket E (src/tests_geschichte.gd)
+		G.autotest = ""
+		G.selftest = true
+		Engine.time_scale = 4.0
+		await TestsGeschichte.new(self).run()
+		print("SELFTEST GESCHICHTE %s (%d Fehler)" % ["OK" if _fails == 0 else "FEHLER", _fails])
+		get_tree().quit()
+		return
+	if G.autotest in ["modi", "turm", "ueberleben", "hoehle"]:     # V6 Paket M: Prüfungen bzw. Bots (src/tests_modi.gd)
+		var mk := G.autotest
+		if mk == "modi":
+			G.autotest = ""
+			G.selftest = true
+			Engine.time_scale = 8.0
+			await TestsModi.new(self).run()
+			print("SELFTEST MODI %s (%d Fehler)" % ["OK" if _fails == 0 else "FEHLER", _fails])
+		else:
+			Engine.time_scale = G.test_speed
+			await TestsModi.new(self).autotest(mk)
+		get_tree().quit()
+		return
+	if G.autotest == "dps":              # Paket H: Messlauf Waffen-Balance -> docs/balance/
+		G.autotest = ""
+		G.selftest = true
+		Engine.time_scale = float(G.arg("speed", "8"))
+		await TestsHelden.new(self).dps()
 		get_tree().quit()
 		return
 	if G.autotest == "waffenschau":      # Paket W: eine Waffe in der Arena zeigen (für Bilder)
@@ -169,6 +227,9 @@ func begin() -> void:
 		print("SELFTEST WAFFEN %s (%d Fehler)" % ["OK" if _fails == 0 else "FEHLER", _fails])
 		get_tree().quit()
 		return
+	if G.autotest in ["qualitaet", "econ_dump", "flood_q", "trailer", "storeshot"]:     # Paket Q: Prüfungen, Wirtschaftsdaten, Flut-Messreihe
+		if await TestsQualitaet.new(self).dispatch():
+			return
 	if _goto.x < 9000.0 and G.main.world != null and G.main.world.hero != null:
 		G.main.world.hero.global_position = Vector3(_goto.x, 0, _goto.y)
 		G.main.world.cam.snap()
@@ -179,6 +240,8 @@ func begin() -> void:
 		G.main.world.start_flood(G.arg("practice") == "1")
 	if G.arg("open") != "":
 		G.main.screens.open(G.arg("open"))
+	if G.arg("do").begins_with("modi_"):          # V6 Paket M: Bilder der Spielmodi
+		await TestsModi.new(self).shot(G.arg("do"))
 	match G.arg("do"):
 		"build":
 			G.main.hud._show_build()
@@ -542,6 +605,12 @@ func _selftest() -> void:
 	await TestsZone.new(self).run()
 	await TestsLiveops.new(self).run()
 	await TestsSprache.new(self).run()
+	await TestsBasis6.new(self).run()
+	await TestsHelden.new(self).run()
+	await TestsGeschichte.new(self).run()
+	await TestsModi.new(self).run()
+	await TestsZone2.new(self).run()
+	await TestsQualitaet.new(self).run()
 	G.main.goto_base()
 	await _wait(0.3)
 	# ---------- Admin-Menü: jede Aktion einmal

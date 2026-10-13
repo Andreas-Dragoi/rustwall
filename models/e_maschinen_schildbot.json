@@ -1,0 +1,81 @@
+{
+ "key": "maschinen_schildbot",
+ "kind": "vat",
+ "role": "shield",
+ "verts": 545,
+ "tris": 490,
+ "width": 545,
+ "rows": 64,
+ "rpf": 1,
+ "fps": 10,
+ "bounds_min": [
+  -0.9912015541512755,
+  -2.0799999773502353,
+  -0.8337343065155365
+ ],
+ "bounds_size": [
+  2.400604830577304,
+  4.796044135194354,
+  2.4599895480142426
+ ],
+ "height": 2.3999998569488525,
+ "radius": 1.2940779744941355,
+ "clips": {
+  "idle": {
+   "row": 0,
+   "n": 14,
+   "dur": 1.4,
+   "loop": true,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "walk": {
+   "row": 14,
+   "n": 10,
+   "dur": 1.0,
+   "loop": true,
+   "stride": 1.5,
+   "hit": -1.0
+  },
+  "attack": {
+   "row": 24,
+   "n": 9,
+   "dur": 0.8,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.4
+  },
+  "hit": {
+   "row": 33,
+   "n": 4,
+   "dur": 0.3,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "death": {
+   "row": 37,
+   "n": 12,
+   "dur": 1.1,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "block": {
+   "row": 49,
+   "n": 6,
+   "dur": 0.5,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "spawn": {
+   "row": 55,
+   "n": 9,
+   "dur": 0.8,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  }
+ }
+}

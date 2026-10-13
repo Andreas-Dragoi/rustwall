@@ -22,6 +22,7 @@ const N := 120                   # Kartenfelder je Seite (240 m)
 const HALFM := 120.0
 const EXT := 110.0
 const START := Vector2.ZERO
+const ROCK_MODEL := {5: "p_rock_snow", 7: "p_rock_lava", 8: "p_st_rubble"}     # Felsen je Gebiet (sonst p_rock)
 
 signal state_changed
 signal battle_ended
@@ -67,6 +68,7 @@ var pack: Node3D                 # Rückenstapel, Ladekreis, abgeworfene Haufen 
 var mining = null                # ResNode, an dem gearbeitet wird
 var welt: Node3D                 # Tageslauf, Wetter, Ereignisse, Wahrzeichen, Karawane, Nebenquest (exp_world.gd, Paket Welt)
 var vulkan: Node3D               # Paket Z: Lavaströme und Hitze-Leiste der Vulkaninsel (exp_vulkan.gd), sonst null
+var stadt: Node3D                # Paket Z2: Dächer, U-Bahn, Notstrom und Ampeln der Stadtruinen (exp_stadt.gd), sonst null
 var water_mesh: MeshInstance3D
 
 var _fixed := RandomNumberGenerator.new()
@@ -159,6 +161,8 @@ func _ready() -> void:
 	welt.setup()                     # Umgebungsklang je Gebiet und Tageszeit kommt von dort
 	if vulkan != null:
 		vulkan.setup()
+	if stadt != null:
+		stadt.setup()
 	Music.set_mood("battle")
 	_reveal(hero.pos2())
 	state_changed.emit()
@@ -224,10 +228,14 @@ func _generate(open: bool) -> void:
 		vulkan = preload("res://src/exp_vulkan.gd").new()
 		add_child(vulkan)
 		vulkan.pre_generate(self)    # Lavaströme sperren ihre Felder, bevor Bäume und Felsen verteilt werden
+	if String(adef.key) == "stadt":
+		stadt = preload("res://src/exp_stadt.gd").new()
+		add_child(stadt)
+		stadt.pre_generate(self)     # Häuser, U-Bahn, Generatoren, Ampeln und Wracks sperren ihre Felder vor den Kulissen
 	# ---- Hindernisse und Wasser außerhalb der Landezone (neu je Besuch), wenige in der Landezone (fest)
 	var kind: String = adef.tree
 	var tree_n: int = 3 if kind == "pine" else 2
-	var rock_m := "p_rock_snow" if area == 5 else ("p_rock_lava" if area == 7 else "p_rock")
+	var rock_m: String = ROCK_MODEL.get(area, "p_rock")
 	var rock_n := 2 if area == 5 else 3
 	if adef.water:
 		for i in 9:
@@ -292,6 +300,8 @@ func _generate(open: bool) -> void:
 	_decor()
 	if vulkan != null:
 		vulkan.decor()
+	if stadt != null:
+		stadt.decor()
 	scatter_commit()
 	make_ambient(String(adef.key))
 	place_model("p_flag_exit", Vector3(START.x + 3.0, 0, START.y + 2.0))
@@ -335,7 +345,7 @@ func _near_passage(p: Vector2, w: float) -> bool:
 func _ring_decor() -> void:
 	var kind: String = adef.tree
 	var lush: bool = area in [0, 1, 3]
-	var rock_m := "p_rock_snow" if area == 5 else ("p_rock_lava" if area == 7 else "p_rock")
+	var rock_m: String = ROCK_MODEL.get(area, "p_rock")
 	var rock_n := 2 if area == 5 else 3
 	for row in 2:
 		var r := D.EXP_RING_LAND + 0.9 + row * 2.2
@@ -348,9 +358,9 @@ func _ring_decor() -> void:
 			var p3 := Vector3(p.x, 0, p.y)
 			if lush and _fixed.randf() < 0.7:
 				scatter_var("p_tree_" + kind, 3 if kind == "pine" else 2, p3, _fixed, 1.0, 1.4)
-			elif area == 2 or area == 4:
-				if _fixed.randf() < 0.5:
-					scatter_var("p_wreck", 2, p3, _fixed, 1.0, 1.0)
+			elif area == 2 or area == 4 or area == 8:
+				if _fixed.randf() < (0.25 if area == 8 else 0.5):
+					scatter_var("p_st_car" if area == 8 else "p_wreck", 2, p3, _fixed, 1.0, 1.0)
 				else:
 					scatter("%s_%d" % [rock_m, _fixed.randi_range(1, rock_n)], p3, _fixed.randf() * TAU, _fixed.randf_range(1.1, 1.6))
 			else:
@@ -378,7 +388,7 @@ func _decor() -> void:
 				scatter("p_mushroom_1", p3, _rng.randf() * TAU, _rng.randf_range(0.7, 1.2))
 		elif area == 3 and k < 0.3:
 			scatter_var("p_grass", 2, p3, _rng, 0.8, 1.2)
-		elif k > 0.93 and area != 7:            # Vulkaninsel: eigene Kulissen (exp_vulkan.gd)
+		elif k > 0.93 and area != 7 and area != 8:            # Vulkaninsel, Stadtruinen: eigene Kulissen (exp_vulkan.gd, exp_stadt.gd)
 			scatter("p_log_1" if area != 5 else "p_stump_1", p3, _rng.randf() * TAU)
 
 
@@ -1149,6 +1159,10 @@ func map_points() -> Array:
 		out.append([Vector2(vp.x, vp.z), "vehicle"])
 	if welt != null:
 		welt.map_points(out)
+	if stadt != null:
+		stadt.map_points(out)                          # Paket Z2: U-Bahn-Eingänge und Generatoren
+	if has_node("ModiExp"):
+		get_node("ModiExp").map_points(out)            # V6 Paket M: Höhleneingänge
 	return out
 
 
@@ -1275,6 +1289,8 @@ func _physics_process(dt: float) -> void:
 	welt.tick(dt, pp)
 	if vulkan != null:
 		vulkan.tick(dt, pp)
+	if stadt != null:
+		stadt.tick(dt, pp)
 	if phase != "explore":           # Paket Welt: gefangene Begleiter in der Landezone gibt es in jeder Phase
 		for p in pois:
 			if p.kind == "pet" and not p.done:

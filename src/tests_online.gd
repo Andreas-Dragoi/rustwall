@@ -9,7 +9,7 @@ const NetNode = preload("res://src/net.gd")
 const Store = preload("res://src/store.gd")
 const Legal = preload("res://src/legal_texts.gd")
 const NetTel = preload("res://src/net_telemetry.gd")
-const PORT := 7593
+var PORT: int = 7593 + 2 * (absi(ProjectSettings.globalize_path("res://").hash()) % 300)   # je Arbeitskopie ein eigener Port (parallele Testläufe)
 
 var T: Node
 var net: Node

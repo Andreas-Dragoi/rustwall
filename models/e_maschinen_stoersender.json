@@ -1,0 +1,81 @@
+{
+ "key": "maschinen_stoersender",
+ "kind": "vat",
+ "role": "jammer",
+ "verts": 454,
+ "tris": 412,
+ "width": 454,
+ "rows": 66,
+ "rpf": 1,
+ "fps": 10,
+ "bounds_min": [
+  -0.837313393034701,
+  -1.989999989271164,
+  -0.7696844267973962
+ ],
+ "bounds_size": [
+  1.4965245656085844,
+  4.582407487985822,
+  1.9665660395978017
+ ],
+ "height": 2.2899999618530273,
+ "radius": 0.6823672326783695,
+ "clips": {
+  "idle": {
+   "row": 0,
+   "n": 14,
+   "dur": 1.4,
+   "loop": true,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "walk": {
+   "row": 14,
+   "n": 8,
+   "dur": 0.8,
+   "loop": true,
+   "stride": 1.8399999999999999,
+   "hit": -1.0
+  },
+  "attack": {
+   "row": 22,
+   "n": 9,
+   "dur": 0.8,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.4
+  },
+  "hit": {
+   "row": 31,
+   "n": 4,
+   "dur": 0.3,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "death": {
+   "row": 35,
+   "n": 12,
+   "dur": 1.1,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "jam": {
+   "row": 47,
+   "n": 10,
+   "dur": 0.9,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.5666666666666667
+  },
+  "spawn": {
+   "row": 57,
+   "n": 9,
+   "dur": 0.8,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  }
+ }
+}

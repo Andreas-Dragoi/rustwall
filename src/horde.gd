@@ -60,6 +60,7 @@ class E:
 	var burn := 0.0
 	var burn_d := 5.0
 	var poison := 0.0
+	var poison_d := 4.0              # Paket H: Giftschaden je Sekunde (die Waffe setzt ihn)
 	var slow := 0.0
 	var stun := 0.0
 	var mark := 0.0
@@ -123,6 +124,7 @@ class E:
 	var specs: Array = []      # Boss: Sonderangriffe im Wechsel (ab Phase 2 mit Zusatz)
 	var bait_t := 0.0          # Lockköder: läuft so lange zum Köder
 	var bait_p := Vector2.ZERO
+	var ladder := false        # V6 Paket B: trägt eine Leiter (siege.gd)
 
 
 var list: Array = []
@@ -141,6 +143,9 @@ var logic_ms := 0.0           # Rechenzeit der Logik je Schritt (geglättet)
 var logic_last := 0.0         # … des letzten Schritts
 var ai: RefCounted
 var time := 0.0
+var siege = null              # V6 Paket B: Belagerung der Flut (siege.gd) – Brecher, Flieger, Leitern; sonst null
+var dmg_src = null            # V6 Paket B: Turm, dessen Schuss gerade trifft (Schaden je Turm für den Flut-Rückblick)
+var fire_mult := 1.0          # V6 Paket B: Wetter der Flut (Regen schwächt Feuer)
 var _vis: Array = []         # je Art: null oder {mm, mi, vat (Dictionary oder null), mat, tint, legacy_t}
 var _flags: Array = []       # je Art: Bit-Maske der Bausteine
 var _elite: Array = []
@@ -692,6 +697,8 @@ func _physics_process(dt: float) -> void:
 	var t0 := Time.get_ticks_usec()
 	var field = G.field
 	field.update_if_dirty()
+	if siege != null:
+		siege.tick(dt)
 	if not _dbg_done:
 		_dbg_done = true
 		_debug_spawn()
@@ -755,13 +762,13 @@ func _step(e: E, dt: float, pp: Vector2, p_ok: bool, i: int, field, zones: Array
 		e.lead = null
 	if e.burn > 0.0:
 		e.burn -= dt
-		e.hp -= e.burn_d * dt * float(_weak[e.t].get("feuer", 1.0))
+		e.hp -= e.burn_d * dt * float(_weak[e.t].get("feuer", 1.0)) * fire_mult
 		if e.hp <= 0.0:
 			_kill(e, Vector2.ZERO, "feuer")
 			return
 	if e.poison > 0.0:
 		e.poison -= dt
-		e.hp -= 4.0 * dt * float(_weak[e.t].get("gift", 1.0))
+		e.hp -= e.poison_d * dt * float(_weak[e.t].get("gift", 1.0))
 		if e.hp <= 0.0:
 			_kill(e, Vector2.ZERO, "gift")
 			return
@@ -833,6 +840,9 @@ func _step(e: E, dt: float, pp: Vector2, p_ok: bool, i: int, field, zones: Array
 	if e.stun > 0.0:
 		e.stun -= dt
 		e.v = Vector2.ZERO
+		return
+	if e.ai_s == 40 and siege != null:                   # V6 Paket B: klettert über eine Mauer
+		siege.tick_climb(e, dt)
 		return
 	if e.taunt > 0.0:
 		e.taunt -= dt
@@ -947,9 +957,9 @@ func _step(e: E, dt: float, pp: Vector2, p_ok: bool, i: int, field, zones: Array
 				e.tgt = gs
 				e.tm = _rng.randf_range(0.2, def.interval)
 				return
-			dir = tg.normalized()
+			dir = tg.normalized() if siege == null else siege.air_dir(e, tg)
 		else:
-			dir = field.dir_at(e.p)
+			dir = field.dir_at(e.p) if siege == null or siege.tank[e.t] == 0 else siege.ground_dir(e, field)
 	if e.bait_t > 0.0:
 		# Lockköder: läuft zum Köder (außer Bosse)
 		e.bait_t -= dt
@@ -967,7 +977,7 @@ func _step(e: E, dt: float, pp: Vector2, p_ok: bool, i: int, field, zones: Array
 			e.tgt_player = true
 			e.tm = _rng.randf_range(0.4, 1.0)
 			return
-		if p_ok and d2p < (e.r + 0.8) * (e.r + 0.8) and e.alt < 1.0 + FLY_ALT:
+		if p_ok and d2p < (e.r + 0.8) * (e.r + 0.8) and e.alt < 1.0 + FLY_ALT and (G.player.perch < 1.0 or e.fly):     # Paket Z2: Held auf dem Dach
 			e.st = ST_ATTACK
 			e.tgt_player = true
 			e.tm = _rng.randf_range(0.15, 0.5)
@@ -1005,6 +1015,8 @@ func _step(e: E, dt: float, pp: Vector2, p_ok: bool, i: int, field, zones: Array
 		var s = field.structure_at(np)
 		if s != null and not s.passable:
 			if fl & (AI.F_BURROW | AI.F_TUNNEL) != 0 and ai.start_burrow(e, def, dir):
+				return
+			if e.ladder and siege != null and siege.try_climb(e, s):
 				return
 			e.st = ST_ATTACK
 			e.tgt = s
@@ -1250,6 +1262,8 @@ func damage(e: E, amt: float, from := Vector2.ZERO, ap := false, dot := false, e
 		if wk <= 0.0:
 			return false
 		amt *= wk
+		if element == "feuer":
+			amt *= fire_mult
 	if fl & AI.DMG_MASK != 0:
 		amt = ai.modify_damage(e, D.ENEMIES[e.t], fl, amt, from, element)
 		if amt < 0.0:
@@ -1261,6 +1275,8 @@ func damage(e: E, amt: float, from := Vector2.ZERO, ap := false, dot := false, e
 	if e.shrink > 0.0:
 		amt *= 1.3
 	e.hp -= amt
+	if dmg_src != null:
+		dmg_src.dealt += amt
 	e.fl = 0.45 if (e.elite or e.r > 0.9) else 1.0         # große Gegner blitzen schwächer (Dauerfeuer machte sie sonst weiß)
 	e.hit_t = 0.0
 	if e.hp <= 0.0:
@@ -1384,6 +1400,8 @@ func explode(c: Vector2, radius: float, dmg: float, opts := {}) -> int:
 					if opts.has("burn"):
 						e.burn = maxf(e.burn, opts.burn)
 					if opts.has("poison"):
+						var pd: float = opts.get("poison_d", 4.0)      # Paket H: Giftschaden der Waffe
+						e.poison_d = pd if e.poison <= 0.0 else maxf(e.poison_d, pd)
 						e.poison = maxf(e.poison, opts.poison)
 				damage(e, dmg * fall, dir, false, false, el)
 				n += 1

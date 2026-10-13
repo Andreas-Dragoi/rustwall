@@ -1,0 +1,81 @@
+{
+ "key": "maschinen_muellpresse",
+ "kind": "vat",
+ "role": "special",
+ "verts": 816,
+ "tris": 568,
+ "width": 816,
+ "rows": 59,
+ "rpf": 1,
+ "fps": 10,
+ "bounds_min": [
+  -0.8686932105511505,
+  -1.3102000743627562,
+  -1.1654514559893314
+ ],
+ "bounds_size": [
+  2.266033887401955,
+  4.114247330339563,
+  2.8676542429699685
+ ],
+ "height": 2.3071274816367264,
+ "radius": 1.1704021045213269,
+ "clips": {
+  "idle": {
+   "row": 0,
+   "n": 10,
+   "dur": 1.0,
+   "loop": true,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "walk": {
+   "row": 10,
+   "n": 8,
+   "dur": 0.8,
+   "loop": true,
+   "stride": 1.2800000000000002,
+   "hit": -1.0
+  },
+  "attack": {
+   "row": 18,
+   "n": 8,
+   "dur": 0.7,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.4
+  },
+  "hit": {
+   "row": 26,
+   "n": 4,
+   "dur": 0.3,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "death": {
+   "row": 30,
+   "n": 11,
+   "dur": 1.0,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "grab": {
+   "row": 41,
+   "n": 9,
+   "dur": 0.8,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.3333333333333333
+  },
+  "spawn": {
+   "row": 50,
+   "n": 9,
+   "dur": 0.8,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  }
+ }
+}

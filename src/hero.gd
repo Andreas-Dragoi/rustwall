@@ -10,6 +10,9 @@ const Models = preload("res://src/models.gd")
 const Skills = preload("res://src/skills.gd")
 const Tower = preload("res://src/tower.gd")
 const Arsenal = preload("res://src/arsenal.gd")
+const HS = preload("res://src/helden.gd")                 # Paket H: Sets, Module, Gift, Aussehen
+const DH = preload("res://src/data_helden.gd")
+const ThrowArc = preload("res://src/throw_arc.gd")
 
 const SEAT := {"quad": Vector3(0, 0.75, -0.3), "bike": Vector3(-0.3, 0.8, -0.2), "buggy": Vector3(0, 0.6, -0.2), "pickup": Vector3(0, 0.95, 0.7), "hover": Vector3(0, 0.7, 0.2)}
 
@@ -51,6 +54,7 @@ var speed_t := 0.0
 var dash_t := 0.0
 var dash_dir := Vector2.ZERO
 var burn_aura := 0.0
+var perch := 0.0                     # Paket Z2: Höhe über dem Boden (Dach in den Stadtruinen) – oben treffen Nahkämpfer nicht
 
 # Fahrzeug
 var veh_key := ""
@@ -98,6 +102,9 @@ var _step_snd := "step_grass"
 var _eng_snd := ""
 var arsenal: Node3D               # neue Schussarten (arsenal.gd)
 var _charge := 0.0                   # Aufladen (Schussart charge)
+var weapon_item := {}                # Paket H: ausgerüstetes Stück (Seltenheit, Stufe, Module)
+var poison_d := 4.0                  # Paket H: Giftschaden je Sekunde dieser Waffe
+var _arc: Node3D                     # Paket H: Wurfbahn beim Zielen
 signal died
 signal respawned
 
@@ -119,6 +126,7 @@ func setup(hero_key: String) -> void:
 	body.build({"helm": def.color, "suit": def.suit, "kind": key, "tier": clampi(int(level / 8), 0, 3), "skin": LO.hero_skin(key)})     # Paket L: Helden-Skin
 	body.scale = Vector3.ONE * D.CHAR_SCALE
 	body.footstep.connect(_on_footstep)
+	HS.dress(body, key)                                       # Paket H: Ausrüstung sichtbar am Modell
 	arsenal = Arsenal.new()
 	if G.game != null:
 		G.game.add_child(arsenal)
@@ -133,19 +141,28 @@ func setup(hero_key: String) -> void:
 	G.skill_pressed.connect(_on_skill)
 	G.dodge_pressed.connect(dodge)
 	G.use_pressed.connect(toggle_vehicle)
+	if G.game != null and G.game.has_signal("battle_ended"):        # Paket H: Siegerpose nach Flut- oder Expeditionssieg
+		G.game.battle_ended.connect(_on_battle_ended)
+	_arc = ThrowArc.new()
+	add_child(_arc)
 
 
 func set_weapon(it: Dictionary) -> void:
 	weapon_key = it.get("key", D.HEROES[key].weapons[0])
-	weapon = D.WEAPONS[weapon_key]
+	weapon_item = it
+	weapon = HS.weapon_with_modules(weapon_key, it)          # Paket H: Element-Kerne, Schalldämpfer, Wuchtgewicht
+	var fx := HS.module_fx(it)
 	var wm := P.weapon_mult(it) if not it.is_empty() else 1.0
-	dmg = float(weapon.damage) * wm * (1.0 + float(m.dmg)) * (1.0 + P.item_mod(it, "damage"))
-	rpm = float(weapon.rpm) * (1.0 + P.item_mod(it, "rpm"))
-	mag = ceilf(float(weapon.mag) * (1.0 + P.item_mod(it, "mag")))
-	reload_time = float(weapon.reload) * maxf(0.4, 1.0 - float(m.reload) - P.item_mod(it, "reload"))
-	wrange = float(weapon.range) * (1.0 + float(m.range) + P.item_mod(it, "range"))
-	crit = float(m.crit) + P.item_mod(it, "crit") + float(weapon.get("crit", 0.0))
+	dmg = float(weapon.damage) * wm * (1.0 + float(m.dmg)) * (1.0 + P.item_mod(it, "damage") + float(fx.get("damage", 0.0)))
+	dmg *= _element_bonus(String(weapon.get("element", "")))
+	rpm = float(weapon.rpm) * maxf(0.3, 1.0 + P.item_mod(it, "rpm") + float(fx.get("rpm", 0.0)))
+	mag = ceilf(float(weapon.mag) * (1.0 + P.item_mod(it, "mag") + float(fx.get("mag", 0.0))))
+	reload_time = float(weapon.reload) * maxf(0.4, 1.0 - float(m.reload) - P.item_mod(it, "reload") - float(fx.get("reload", 0.0)))
+	wrange = float(weapon.range) * (1.0 + float(m.range) + P.item_mod(it, "range") + float(fx.get("range", 0.0)))
+	crit = float(m.crit) + P.item_mod(it, "crit") + float(weapon.get("crit", 0.0)) + float(fx.get("crit", 0.0))
 	double_chance = P.item_mod(it, "double")
+	poison_d = HS.poison_dps(it, skill_scale())             # Paket H: Gift wächst mit Stufe und Seltenheit
+	weapon["poison_d"] = poison_d
 	ammo = mag
 	reloading = false
 	_charge = 0.0
@@ -153,7 +170,8 @@ func set_weapon(it: Dictionary) -> void:
 	if arsenal != null:
 		arsenal.beam_off()
 		arsenal.charge_glow(0.0, Color.WHITE)
-	body.set_weapon(LO.tint_weapon(Models.weapon(weapon_key)), weapon.len)      # Paket L: Waffen-Skin
+	body.set_weapon(LO.tint_weapon(Models.weapon(weapon_key)), weapon.len, HS.hand_scale(weapon_key))      # Paket L: Waffen-Skin
+	HS.show_modules(body, it)                                # Paket H: Module am Waffenmodell
 	body.set_pose(weapon_key)
 	body.two_handed = true
 	if _flame:
@@ -170,7 +188,8 @@ func set_weapon(it: Dictionary) -> void:
 		else:
 			# V4: Frost, Teer, Dampf, Wind bekommen eigene Farben
 			var cols := {"frost": [Color(0.9, 1.0, 1.0, 1.0), Color(0.5, 0.8, 1.0, 0.0)], "tar": [Color(0.35, 0.2, 0.1, 1.0), Color(1.0, 0.5, 0.1, 0.0)],
-				"steam": [Color(1, 1, 1, 0.9), Color(0.85, 0.9, 1.0, 0.0)], "wind": [Color(1, 1, 1, 0.6), Color(0.8, 1.0, 0.9, 0.0)]}
+				"steam": [Color(1, 1, 1, 0.9), Color(0.85, 0.9, 1.0, 0.0)], "wind": [Color(1, 1, 1, 0.6), Color(0.8, 1.0, 0.9, 0.0)],
+				"ink": [Color(0.12, 0.1, 0.22, 1.0), Color(0.3, 0.25, 0.45, 0.0)]}            # Paket H: Neles Tintenspritze
 			for fk in cols:
 				if weapon.get(fk, false):
 					var gr := Gradient.new()
@@ -490,12 +509,12 @@ func _on_footstep(left: bool) -> void:
 
 
 func _blocked(field, p: Vector2, rad: float) -> bool:
-	if field.blocks_player(p, hover):
+	if field.blocks_hero(p, hover):                  # Paket Z2: wie blocks_player, dazu Feuertreppen und Dächer
 		return true
 	if rad <= 0.0:
 		return false
-	return field.blocks_player(p + Vector2(rad, 0), hover) or field.blocks_player(p - Vector2(rad, 0), hover) \
-		or field.blocks_player(p + Vector2(0, rad), hover) or field.blocks_player(p - Vector2(0, rad), hover)
+	return field.blocks_hero(p + Vector2(rad, 0), hover) or field.blocks_hero(p - Vector2(rad, 0), hover) \
+		or field.blocks_hero(p + Vector2(0, rad), hover) or field.blocks_hero(p - Vector2(0, rad), hover)
 
 
 func dodge() -> void:
@@ -561,6 +580,11 @@ func _combat(dt: float) -> void:
 			if to.length() > 0.3:
 				_aim = to.normalized()
 				manual = true
+	if not manual and G.autotest == "" and not G.main.ui_blocked():          # Paket Q: Zielen mit dem rechten Stick
+		var rs := Input.get_vector("aim_left", "aim_right", "aim_up", "aim_down")
+		if rs.length() > 0.35:
+			_aim = G.cam.screen_to_world_dir(rs).normalized()
+			manual = true
 	if not manual and _target != null:
 		var to2: Vector2 = _target.p - pp
 		if to2.length() > 0.01:
@@ -688,6 +712,7 @@ func _hit(e, d: float, dir: Vector2) -> void:
 		e.burn = maxf(e.burn, float(weapon.burn))
 		e.burn_d = 5.0 * skill_scale() * (1.0 + float(m.burn))
 	if weapon.has("poison"):
+		e.poison_d = poison_d if e.poison <= 0.0 else maxf(e.poison_d, poison_d)    # Paket H: Gift skaliert
 		e.poison = maxf(e.poison, float(weapon.poison))
 	if weapon.has("chill"):
 		e.slow = maxf(e.slow, float(weapon.chill))
@@ -818,7 +843,7 @@ func _proj_land(to: Vector3, w: Dictionary, d: float) -> void:
 		opts["root"] = w.root
 	if w.has("slow"):
 		opts["slow"] = w.slow
-	for k in ["stun", "burn", "poison"]:      # V4
+	for k in ["stun", "burn", "poison", "poison_d"]:      # V4; Paket H: Giftschaden
 		if w.has(k):
 			opts[k] = float(w[k])
 	var spl: float = w.get("splash", 0.0)
@@ -844,7 +869,10 @@ func _proj_land(to: Vector3, w: Dictionary, d: float) -> void:
 func hurt(d: float, from = null) -> void:
 	if not alive or invuln > 0.0 or G.ch("god"):
 		return
+	if perch >= 1.0 and preload("res://src/exp_stadt.gd").roof_safe(self, from):    # Paket Z2: auf dem Dach kein Nahkampf
+		return
 	d *= 1.0 - dr
+	d *= 1.0 - clampf(float(m.get("dr", 0.0)), 0.0, 0.5)        # Paket H: Set-Bonus „weniger Schaden“
 	if key == "mika" and from != null and from.burn > 0.0:
 		d *= 0.65 if level >= D.HERO_PASSIVE_LEVEL else 0.75
 	if mounted and veh_hp > 0.0:
@@ -862,6 +890,7 @@ func hurt(d: float, from = null) -> void:
 	hp -= d
 	_since_hit = 0.0
 	Sfx.play("hurt", -8.0, 1.0, 0.15)
+	body.set_face("pain", 0.45)                                # Paket H: Schmerz im Gesicht
 	if hp > 0.0 and speed_now < 1.0 and not mounted and _hit_t <= 0.0:    # im Stand: sichtbares Zucken
 		_hit_t = 0.5
 		body.play("hit_heavy" if d > max_hp * 0.2 else "hit_light")
@@ -972,3 +1001,39 @@ func push(dir: Vector2, strength: float) -> void:
 			break
 		np = q
 	global_position = Vector3(np.x, 0.0, np.y)
+
+
+# ---------------------------------------------------------------- Paket H: Element-Boni, Sieg, Wurfbahn
+## Schadensfaktor für das Element der Waffe: Set-Boni (elem_<element>) und Neles Besonderheit (Wasser und Eis).
+func _element_bonus(el: String) -> float:
+	var k := 1.0 + float(m.get("elem_" + el, 0.0))
+	if key == "nele" and (el == "wasser" or el == "eis"):
+		k *= 1.25 if level >= D.HERO_PASSIVE_LEVEL else 1.15
+	return k
+
+
+func _on_battle_ended() -> void:
+	if not alive or G.game == null:
+		return
+	var r = G.game.get("result")
+	if r is Dictionary and bool(r.get("win", false)):
+		body.victory(3.2)
+
+
+func _process(_dt: float) -> void:
+	if _arc == null:
+		return
+	# Wurfbahn: beim Zielen mit Bogenwurf-Waffen (Bogenwurf, Minen) als Punktlinie bis zum Ziel
+	var show: bool = alive and not mounted and _aim != Vector2.ZERO and DH.ARC_MODES.has(String(weapon.get("mode", ""))) and G.game != null and G.game.is_running()
+	if not show:
+		_arc.hide_arc()
+		return
+	var pp := pos2()
+	var tp := pp + _aim * minf(wrange, 11.0)
+	if _target != null:
+		tp = _target.p
+	if String(weapon.mode) == "mine":
+		tp = pp + _aim * minf(wrange, 6.0)
+		if _target != null and pp.distance_to(_target.p) < wrange:
+			tp = _target.p
+	_arc.show_arc(body.muzzle.global_position, Vector3(tp.x, 0.1, tp.y), Arsenal.el_col(weapon) if weapon.has("lvl") else D.HEROES[key].color.lightened(0.3))

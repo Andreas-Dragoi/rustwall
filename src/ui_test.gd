@@ -11,8 +11,8 @@ const Screens = preload("res://src/screens.gd")
 const UI = preload("res://src/ui.gd")
 const Hud = preload("res://src/hud.gd")
 
-const TAB_COUNT := {"heroes": 7, "chests": 1, "workshop": 1, "garage": 1, "social": 3, "clan": 3, "profile": 2, "quests": 1, "expedition": 1, "settings": 1, "shop": 1, "erfolge": 1, "bestiary": 7, "begleiter": 1, "hilfe": 8, "legal": 4, "tagebuch": 7, "saison": 7, "garderobe": 6}
-const ORDER := ["heroes", "chests", "workshop", "garage", "social", "clan", "profile", "quests", "expedition", "settings", "shop", "erfolge", "bestiary", "begleiter", "hilfe", "legal", "tagebuch", "saison", "garderobe"]
+const TAB_COUNT := {"heroes": 7, "chests": 1, "workshop": 1, "garage": 1, "social": 3, "clan": 3, "profile": 2, "quests": 1, "expedition": 1, "settings": 1, "shop": 1, "erfolge": 1, "bestiary": 7, "begleiter": 1, "hilfe": 9, "legal": 4, "tagebuch": 7, "saison": 7, "garderobe": 6, "forschung": 3, "rueckblick": 3, "chronik": 2, "tausch": 1, "auto": 2, "modi": 4}
+const ORDER := ["heroes", "chests", "workshop", "garage", "social", "clan", "profile", "quests", "expedition", "settings", "shop", "erfolge", "bestiary", "begleiter", "hilfe", "legal", "tagebuch", "saison", "garderobe", "forschung", "rueckblick", "chronik", "tausch", "auto", "modi"]
 
 var scr: CanvasLayer
 var presses := 0
@@ -86,6 +86,8 @@ func _rich() -> void:
 	soc.add_points("explorer", 400)
 	soc.submit_time(0, 71.5)
 	P.start_auto("mika", 0, 4)
+	preload("res://src/tests_basis6.gd").ui_rich()       # V6 Paket B: Werkstatt, Labor, Forschung, Rückblicke
+	preload("res://src/tests_modi.gd").ui_rich()         # V6 Paket M: Turm, Überleben, Clan-Raid
 	var b: Dictionary = P.d.heroes["bruno"]
 	b.auto_until = P.now() - 5.0
 	b.auto_area = 1
@@ -114,6 +116,10 @@ func _single() -> void:
 		var p := kv.split(":")
 		if p.size() == 2:
 			st[p[0]] = int(p[1]) if p[1].is_valid_int() else p[1]
+	for kv2 in G.arg("scroll").split(",", false):           # Paket Q: --scroll=set_left:900 (Rollposition für Bilder)
+		var p2 := kv2.split(":")
+		if p2.size() == 2:
+			scr._scroll_pos["%s/%s" % [G.arg("screen", "heroes"), p2[0]]] = int(p2[1])
 	scr.open(G.arg("screen", "heroes"), st if not st.is_empty() else null)
 	await _frames(3)
 	for text in G.arg("press").split(",", false):

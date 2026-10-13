@@ -13,6 +13,7 @@ const CameraRig = preload("res://src/camera_rig.gd")
 const Hero = preload("res://src/hero.gd")
 const Tower = preload("res://src/tower.gd")
 const Anim = preload("res://src/anim.gd")
+const Research = preload("res://src/research.gd")
 
 const ZONE_COL := {"fire": Color(1.0, 0.45, 0.1, 0.4), "storm": Color(0.5, 0.7, 1.0, 0.35), "heal": Color(0.4, 1.0, 0.5, 0.35),
 	"glue": Color(0.9, 0.8, 0.2, 0.0), "spike": Color(1, 1, 1, 0.0)}
@@ -55,6 +56,8 @@ var world_env: Environment     # Umgebung (Tageszeit stellt Farben und Licht um)
 var companion: Node3D          # aktiver Begleiter (companion.gd, Paket B); folgt dem Helden
 var lure_t := 0.0              # Köder des Begleiters (Paket Welt): solange > 0 laufen jagende Gegner zu lure_p
 var lure_p := Vector2.ZERO
+var flood_rate_k := 1.0        # V6 Paket B: Wetter der Flut (Regen: Türme langsamer)
+var flood_range_k := 1.0       # V6 Paket B: Wetter der Flut (Nebel: kürzere Reichweite)
 
 
 func is_running() -> bool:
@@ -145,10 +148,15 @@ func _flush_coins() -> void:
 
 ## Tempo-Faktor für Türme an dieser Stelle (Adas Besonderheit: +15 % im Umkreis von 12 Metern).
 func tower_rate(p: Vector2) -> float:
-	var k := 1.0 + P.outpost_bonus("tower_rate")
+	var k := (1.0 + P.outpost_bonus("tower_rate")) * (1.0 + Research.bonus("tower_rate")) * flood_rate_k     # V6 Paket B: Forschung, Wetter
 	if hero != null and hero.key == "ada" and hero.alive and hero.pos2().distance_squared_to(p) < 144.0:
 		k *= 1.25 if hero.level >= D.HERO_PASSIVE_LEVEL else 1.15
 	return k
+
+
+## V6 Paket B: Reichweiten-Faktor aller Türme (Forschung, Nebel in der Flut).
+func tower_range_k() -> float:
+	return (1.0 + Research.bonus("tower_range")) * flood_range_k
 
 
 ## Schadens-Faktor für ein Gebäude (Brunos Besonderheit, Schildgenerator).

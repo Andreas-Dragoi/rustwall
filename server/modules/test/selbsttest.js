@@ -73,7 +73,7 @@ function weekReset() {
 
 // ----------------------------------------------------------------- Abläufe
 const A = "11111111-1111-4111-8111-111111111111", B = "22222222-2222-4222-8222-222222222222";
-check(Object.keys(rpcs).length === 40, "40 Serverfunktionen registriert (" + Object.keys(rpcs).length + ")");
+check(Object.keys(rpcs).length === 44, "44 Serverfunktionen registriert (" + Object.keys(rpcs).length + ")");
 const ha = call(A, "rw_hello", { bunker_name: "Rostburg", name: "Anna", level: 10, code: "ANNA2345" });
 check(ha.code === "ANNA2345" && ha.bunker.ok && ha.gems === 100, "Anmeldung, Code, Startjuwelen");
 let hb = call(B, "rw_hello", { bunker_name: "Rostburg", name: "Ben", level: 9 });
@@ -134,6 +134,19 @@ const sb = call(A, "rw_season_board", {});
 check(sb.entries.length === 2 && sb.entries[0].me && sb.rank === 1, "Saison-Rangliste");
 const bh = call(A, "rw_boss_hit", { dmg: 5000 });
 check(lv.event === "weltboss" ? bh.boss_dmg >= 5000 : !bh.ok, "Weltboss-Treffer nur in der Weltboss-Woche");
+// Spielmodi (V6 Paket M): Wochen-Ranglisten und Clan-Raid
+check(call(A, "rw_modi_score", { board: "tower", score: 1200 }).ok && call(B, "rw_modi_score", { board: "tower", score: 800 }).ok, "Turm: Wochenwert senden");
+call(A, "rw_modi_score", { board: "tower", score: 900 });
+const mt = call(A, "rw_modi_board", { board: "tower" });
+check(mt.entries.length === 2 && mt.entries[0].me && mt.entries[0].score === 1200 && mt.rank === 1, "Turm-Rangliste hält den Bestwert der Woche");
+check(call(B, "rw_modi_board", { board: "surv" }).entries.length === 1 && !call(A, "rw_modi_score", { board: "xyz", score: 1 }).ok, "Überleben-Rangliste, unbekannte Rangliste");
+const r1 = call(A, "rw_raid_hit", { dmg: 50000 });
+check(r1.ok && r1.dmg === 50000 && r1.hp === 2 * 260000 && r1.members.length === 2, "Clan-Raid: Schaden zählt im Clan");
+call(B, "rw_raid_hit", { dmg: 30000 });
+call(A, "rw_raid_hit", { dmg: 10 });
+call(A, "rw_raid_hit", { dmg: 10 });
+check(call(A, "rw_raid_hit", { dmg: 99999 }).dmg === 80020, "Clan-Raid: höchstens 3 Angriffe je Tag");
+check(call(B, "rw_raid_get", {}).dmg === 80020 && call(B, "rw_raid_hit", { dmg: 9999999 }).dmg === 480020, "Clan-Raid: Stand für alle, Obergrenze je Angriff");
 // Telemetrie, Melden, Sperren, Löschen
 check(call(A, "rw_telemetry", { events: [{ e: "tutorial", p: { step: 1 } }] }).n === 1, "Telemetrie");
 check(call(A, "rw_crash", { event: { message: "x" } }).ok, "Fehlerbericht");

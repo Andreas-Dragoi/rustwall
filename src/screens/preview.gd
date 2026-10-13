@@ -87,8 +87,12 @@ func show_hero(key: String, tier: int, weapon_key: String, skin := "-", wskin :=
 	pivot.add_child(h)
 	var LO = load("res://src/liveops.gd")                    # Paket L: Skin und Waffen-Skin ("-" = angelegt)
 	h.build({"helm": def.color, "suit": def.suit, "kind": key, "tier": tier, "skin": LO.hero_skin(key) if skin == "-" else skin})
+	var HS = load("res://src/helden.gd")                       # Paket H: Wurfwaffen größer, Ausrüstung und Module sichtbar
 	if weapon_key != "" and D.WEAPONS.has(weapon_key):
-		h.set_weapon(LO.tint_weapon(Models.weapon(weapon_key), wskin), float(D.WEAPONS[weapon_key].len))
+		h.set_weapon(LO.tint_weapon(Models.weapon(weapon_key), wskin), float(D.WEAPONS[weapon_key].len), HS.hand_scale(weapon_key))
+	if P.d.has("heroes") and P.d.heroes.has(key):
+		var it: Dictionary = P.item(int(P.d.heroes[key].weapon))
+		HS.dress(h, key, it if String(it.get("key", "")) == weapon_key else {})
 	h.aiming = true
 	h.tick(0.016)
 	human = h
@@ -105,7 +109,10 @@ func show_model(node: Node3D, dist: float, height: float) -> void:
 
 func cheer() -> void:
 	if human:
-		human.cheer()
+		if human.has_method("victory") and human.kind != "settler":
+			human.victory(1.8)                                  # Paket H: Siegerpose des Helden
+		else:
+			human.cheer()
 
 
 func _process(dt: float) -> void:

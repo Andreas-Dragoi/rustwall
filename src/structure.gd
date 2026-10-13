@@ -81,7 +81,7 @@ func setup(entry: Dictionary, building_key: String, level: int, footprint: Vecto
 	gate = key == "tor"
 	max_hp = float(def.hp) * pow(1.18, level - 1)
 	if key == "bunker":
-		max_hp = D.bunker_hp(level)
+		max_hp = D.bunker_hp(level) * (1.0 + preload("res://src/research.gd").bonus("bunker_hp"))     # V6 Paket B: Bunkerpanzer
 	if gate:
 		# Tore sind 2,2-mal so stark wie die Mauer derselben Bauart; im Bau nur ein Viertel
 		max_hp = float(def.hp) * float(D.WALL_TIERS[clampi(level - 1, 0, 2)].hp) * (1.0 + P.cmd_bonus("wall_hp")) * (1.0 + P.outpost_bonus("wall_hp"))

@@ -383,11 +383,14 @@ def c_fire_v4():
     back = aim_pose("spear", dg=(0.02, 0.16, 0.0), spine=(0, 0, 6), chest=(-2, 0, 12), head=(0, 0, -10))
     hit = aim_pose("spear", dg=(-0.04, -0.28, 0.03), spine=(10, 0, -4), chest=(8, 0, -12), head=(-8, 0, 10))
     clip("fire_thrust", 0.36, [(0.0, aim), (0.1, back), (0.18, hit), (0.24, hit), (0.36, aim)])
-    # schwere Zweihandwaffe: hoch über den Kopf, mit ganzem Körper herunter
+    # schwere Zweihandwaffe: echter Überkopf-Schlag (Paket H) – beide Hände über den Kopf, die Waffe zeigt nach hinten,
+    # dann mit ganzem Körper bis vor die Füße herunter
     aim = aim_pose("hammer")
-    up = aim_pose("hammer", dg=(-0.04, 0.12, 0.40), aim=R(-80, 0, 0), spine=(-8, 0, 0), chest=(-8, 0, 0), head=(8, 0, 0))
-    down = aim_pose("hammer", dg=(0.0, -0.16, -0.22), aim=R(40, 0, 0), spine=(16, 0, 0), chest=(12, 0, 0), head=(-12, 0, 0))
-    clip("fire_slam", 0.5, [(0.0, aim), (0.18, up), (0.3, down), (0.38, down), (0.5, aim)])
+    up = aim_pose("hammer", dg=(-0.06, 0.18, 0.70), aim=R(-150, 0, 0), spine=(-12, 0, 0), chest=(-12, 0, 0), head=(10, 0, 0))
+    top = aim_pose("hammer", dg=(-0.06, 0.22, 0.72), aim=R(-168, 0, 0), spine=(-16, 0, 0), chest=(-14, 0, 0), head=(12, 0, 0))
+    mid = aim_pose("hammer", dg=(-0.02, -0.12, 0.42), aim=R(-40, 0, 0), spine=(6, 0, 0), chest=(4, 0, 0), head=(-2, 0, 0))
+    down = aim_pose("hammer", dg=(0.0, -0.24, -0.30), aim=R(62, 0, 0), spine=(22, 0, 0), chest=(14, 0, 0), head=(-18, 0, 0))
+    clip("fire_slam", 0.55, [(0.0, aim), (0.15, up), (0.22, top), (0.28, mid), (0.33, down), (0.42, down), (0.55, aim)])
     # Wurf: ausholen hinter die Schulter, nach vorn schleudern
     aim = aim_pose("toss")
     wind = aim_pose("toss", dg=(0.04, 0.22, 0.10), aim=R(-50, 0, 20), spine=(-4, 0, 10), chest=(-4, 0, 24), head=(2, 0, -18))
@@ -784,6 +787,135 @@ def c_party():
     clip("defeat", 1.6, [(0.0, s0), (0.4, k1), (0.9, k2), (1.25, k3), (1.6, k2)])
 
 
+# ---------------------------------------------------------------- Paket H: Siegerposen, Laufstile, Nele
+def c_helden():
+    s0 = stand(0.006)
+
+    def hold_weapon_low(p):
+        """Waffenhand hängt locker (die Waffe zeigt schräg nach unten)."""
+        p["upper_arm_r"] = R(6, -10, 0)
+        p["fore_arm_r"] = R(-30, 0, 0)
+        p["hand_r"] = I3.copy()
+        p["prop_r"] = R(40, 0, 0)
+        return p
+
+    # ---- Siegerposen (Schleifen, gehalten bis stop_clip)
+    # Jona: strammer Gruß mit der linken Hand an der Helmkante, kurzes Nicken
+    def sal(nod):
+        p = stand(0.0).set(spine=(-3, 0, 0), chest=(-4, 0, 0), head=(-4 + nod, 0, 0))
+        hold_weapon_low(p)
+        p.arm("l", (-0.14, -0.26, 1.50 - 0.01 * nod), (-1, 0.1, 0.2))
+        return p
+    clip("jona_victory", 1.2, [(0.0, sal(0)), (0.4, sal(0)), (0.6, sal(6)), (0.8, sal(0)), (1.2, sal(0))], loop=True)
+    # Mika: Faust hochreißen und hüpfen
+    def pump(k):
+        p = body((0, 0, -0.04 + 0.08 * k), (-4 * k, 0, 0), l=(0, 0, 0.06 * k), r=(0, 0, 0.06 * k), lp=12 * k, rp=12 * k)
+        p.set(spine=(-4 * k, 0, 0), chest=(-6 * k, 0, -6), head=(-14 * k, 0, 6))
+        hold_weapon_low(p)
+        p.set(upper_arm_l=(-120 - 50 * k, 14, 0), fore_arm_l=(-60 + 50 * k, 0, 0))
+        return p
+    clip("mika_victory", 0.8, [(0.0, pump(0)), (0.2, pump(1)), (0.4, pump(0)), (0.6, pump(1)), (0.8, pump(0))], loop=True)
+    # Bruno: zeigt die Muskeln (beide Arme angewinkelt), Brust raus
+    def flex(k):
+        p = body((0, 0, -0.02 - 0.02 * k), (-2, 0, 0), l=(-0.05, 0, 0), r=(0.05, 0, 0)).set(spine=(-4, 0, 0), chest=(-8 - 3 * k, 0, 0), head=(-8, 0, 4 * k))
+        p.arm("l", (-0.40 - 0.02 * k, 0.0, 1.32 + 0.03 * k), (-1, 0.2, -0.5))
+        p.arm("r", (0.40 + 0.02 * k, 0.0, 1.32 + 0.03 * k), (1, 0.2, -0.5))
+        p["prop_r"] = R(-90, 0, 0)
+        return p
+    clip("bruno_victory", 1.2, [(0.0, flex(0)), (0.3, flex(1)), (0.6, flex(0)), (0.9, flex(1)), (1.2, flex(0))], loop=True)
+    # Ada: Daumen hoch nach vorn, Kopf schief, wippt auf den Fußballen
+    def thumb(k):
+        p = body((0, 0, 0.01 * k), (0, 0, 0), l=(0, 0, 0.02 * k), r=(0, 0, 0.02 * k), lp=8 * k, rp=8 * k)
+        p.set(spine=(-2, 0, 0), chest=(-3, 0, 4), head=(-6, 10 * (1 - k) - 4, -6))
+        hold_weapon_low(p)
+        p.arm("l", (-0.16, -0.40, 1.16 + 0.02 * k), (-0.6, 0.3, -1))
+        return p
+    clip("ada_victory", 1.0, [(0.0, thumb(0)), (0.25, thumb(1)), (0.5, thumb(0)), (0.75, thumb(1)), (1.0, thumb(0))], loop=True)
+    # Yuki: ruft Kiko – linker Arm zeigt hoch in den Himmel, auf den Zehenspitzen, Blick nach oben
+    def call(k):
+        p = body((0, 0, 0.02 + 0.01 * k), (-4, 0, 0), l=(0, 0, 0.03), r=(0, 0, 0.03), lp=16, rp=16)
+        p.set(spine=(-6, 0, 0), chest=(-8, 0, -6), head=(-24 - 4 * k, 0, -10))
+        hold_weapon_low(p)
+        p.set(upper_arm_l=(-150 - 6 * k, 22, 0), fore_arm_l=(-8, 0, 0))
+        return p
+    clip("yuki_victory", 1.4, [(0.0, call(0)), (0.7, call(1)), (1.4, call(0))], loop=True)
+    # Greta: kleines Tänzchen – Gewicht von Fuß zu Fuß, Arme wedeln
+    def dance(k):
+        p = body((0.03 * k, 0, -0.02 + 0.02 * abs(k)), (0, 4 * k, 6 * k), l=(0, 0, 0.05 if k > 0 else 0.0), r=(0, 0, 0.05 if k < 0 else 0.0))
+        p.set(spine=(2, -6 * k, 0), chest=(-2, -4 * k, -8 * k), head=(-10, 8 * k, 0))
+        p.set(upper_arm_l=(-30, 70 + 30 * k, 0), fore_arm_l=(-90, 0, 0), upper_arm_r=(-30, -70 + 30 * k, 0), fore_arm_r=(-90, 0, 0))
+        p["hand_r"] = I3.copy()
+        p["prop_r"] = R(-60, 0, 0)
+        return p
+    clip("greta_victory", 1.2, [(0.0, dance(1)), (0.3, dance(0.0001)), (0.6, dance(-1)), (0.9, dance(-0.0001)), (1.2, dance(1))], loop=True)
+    # Nele: winkt mit dem ganzen Arm über dem Kopf und hüpft wie auf einer Welle
+    def wv(k, up):
+        p = body((0, 0, -0.03 + 0.07 * up), (0, 0, 0), l=(0, 0, 0.05 * up), r=(0, 0, 0.05 * up), lp=10 * up, rp=10 * up)
+        p.set(spine=(-3, 3 * k, 0), chest=(-5, 4 * k, 0), head=(-12, -6 * k, 0))
+        hold_weapon_low(p)
+        p.set(upper_arm_l=(-10, 150 + 18 * k, 0), fore_arm_l=(-12 - 14 * k, 0, 0))
+        return p
+    clip("nele_victory", 1.2, [(0.0, wv(1, 0)), (0.3, wv(-1, 1)), (0.6, wv(1, 0)), (0.9, wv(-1, 1)), (1.2, wv(1, 0))], loop=True)
+
+    # ---- Nele: Fähigkeiten
+    def st(drop=0.0, lean=0.0, yaw=0.0, **kw):
+        p = body((0, 0, -drop), (lean * 0.5, 0, yaw * 0.3), l=kw.pop("l", (0, 0, 0)), r=kw.pop("r", (0, 0, 0)))
+        p.set(spine=(lean * 0.3, 0, yaw * 0.3), chest=(lean * 0.2, 0, yaw * 0.4))
+        p.set(**kw)
+        return p
+    # 1 Strudel: linker Arm zieht einen Kreis vor dem Körper, Oberkörper dreht mit
+    keys = [(0.0, s0)]
+    for i, ang in enumerate((0, 90, 180, 270, 360)):
+        a = math.radians(ang)
+        p = st(0.04, 6, 14 * math.sin(a), head=(-4, 0, -10 * math.sin(a)))
+        p.arm("l", (-0.18 + 0.14 * math.cos(a), -0.42, 1.0 + 0.14 * math.sin(a)), (-0.6, 0.3, -1))
+        keys.append((0.12 + i * 0.1, p))
+    keys.append((0.75, s0))
+    clip("nele_skill_1", 0.75, keys)
+    # 2 Luftblase: in die Hocke, Arme vor der Brust verschränkt, dann aufrichten und Arme rund öffnen
+    a = st(0.1, 14, head=(6, 0, 0), upper_arm_l=(-70, -40, 0), fore_arm_l=(-110, 0, 0))
+    b = st(0.0, -6, head=(-10, 0, 0), upper_arm_l=(-60, 60, 0), fore_arm_l=(-40, 0, 0))
+    clip("nele_skill_2", 0.7, [(0.0, s0), (0.16, a), (0.3, a), (0.44, b), (0.56, b), (0.7, s0)])
+    # 3 Springflut: weit ausholen, Ausfallschritt, beide Arme stoßen eine Welle nach vorn
+    a = body((0, 0.04, -0.04), (-10, 0, 0), l=(0, 0.06, 0), arms=False).set(spine=(-10, 0, 0), chest=(-10, 0, 0), head=(-8, 0, 0))
+    a.both("upper_arm", 40, -30, 0).both("fore_arm", -40, 0, 0)
+    a["hand_r"] = I3.copy()
+    a["prop_r"] = I3.copy()
+    b = body((0, -0.06, -0.14), (20, 0, 0), l=(0, -0.16, 0), r=(0, 0.12, 0), arms=False).set(spine=(14, 0, 0), chest=(10, 0, 0), head=(-20, 0, 0))
+    b.both("upper_arm", -84, -10, 0).both("fore_arm", -6, 0, 0)
+    b["hand_r"] = I3.copy()
+    b["prop_r"] = I3.copy()
+    clip("nele_special", 0.9, [(0.0, s0), (0.22, a), (0.36, b), (0.6, b), (0.9, s0)])
+
+    # ---- Laufstil je Persönlichkeit: additive Haltung (nur Rumpf und Kopf, die Füße bleiben unberührt), ein Lauf-Zyklus
+    # lang (LOCO_T), Godot spielt ihn im Takt der Schritte (humanoid.gd). base = feste Haltung, sway = Pendel je Schritt-
+    # paar (sin 2πt), bob = Wippen je Schritt (sin 4πt). Winkel in Grad wie bei Pose.set.
+    GAIT = {
+        "jona": dict(base=dict(spine=(-2, 0, 0), chest=(-3, 0, 0), head=(-3, 0, 0)), sway=dict(chest=(0, 0, 2)), bob={}),
+        "mika": dict(base=dict(spine=(5, 0, 0), chest=(3, 0, 0), head=(-7, 0, 0)), sway=dict(spine=(0, 0, 5)), bob=dict(head=(2, 0, 0))),
+        "bruno": dict(base=dict(spine=(3, 0, 0), chest=(2, 0, 0), head=(-4, 0, 0)), sway=dict(spine=(0, 2, 0), chest=(0, 4, 6)), bob={}),
+        "ada": dict(base=dict(spine=(3, 0, 0), neck=(8, 0, 0), head=(-6, 4, 0)), sway={}, bob=dict(neck=(3, 0, 0))),
+        "yuki": dict(base=dict(spine=(-3, 0, 0), chest=(-4, 0, 0), head=(-2, 0, 0)), sway=dict(head=(0, 0, 4)), bob={}),
+        "greta": dict(base=dict(spine=(9, 0, 0), chest=(6, 0, 0), neck=(4, 0, 0), head=(-14, 0, 0)), sway=dict(spine=(0, 5, 0), head=(0, -3, 0)), bob={}),
+        "nele": dict(base=dict(spine=(1, 0, 0), chest=(-1, 0, 0), head=(-2, 0, 0)), sway=dict(spine=(0, 4, 3), chest=(0, -2, 0), head=(0, -2, -3)), bob={}),
+    }
+    for hk, g in GAIT.items():
+        keys = []
+        for i in range(9):
+            ph = i / 8.0
+            p = Pose()
+            bones = set(g["base"]) | set(g["sway"]) | set(g["bob"])
+            for bn in bones:
+                v = [0.0, 0.0, 0.0]
+                for j in range(3):
+                    v[j] += g["base"].get(bn, (0, 0, 0))[j]
+                    v[j] += g["sway"].get(bn, (0, 0, 0))[j] * math.sin(2 * math.pi * ph)
+                    v[j] += g["bob"].get(bn, (0, 0, 0))[j] * math.sin(4 * math.pi * ph)
+                p[bn] = R(*v)
+            keys.append((ph * LOCO_T, p))
+        clip("gait_" + hk, LOCO_T, keys, loop=True, dense=True)
+
+
 # ---------------------------------------------------------------- Aufbau in Blender
 def bake(arm, names):
     ad = arm.animation_data_create()
@@ -869,7 +1001,7 @@ def write_data():
         f.write("\n".join(lines) + "\n")
 
 
-HEROES = ["jona", "mika", "bruno", "ada", "yuki", "greta"]
+HEROES = ["jona", "mika", "bruno", "ada", "yuki", "greta", "nele"]
 ALL = (["idle", "idle_look", "idle_stretch", "idle_weapon_check",
         "walk_f", "walk_b", "walk_l", "walk_r", "run_f", "run_b", "run_l", "run_r",
         "walk_fr", "walk_fl", "walk_br", "walk_bl", "run_fr", "run_fl", "run_br", "run_bl",
@@ -885,7 +1017,8 @@ ALL = (["idle", "idle_look", "idle_stretch", "idle_weapon_check",
         "wipe_brow", "shoo", "warm_hands", "eat",
         "ride_quad", "ride_bike", "ride_car", "ride_hover", "ride_steer", "mount", "dismount"]
        + ["%s_%s" % (h, k) for h in HEROES for k in ("skill_1", "skill_2", "special")]
-       + ["level_up", "victory", "defeat"])
+       + ["level_up", "victory", "defeat"]
+       + ["%s_victory" % h for h in HEROES] + ["gait_%s" % h for h in HEROES])
 
 
 def define_all():
@@ -905,6 +1038,7 @@ def define_all():
     c_ride()
     c_skills()
     c_party()
+    c_helden()
     missing = [n for n in ALL if n not in CLIPS]
     assert not missing, missing
 

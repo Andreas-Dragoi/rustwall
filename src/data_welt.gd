@@ -4,7 +4,7 @@ extends RefCounted
 ## Bewohner-Wünsche und der Übungsplatz.
 ## Eingebunden als const DW = preload("res://src/data_welt.gd"). Gebiets-Schlüssel wie in D.AREAS.
 
-const AREA_KEYS := ["gruental", "forst", "staub", "kueste", "sumpf", "frost", "krater", "vulkan"]
+const AREA_KEYS := ["gruental", "forst", "staub", "kueste", "sumpf", "frost", "krater", "vulkan", "stadt"]
 
 # ---------------------------------------------------------------- Tageslauf in der Expedition
 ## Stimmungen wie in der Basis (weather.gd MOOD); die Farben werden zur Hälfte mit dem Gebietslicht gemischt.
@@ -36,6 +36,9 @@ const EVENTS := {
 	"vulkan": {"key": "ausbruch", "name": "Vulkanausbruch", "dur": 40.0, "icon": "ui_fire",
 		"text": "Der Vulkan bricht aus! Ascheregen, Lavabomben (rote Kreise) – und alle Lavaströme fließen. Such Schatten!", "count": 7, "radius": 3.6, "warn": 2.4, "dmg": 0.16,
 		"reveal_k": 0.6, "heat_k": 1.8},
+	"stadt": {"key": "gewitter", "name": "Blitzgewitter", "dur": 40.0, "icon": "ui_bolt",
+		"text": "Blitzgewitter! Stromausfall in der ganzen Stadt – die Blitze schlagen in den roten Kreisen ein. Maschinen, die getroffen werden, gehen kurz aus.",
+		"count": 7, "radius": 3.4, "warn": 2.2, "dmg": 0.15, "stun": 2.5, "reveal_k": 0.75},
 }
 
 # ---------------------------------------------------------------- Wahrzeichen
@@ -49,6 +52,7 @@ const LANDMARKS := {
 	"frost": {"name": "Eisbogen", "model": "lm_frost", "dist": [58.0, 72.0], "r": 3.8},
 	"krater": {"name": "Schleimportal", "model": "lm_krater", "dist": [58.0, 72.0], "r": 3.8},
 	"vulkan": {"name": "Feuerschlund", "model": "lm_vulkan", "dist": [60.0, 74.0], "r": 3.8},
+	"stadt": {"name": "Gestürzter Fernsehturm", "model": "lm_stadt", "dist": [60.0, 74.0], "r": 4.0},
 }
 const LANDMARK_SEE := 10.0
 const LANDMARK_XP := 40
@@ -71,10 +75,13 @@ const SOURCES := {
 		"snd": "hit_geyser", "no_factor": true, "rare": "cells", "rare_p": 0.6},
 	"src_vulkan": {"name": "Glutgeode", "model": "n_src_vulkan", "res": "cells", "min": 8, "max": 14, "hits": 4, "clip": "mine", "tool": "tongs",
 		"snd": "hit_geode", "no_factor": true, "rare": "shards", "rare_p": 0.5},
+	"src_stadt": {"name": "Umspannkasten", "model": "n_src_stadt", "res": "parts", "min": 6, "max": 10, "hits": 4, "clip": "mine", "tool": "cutter",
+		"snd": "hit_fuse", "no_factor": true, "rare": "cells", "rare_p": 0.6},
 	# Funde aus Ereignissen (ohne Werkzeug)
 	"meteor": {"name": "Meteorit", "model": "n_meteor", "res": "shards", "min": 1, "max": 1, "hits": 4, "clip": "mine", "snd": "hit_ice", "no_factor": true, "rare": "cells", "rare_p": 0.8},
 	"pot": {"name": "Münztopf", "model": "n_coinpile", "res": "coins", "min": 90, "max": 130, "hits": 2, "clip": "pick_up"},
 	"lavabomb": {"name": "Lavabombe", "model": "n_lavabomb", "res": "stone", "min": 20, "max": 32, "hits": 3, "clip": "mine", "snd": "hit_geode", "rare": "shards", "rare_p": 0.25},
+	"blitzakku": {"name": "Geladener Akku", "model": "n_akku", "res": "cells", "min": 8, "max": 14, "hits": 3, "clip": "mine", "snd": "hit_fuse", "rare": "shards", "rare_p": 0.2},
 }
 const SOURCES_PER_VISIT := 3                       # gebietseigene Quellen je Besuch (Mittel- und Außenring)
 const TOOLS := {
@@ -86,6 +93,7 @@ const TOOLS := {
 	"icepick": {"name": "Eispickel", "area": 5, "icon": "tool_icepick", "price": 80, "text": "Bricht Eiskristalle: Energiezellen."},
 	"canister": {"name": "Schleimkanister", "area": 6, "icon": "tool_canister", "price": 90, "text": "Fängt Schleim aus Geysiren: Sternsplitter und Zellen."},
 	"tongs": {"name": "Glutzange", "area": 7, "icon": "tool_tongs", "price": 100, "text": "Bricht glühende Geoden auf: Energiezellen und Sternsplitter."},
+	"cutter": {"name": "Bolzenschneider", "area": 8, "icon": "tool_cutter", "price": 110, "text": "Knackt verschlossene Umspannkästen: Bauteile und Energiezellen."},
 }
 
 # ---------------------------------------------------------------- Tagebuchseiten (Gebietsgeschichte)
@@ -139,6 +147,12 @@ const JOURNAL := {
 		["Hitze", "Regel Nummer eins auf der Insel: Nie zu lange in der Sonne und nie zu nah an der Glut. Im Schatten der Felsen und an den kühlen Quellen kommt man wieder zu Atem."],
 		["Obsidian", "Das schwarze Glas ist härter als jeder Stein. Greta sagt, aus Obsidian ließen sich Mauern bauen, an denen sich selbst der Schleimkönig die Zähne ausbeißt. Wir schmieden schon die ersten Platten."],
 	],
+	"stadt": [
+		["Der Fernsehturm", "Notizbuch eines Stadtführers: Der Turm war das Erste, was man von der Stadt sah. Seit dem Sturm liegt seine Kugel im Park. Nachts blinkt oben trotzdem noch das rote Licht – irgendwer zahlt die Stromrechnung."],
+		["Die Durchsage", "Jeden Morgen um acht knackt es aus allen Lautsprechern: „Die Stadtverwaltung bittet um Ruhe.“ Dann fahren die Rasenmäher los, obwohl hier seit Jahren kein Rasen mehr wächst."],
+		["Ampeln", "Die Maschinen halten bei Rot. Immer. Selbst wenn sie hinter jemandem her sind. Wer schlau ist, wirft den Notstrom an und wartet an der Kreuzung."],
+		["Unter der Stadt", "Die U-Bahn fährt nicht mehr, aber die Schächte sind frei. Wer Strom hat, kommt in Sekunden ans andere Ende der Stadt. Die Maschinen trauen sich nicht hinunter – es riecht nach Pilzen."],
+	],
 }
 const JOURNAL_PICK_R := 2.2
 const JOURNAL_XP := 15
@@ -171,6 +185,8 @@ const QUESTS := {
 		"intro": "„Mit drei Siegelsteinen können wir das Portal schwächen. Sie liegen verstreut im Krater.“", "done": "„Das Portal zittert! Hier, der Schleimkanister – sammle den Schleim, bevor er sich wieder sammelt.“"},
 	"vulkan": {"title": "Kühlwasser für die Schmiede", "giver": "Schmiedin Erna", "suit": "B8542A", "item": "Wasserkanne", "model": "c_watering", "n": 3, "coins": 260,
 		"intro": "„Meine Schmiede braucht Kühlwasser, sonst springt das Obsidian. Die Inselwache hat drei Kannen verloren, als die Lava kam.“", "done": "„Zischt wunderbar! Nimm meine Glutzange – damit knackst du die glühenden Geoden.“"},
+	"stadt": {"title": "Sicherungen für die Notrufsäule", "giver": "Elektrikerin Jule", "suit": "E8C040", "item": "Ersatzsicherung", "model": "cg_cells", "n": 3, "coins": 280,
+		"intro": "„Die Notrufsäule am Platz braucht drei Ersatzsicherungen. Die Mäh-Bots haben sie in der ganzen Stadt verstreut.“", "done": "„Es summt! Nimm meinen Bolzenschneider – damit kommst du an die Umspannkästen.“"},
 }
 const QUEST_TALK_R := 3.0
 const QUEST_TALK_TIME := 1.2
@@ -239,4 +255,34 @@ const AREA_TIPS := {
 	"vulkan": ["Auf der Vulkaninsel steigt die Hitze nahe der Lava und am Tag. Im Schatten von Felsen und an den blauen Quellen kühlst du ab.",
 		"Glühen die Risse neben einem Lavastrom auf, wechselt er gleich seinen Weg – geh rechtzeitig zur Seite.",
 		"Magma-Wesen fürchten Wasser (+60 %). Feuer kann ihnen nichts anhaben."],
+	"stadt": ["In den Stadtruinen führen Feuertreppen auf die Dächer. Oben erreichen dich nur Funkenspinnen, Drohnen und Schützen – und du triffst weiter.",
+		"Wirf einen Notstrom-Generator an: Dann fährt die U-Bahn ans andere Ende der Stadt, und die Ampeln in der Nähe stoppen die Maschinen bei Rot.",
+		"Maschinen fürchten Blitz (+50 %) und Wasser (+30 %). Gift kann ihnen nichts anhaben."],
 }
+
+# ---------------------------------------------------------------- Stadtruinen (Paket Z2): Dächer, U-Bahn, Notstrom, Ampeln
+## Straßen: Raster alle CITY_GRID Meter (versetzt um CITY_OFF), Kacheln je 8 m (p_st_road / p_st_cross).
+const CITY_GRID := 48.0
+const CITY_OFF := -12.0
+## Dachhäuser (p_st_roof_1/2): Grundfläche 10 × 8 m, Feuertreppe 4 × 4 m vor der Vorderseite. Auf dem Dach (ROOF_H Meter hoch)
+## erreichen den Helden nur Flieger, Fernkämpfer und Kletterer (climb); er trifft ROOF_RANGE-mal so weit und ROOF_DMG-mal so stark.
+const ROOFS := 9
+const ROOF_H := 3.4
+const ROOF_RANGE := 1.3
+const ROOF_DMG := 1.15
+const ROOF_FALL := 0.3                              # so lange dauert der Sprung vom Dach (Sekunden)
+## U-Bahn: SUBWAY_LINES Linien mit je zwei Eingängen (einer in der Landezone oder im Mittelring, einer im Außenring). Fährt nur mit Strom
+## (Generator der Linie an) und erst, wenn die Sperren offen sind. Auf dem Einstieg SUBWAY_HOLD Sekunden stehen, dann geht es los.
+const SUBWAY_LINES := 2
+const SUBWAY_HOLD := 0.9
+const SUBWAY_R := 1.8
+const SUBWAY_CD := 4.0
+## Notstrom-Generator: GEN_HOLD Sekunden daneben stehen schaltet ihn ein. Er versorgt die U-Bahn-Linie und alle Ampeln bis GEN_RANGE Meter.
+const GEN_HOLD := 1.5
+const GEN_R := 2.8
+const GEN_RANGE := 60.0
+## Ampeln an Kreuzungen: mit Strom Grün AMPEL_CYCLE[0] s, Gelb [1] s, Rot [2] s. Bei Rot bleiben Maschinen bis AMPEL_R Meter stehen
+## (keine Bosse und Minibosse). Ohne Strom blinkt Gelb.
+const AMPELS := 12
+const AMPEL_CYCLE := [7.0, 1.5, 3.5]
+const AMPEL_R := 8.0

@@ -76,7 +76,7 @@ neuen Dateien umgeleitet.
 ## Paket Welt (V5): Musik je Ort, Ton-Prüfung, Mischpult, Rufe
 
 **Musik** (`python3 tools/make_music.py [name|areas]`, Stil je Gebiet, nahtlose Schleifen, 32 kHz, OGG):
-`area_<gebiet>.ogg` (Ruhe-Lage) und `area_<gebiet>_fight.ogg` (Gefahr-Lage: Schlagzeug, Bass, Bläser) für alle sieben
+`area_<gebiet>.ogg` (Ruhe-Lage) und `area_<gebiet>_fight.ogg` (Gefahr-Lage: Schlagzeug, Bass, Bläser) für alle
 Gebiete, dazu `boss.ogg`, `menu.ogg`, `win.ogg`, `lose.ogg` (Stinger). Die beiden Lagen laufen im Spiel synchron
 (`AudioStreamSynchronized`); die Gefahr-Lage wird nach der Zahl der Gegner um den Helden eingeblendet (Großangriff: ganz).
 Boss-Stimmung (Expedition und Flut) spielt `boss.ogg`, das Hauptmenü nach dem ersten Durchlauf des eigenen Lieds

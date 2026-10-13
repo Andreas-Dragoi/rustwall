@@ -4,7 +4,8 @@ extends Node3D
 ##   Tageslauf    Ankunft am Morgen, dann Tag, vor der Dämmerung Abend, in der Dämmerung Nacht (Farben wie in der Basis)
 ##   Wetter       Regen-, Staub- und Nebelteilchen, Umgebungsklang je Gebiet (Tag/Nacht überblendet)
 ##   Ereignisse   je Gebiet eines mit Spielwirkung: Regen (Grüntal), Nebel (Forst), Sandsturm (Staubebene), Ebbe/Flut (Küste),
-##                Giftnebel (Sumpf), Lawine (Frostpass), Meteoriten (Krater), Vulkanausbruch (Vulkaninsel, Paket Z)
+##                Giftnebel (Sumpf), Lawine (Frostpass), Meteoriten (Krater), Vulkanausbruch (Vulkaninsel, Paket Z),
+##                Blitzgewitter mit Stromausfall (Stadtruinen, Paket Z2)
 ##   Wahrzeichen  großes Modell an festem Ort; entdecken gibt Tagebuchseite 0
 ##   Quellen      gebietseigene Quellen, nur mit dem passenden Werkzeug abbaubar (welt_state.gd)
 ##   Tagebuch     je Besuch liegt eine fehlende Seite (1 oder 2) irgendwo im Gebiet
@@ -474,6 +475,9 @@ func _tick_event(dt: float, pp: Vector2) -> void:
 			_tick_clouds(dt, pp, tick)
 		"lawine", "meteor", "ausbruch":
 			_tick_strikes(dt, pp)
+		"gewitter":
+			rain_k = move_toward(rain_k, 1.0, dt / 3.0)
+			_tick_strikes(dt, pp)
 	if ev_left <= 0.0:
 		end_event()
 
@@ -525,6 +529,11 @@ func start_event() -> void:
 			Sfx.loop("wx_ev", "ev_amb_eruption", -10.0)
 			if ex.vulkan != null:
 				ex.vulkan.set_eruption(true)
+		"gewitter":
+			Sfx.play("ev_thunder", -2.0)
+			Sfx.loop("wx_ev", "ev_amb_storm", -10.0)
+			if ex.get("stadt") != null:
+				ex.stadt.set_blackout(true)
 
 
 func end_event() -> void:
@@ -546,6 +555,8 @@ func end_event() -> void:
 		_after_rain()
 	if k == "ausbruch" and ex.vulkan != null:
 		ex.vulkan.set_eruption(false)
+	if k == "gewitter" and ex.get("stadt") != null:
+		ex.stadt.set_blackout(false)
 	ev = {}
 	ev_next = rng.randf_range(DW.EVENT_EVERY[0], DW.EVENT_EVERY[1])
 	log.append("event_end:" + k)
@@ -553,7 +564,7 @@ func end_event() -> void:
 
 
 func _tick_particles(dt: float) -> void:
-	if ev.is_empty() or String(ev.key) != "regen":
+	if ev.is_empty() or (String(ev.key) != "regen" and String(ev.key) != "gewitter"):
 		rain_k = move_toward(rain_k, 0.0, dt / 6.0)
 	if ev.is_empty() or String(ev.key) != "sandsturm":
 		dust_k = move_toward(dust_k, 0.0, dt / 4.0)
@@ -735,6 +746,8 @@ func _tick_strikes(dt: float, pp: Vector2) -> void:
 		_ev_items.append({"kind": "strike", "p": c, "r": r, "t": float(ev.warn), "ring": ring})
 		if ev.key == "ausbruch":
 			Sfx.play_at("ev_lavabomb_fall", Vector3(c.x, 0, c.y), -4.0, 1.0, 0.2)
+		elif ev.key == "gewitter":
+			Sfx.play_at("ev_thunder_warn", Vector3(c.x, 0, c.y), -5.0, 1.0, 0.2)
 		elif ev.key == "meteor":
 			Sfx.play_at("ev_meteor_fall", Vector3(c.x, 0, c.y), -4.0, 1.0, 0.2)
 		else:
@@ -760,6 +773,10 @@ func _strike(it: Dictionary) -> void:
 	var dmg := 260.0 * float(ex.hp_mult)
 	if ev.key == "ausbruch":
 		ex.blast(p3, r, dmg * 0.6, {"sfx": "ev_lavabomb_impact", "knock": 2.0}, Color(1.0, 0.42, 0.1))
+	elif ev.key == "gewitter":
+		# Paket Z2: Blitz – Blitzschaden (Maschinen +50 %), getroffene Maschinen gehen kurz aus
+		ex.fx.lightning(p3 + Vector3(rng.randf_range(-2.0, 2.0), 22.0, rng.randf_range(-2.0, 2.0)), p3 + Vector3(0, 0.2, 0))
+		ex.blast(p3, r, dmg * 0.5, {"sfx": "ev_lightning_strike", "knock": 1.0, "stun": float(ev.get("stun", 2.0)), "element": "blitz"}, Color(0.6, 0.85, 1.0))
 	elif meteor:
 		ex.blast(p3, r, dmg, {"sfx": "ev_meteor_impact", "knock": 2.0}, Color(1.0, 0.5, 0.2))
 	else:
@@ -773,6 +790,8 @@ func _strike(it: Dictionary) -> void:
 		log.append("strike_hit")
 	if meteor and not ex.field.is_solid(c):
 		bonus_nodes.append(_add_node("lavabomb" if ev.key == "ausbruch" else "meteor", c, 1))
+	elif ev.key == "gewitter" and rng.randf() < 0.5 and not ex.field.is_solid(c):
+		bonus_nodes.append(_add_node("blitzakku", c, 1))      # Paket Z2: aufgeladener Akku bleibt liegen
 	log.append("strike")
 
 

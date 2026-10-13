@@ -1,0 +1,3094 @@
+{
+ "normal": {
+  "title": "Normaler Ausbau (Simulation, 45 min/Tag)",
+  "weeks": {
+   "1": {
+    "plan": {
+     "bunker": 5,
+     "tower": 2,
+     "hero": 6,
+     "wall": 2,
+     "level": 6,
+     "total": 130
+    },
+    "runs": [
+     {
+      "real": 22.3,
+      "args": [
+       "--bunker=5",
+       "--week=1",
+       "--tower=2",
+       "--herolv=6",
+       "--wall=2",
+       "--plevel=6"
+      ],
+      "win": true,
+      "kills": 130,
+      "t": 124,
+      "deaths": 0,
+      "hp": 1.0,
+      "stars": 3,
+      "waves": 4
+     },
+     {
+      "real": 21.0,
+      "args": [
+       "--bunker=5",
+       "--week=1",
+       "--tower=2",
+       "--herolv=6",
+       "--wall=2",
+       "--plevel=6"
+      ],
+      "win": true,
+      "kills": 130,
+      "t": 117,
+      "deaths": 0,
+      "hp": 1.0,
+      "stars": 3,
+      "waves": 4
+     },
+     {
+      "real": 19.3,
+      "args": [
+       "--bunker=5",
+       "--week=1",
+       "--tower=2",
+       "--herolv=6",
+       "--wall=2",
+       "--plevel=6"
+      ],
+      "win": true,
+      "kills": 130,
+      "t": 108,
+      "deaths": 0,
+      "hp": 1.0,
+      "stars": 3,
+      "waves": 4
+     }
+    ]
+   },
+   "2": {
+    "plan": {
+     "bunker": 6,
+     "tower": 2,
+     "hero": 8,
+     "wall": 2,
+     "level": 8,
+     "total": 160
+    },
+    "runs": [
+     {
+      "real": 23.5,
+      "args": [
+       "--bunker=6",
+       "--week=2",
+       "--tower=2",
+       "--herolv=8",
+       "--wall=2",
+       "--plevel=8"
+      ],
+      "win": true,
+      "kills": 161,
+      "t": 139,
+      "deaths": 0,
+      "hp": 1.0,
+      "stars": 3,
+      "waves": 6
+     },
+     {
+      "real": 28.2,
+      "args": [
+       "--bunker=6",
+       "--week=2",
+       "--tower=2",
+       "--herolv=8",
+       "--wall=2",
+       "--plevel=8"
+      ],
+      "win": true,
+      "kills": 161,
+      "t": 179,
+      "deaths": 0,
+      "hp": 1.0,
+      "stars": 3,
+      "waves": 6
+     },
+     {
+      "real": 24.8,
+      "args": [
+       "--bunker=6",
+       "--week=2",
+       "--tower=2",
+       "--herolv=8",
+       "--wall=2",
+       "--plevel=8"
+      ],
+      "win": true,
+      "kills": 161,
+      "t": 151,
+      "deaths": 0,
+      "hp": 1.0,
+      "stars": 3,
+      "waves": 6
+     }
+    ]
+   },
+   "3": {
+    "plan": {
+     "bunker": 7,
+     "tower": 2,
+     "hero": 10,
+     "wall": 3,
+     "level": 10,
+     "total": 190
+    },
+    "runs": [
+     {
+      "real": 27.8,
+      "args": [
+       "--bunker=7",
+       "--week=3",
+       "--tower=2",
+       "--herolv=10",
+       "--wall=3",
+       "--plevel=10"
+      ],
+      "win": true,
+      "kills": 210,
+      "t": 171,
+      "deaths": 0,
+      "hp": 1.0,
+      "stars": 3,
+      "waves": 6
+     },
+     {
+      "real": 27.7,
+      "args": [
+       "--bunker=7",
+       "--week=3",
+       "--tower=2",
+       "--herolv=10",
+       "--wall=3",
+       "--plevel=10"
+      ],
+      "win": true,
+      "kills": 214,
+      "t": 174,
+      "deaths": 0,
+      "hp": 0.99,
+      "stars": 2,
+      "waves": 6
+     },
+     {
+      "real": 27.8,
+      "args": [
+       "--bunker=7",
+       "--week=3",
+       "--tower=2",
+       "--herolv=10",
+       "--wall=3",
+       "--plevel=10"
+      ],
+      "win": true,
+      "kills": 210,
+      "t": 175,
+      "deaths": 0,
+      "hp": 0.99,
+      "stars": 2,
+      "waves": 6
+     }
+    ]
+   },
+   "4": {
+    "plan": {
+     "bunker": 7,
+     "tower": 2,
+     "hero": 12,
+     "wall": 3,
+     "level": 11,
+     "total": 240
+    },
+    "runs": [
+     {
+      "real": 34.3,
+      "args": [
+       "--bunker=7",
+       "--week=4",
+       "--tower=2",
+       "--herolv=12",
+       "--wall=3",
+       "--plevel=11"
+      ],
+      "win": true,
+      "kills": 261,
+      "t": 225,
+      "deaths": 0,
+      "hp": 0.98,
+      "stars": 2,
+      "waves": 7
+     },
+     {
+      "real": 38.0,
+      "args": [
+       "--bunker=7",
+       "--week=4",
+       "--tower=2",
+       "--herolv=12",
+       "--wall=3",
+       "--plevel=11"
+      ],
+      "win": true,
+      "kills": 261,
+      "t": 249,
+      "deaths": 2,
+      "hp": 0.96,
+      "stars": 2,
+      "waves": 7
+     },
+     {
+      "real": 39.4,
+      "args": [
+       "--bunker=7",
+       "--week=4",
+       "--tower=2",
+       "--herolv=12",
+       "--wall=3",
+       "--plevel=11"
+      ],
+      "win": true,
+      "kills": 261,
+      "t": 264,
+      "deaths": 1,
+      "hp": 0.95,
+      "stars": 2,
+      "waves": 7
+     }
+    ]
+   },
+   "5": {
+    "plan": {
+     "bunker": 8,
+     "tower": 2,
+     "hero": 13,
+     "wall": 3,
+     "level": 12,
+     "total": 290
+    },
+    "runs": [
+     {
+      "real": 41.4,
+      "args": [
+       "--bunker=8",
+       "--week=5",
+       "--tower=2",
+       "--herolv=13",
+       "--wall=3",
+       "--plevel=12"
+      ],
+      "win": true,
+      "kills": 357,
+      "t": 281,
+      "deaths": 0,
+      "hp": 0.99,
+      "stars": 2,
+      "waves": 7
+     },
+     {
+      "real": 38.6,
+      "args": [
+       "--bunker=8",
+       "--week=5",
+       "--tower=2",
+       "--herolv=13",
+       "--wall=3",
+       "--plevel=12"
+      ],
+      "win": true,
+      "kills": 360,
+      "t": 255,
+      "deaths": 0,
+      "hp": 0.99,
+      "stars": 2,
+      "waves": 7
+     },
+     {
+      "real": 48.2,
+      "args": [
+       "--bunker=8",
+       "--week=5",
+       "--tower=2",
+       "--herolv=13",
+       "--wall=3",
+       "--plevel=12"
+      ],
+      "win": true,
+      "kills": 354,
+      "t": 328,
+      "deaths": 1,
+      "hp": 0.99,
+      "stars": 2,
+      "waves": 7
+     }
+    ]
+   },
+   "6": {
+    "plan": {
+     "bunker": 8,
+     "tower": 2,
+     "hero": 14,
+     "wall": 3,
+     "level": 13,
+     "total": 350
+    },
+    "runs": [
+     {
+      "real": 52.6,
+      "args": [
+       "--bunker=8",
+       "--week=6",
+       "--tower=2",
+       "--herolv=14",
+       "--wall=3",
+       "--plevel=13"
+      ],
+      "win": true,
+      "kills": 463,
+      "t": 375,
+      "deaths": 1,
+      "hp": 0.97,
+      "stars": 2,
+      "waves": 8
+     },
+     {
+      "real": 46.7,
+      "args": [
+       "--bunker=8",
+       "--week=6",
+       "--tower=2",
+       "--herolv=14",
+       "--wall=3",
+       "--plevel=13"
+      ],
+      "win": true,
+      "kills": 469,
+      "t": 318,
+      "deaths": 0,
+      "hp": 0.91,
+      "stars": 2,
+      "waves": 8
+     },
+     {
+      "real": 44.2,
+      "args": [
+       "--bunker=8",
+       "--week=6",
+       "--tower=2",
+       "--herolv=14",
+       "--wall=3",
+       "--plevel=13"
+      ],
+      "win": true,
+      "kills": 461,
+      "t": 308,
+      "deaths": 1,
+      "hp": 0.96,
+      "stars": 2,
+      "waves": 8
+     }
+    ]
+   },
+   "7": {
+    "plan": {
+     "bunker": 8,
+     "tower": 2,
+     "hero": 15,
+     "wall": 3,
+     "level": 14,
+     "total": 430
+    },
+    "runs": [
+     {
+      "real": 46.8,
+      "args": [
+       "--bunker=8",
+       "--week=7",
+       "--tower=2",
+       "--herolv=15",
+       "--wall=3",
+       "--plevel=14"
+      ],
+      "win": true,
+      "kills": 532,
+      "t": 309,
+      "deaths": 1,
+      "hp": 0.93,
+      "stars": 2,
+      "waves": 8
+     },
+     {
+      "real": 100.7,
+      "args": [
+       "--bunker=8",
+       "--week=7",
+       "--tower=2",
+       "--herolv=15",
+       "--wall=3",
+       "--plevel=14"
+      ],
+      "win": true,
+      "kills": 529,
+      "t": 708,
+      "deaths": 1,
+      "hp": 0.89,
+      "stars": 2,
+      "waves": 8
+     },
+     {
+      "real": 107.6,
+      "args": [
+       "--bunker=8",
+       "--week=7",
+       "--tower=2",
+       "--herolv=15",
+       "--wall=3",
+       "--plevel=14"
+      ],
+      "win": true,
+      "kills": 532,
+      "t": 784,
+      "deaths": 1,
+      "hp": 0.88,
+      "stars": 2,
+      "waves": 8
+     }
+    ]
+   },
+   "8": {
+    "plan": {
+     "bunker": 8,
+     "tower": 2,
+     "hero": 16,
+     "wall": 3,
+     "level": 14,
+     "total": 520
+    },
+    "runs": [
+     {
+      "real": 91.2,
+      "args": [
+       "--bunker=8",
+       "--week=8",
+       "--tower=2",
+       "--herolv=16",
+       "--wall=3",
+       "--plevel=14"
+      ],
+      "win": true,
+      "kills": 629,
+      "t": 679,
+      "deaths": 1,
+      "hp": 0.99,
+      "stars": 2,
+      "waves": 9
+     },
+     {
+      "real": 125.3,
+      "args": [
+       "--bunker=8",
+       "--week=8",
+       "--tower=2",
+       "--herolv=16",
+       "--wall=3",
+       "--plevel=14"
+      ],
+      "win": true,
+      "kills": 644,
+      "t": 919,
+      "deaths": 1,
+      "hp": 0.92,
+      "stars": 2,
+      "waves": 9
+     },
+     {
+      "real": 63.4,
+      "args": [
+       "--bunker=8",
+       "--week=8",
+       "--tower=2",
+       "--herolv=16",
+       "--wall=3",
+       "--plevel=14"
+      ],
+      "win": true,
+      "kills": 662,
+      "t": 404,
+      "deaths": 0,
+      "hp": 0.93,
+      "stars": 2,
+      "waves": 9
+     }
+    ]
+   },
+   "9": {
+    "plan": {
+     "bunker": 9,
+     "tower": 2,
+     "hero": 17,
+     "wall": 3,
+     "level": 15,
+     "total": 640
+    },
+    "runs": [
+     {
+      "real": 85.1,
+      "args": [
+       "--bunker=9",
+       "--week=9",
+       "--tower=2",
+       "--herolv=17",
+       "--wall=3",
+       "--plevel=15"
+      ],
+      "win": true,
+      "kills": 853,
+      "t": 605,
+      "deaths": 1,
+      "hp": 0.93,
+      "stars": 2,
+      "waves": 9
+     },
+     {
+      "real": 62.2,
+      "args": [
+       "--bunker=9",
+       "--week=9",
+       "--tower=2",
+       "--herolv=17",
+       "--wall=3",
+       "--plevel=15"
+      ],
+      "win": true,
+      "kills": 844,
+      "t": 439,
+      "deaths": 1,
+      "hp": 0.93,
+      "stars": 2,
+      "waves": 9
+     },
+     {
+      "real": 62.0,
+      "args": [
+       "--bunker=9",
+       "--week=9",
+       "--tower=2",
+       "--herolv=17",
+       "--wall=3",
+       "--plevel=15"
+      ],
+      "win": true,
+      "kills": 868,
+      "t": 425,
+      "deaths": 0,
+      "hp": 0.91,
+      "stars": 2,
+      "waves": 9
+     }
+    ]
+   },
+   "10": {
+    "plan": {
+     "bunker": 9,
+     "tower": 2,
+     "hero": 18,
+     "wall": 3,
+     "level": 16,
+     "total": 780
+    },
+    "runs": [
+     {
+      "real": 74.8,
+      "args": [
+       "--bunker=9",
+       "--week=10",
+       "--tower=2",
+       "--herolv=18",
+       "--wall=3",
+       "--plevel=16"
+      ],
+      "win": true,
+      "kills": 988,
+      "t": 545,
+      "deaths": 2,
+      "hp": 0.84,
+      "stars": 2,
+      "waves": 10
+     },
+     {
+      "real": 84.1,
+      "args": [
+       "--bunker=9",
+       "--week=10",
+       "--tower=2",
+       "--herolv=18",
+       "--wall=3",
+       "--plevel=16"
+      ],
+      "win": true,
+      "kills": 1012,
+      "t": 596,
+      "deaths": 2,
+      "hp": 0.87,
+      "stars": 2,
+      "waves": 10
+     },
+     {
+      "real": 73.1,
+      "args": [
+       "--bunker=9",
+       "--week=10",
+       "--tower=2",
+       "--herolv=18",
+       "--wall=3",
+       "--plevel=16"
+      ],
+      "win": true,
+      "kills": 1003,
+      "t": 497,
+      "deaths": 3,
+      "hp": 0.78,
+      "stars": 2,
+      "waves": 10
+     }
+    ]
+   },
+   "11": {
+    "plan": {
+     "bunker": 9,
+     "tower": 2,
+     "hero": 19,
+     "wall": 3,
+     "level": 17,
+     "total": 950
+    },
+    "runs": [
+     {
+      "real": 68.5,
+      "args": [
+       "--bunker=9",
+       "--week=11",
+       "--tower=2",
+       "--herolv=19",
+       "--wall=3",
+       "--plevel=17"
+      ],
+      "win": true,
+      "kills": 1201,
+      "t": 495,
+      "deaths": 0,
+      "hp": 0.94,
+      "stars": 2,
+      "waves": 10
+     },
+     {
+      "real": 99.2,
+      "args": [
+       "--bunker=9",
+       "--week=11",
+       "--tower=2",
+       "--herolv=19",
+       "--wall=3",
+       "--plevel=17"
+      ],
+      "win": true,
+      "kills": 1201,
+      "t": 735,
+      "deaths": 2,
+      "hp": 0.93,
+      "stars": 2,
+      "waves": 10
+     },
+     {
+      "real": 67.5,
+      "args": [
+       "--bunker=9",
+       "--week=11",
+       "--tower=2",
+       "--herolv=19",
+       "--wall=3",
+       "--plevel=17"
+      ],
+      "win": true,
+      "kills": 1222,
+      "t": 458,
+      "deaths": 1,
+      "hp": 0.95,
+      "stars": 2,
+      "waves": 10
+     }
+    ]
+   },
+   "12": {
+    "plan": {
+     "bunker": 9,
+     "tower": 2,
+     "hero": 20,
+     "wall": 3,
+     "level": 17,
+     "total": 1160
+    },
+    "runs": [
+     {
+      "real": 77.4,
+      "args": [
+       "--bunker=9",
+       "--week=12",
+       "--tower=2",
+       "--herolv=20",
+       "--wall=3",
+       "--plevel=17"
+      ],
+      "win": true,
+      "kills": 1508,
+      "t": 537,
+      "deaths": 0,
+      "hp": 0.65,
+      "stars": 2,
+      "waves": 11
+     },
+     {
+      "real": 142.0,
+      "args": [
+       "--bunker=9",
+       "--week=12",
+       "--tower=2",
+       "--herolv=20",
+       "--wall=3",
+       "--plevel=17"
+      ],
+      "win": true,
+      "kills": 1562,
+      "t": 1044,
+      "deaths": 2,
+      "hp": 0.72,
+      "stars": 2,
+      "waves": 11
+     },
+     {
+      "real": 78.3,
+      "args": [
+       "--bunker=9",
+       "--week=12",
+       "--tower=2",
+       "--herolv=20",
+       "--wall=3",
+       "--plevel=17"
+      ],
+      "win": true,
+      "kills": 1547,
+      "t": 522,
+      "deaths": 1,
+      "hp": 0.75,
+      "stars": 2,
+      "waves": 11
+     }
+    ]
+   },
+   "13": {
+    "plan": {
+     "bunker": 9,
+     "tower": 2,
+     "hero": 21,
+     "wall": 3,
+     "level": 18,
+     "total": 1250
+    },
+    "runs": [
+     {
+      "real": 82.7,
+      "args": [
+       "--bunker=9",
+       "--week=13",
+       "--tower=2",
+       "--herolv=21",
+       "--wall=3",
+       "--plevel=18"
+      ],
+      "win": true,
+      "kills": 1622,
+      "t": 612,
+      "deaths": 4,
+      "hp": 0.49,
+      "stars": 1,
+      "waves": 11
+     },
+     {
+      "real": 86.1,
+      "args": [
+       "--bunker=9",
+       "--week=13",
+       "--tower=2",
+       "--herolv=21",
+       "--wall=3",
+       "--plevel=18"
+      ],
+      "win": true,
+      "kills": 1610,
+      "t": 594,
+      "deaths": 4,
+      "hp": 0.53,
+      "stars": 2,
+      "waves": 11
+     },
+     {
+      "real": 93.3,
+      "args": [
+       "--bunker=9",
+       "--week=13",
+       "--tower=2",
+       "--herolv=21",
+       "--wall=3",
+       "--plevel=18"
+      ],
+      "win": true,
+      "kills": 1619,
+      "t": 652,
+      "deaths": 5,
+      "hp": 0.48,
+      "stars": 1,
+      "waves": 11
+     }
+    ]
+   },
+   "14": {
+    "plan": {
+     "bunker": 10,
+     "tower": 3,
+     "hero": 22,
+     "wall": 3,
+     "level": 19,
+     "total": 1350
+    },
+    "runs": [
+     {
+      "real": 90.4,
+      "args": [
+       "--bunker=10",
+       "--week=14",
+       "--tower=3",
+       "--herolv=22",
+       "--wall=3",
+       "--plevel=19"
+      ],
+      "win": true,
+      "kills": 1726,
+      "t": 586,
+      "deaths": 2,
+      "hp": 0.87,
+      "stars": 2,
+      "waves": 12
+     },
+     {
+      "real": 97.7,
+      "args": [
+       "--bunker=10",
+       "--week=14",
+       "--tower=3",
+       "--herolv=22",
+       "--wall=3",
+       "--plevel=19"
+      ],
+      "win": true,
+      "kills": 1777,
+      "t": 661,
+      "deaths": 1,
+      "hp": 0.79,
+      "stars": 2,
+      "waves": 12
+     },
+     {
+      "real": 126.5,
+      "args": [
+       "--bunker=10",
+       "--week=14",
+       "--tower=3",
+       "--herolv=22",
+       "--wall=3",
+       "--plevel=19"
+      ],
+      "win": true,
+      "kills": 1750,
+      "t": 910,
+      "deaths": 2,
+      "hp": 0.88,
+      "stars": 2,
+      "waves": 12
+     }
+    ]
+   },
+   "15": {
+    "plan": {
+     "bunker": 10,
+     "tower": 4,
+     "hero": 23,
+     "wall": 3,
+     "level": 20,
+     "total": 1460
+    },
+    "runs": [
+     {
+      "real": 155.2,
+      "args": [
+       "--bunker=10",
+       "--week=15",
+       "--tower=4",
+       "--herolv=23",
+       "--wall=3",
+       "--plevel=20"
+      ],
+      "win": true,
+      "kills": 1925,
+      "t": 1174,
+      "deaths": 1,
+      "hp": 0.75,
+      "stars": 2,
+      "waves": 12
+     },
+     {
+      "real": 166.8,
+      "args": [
+       "--bunker=10",
+       "--week=15",
+       "--tower=4",
+       "--herolv=23",
+       "--wall=3",
+       "--plevel=20"
+      ],
+      "win": true,
+      "kills": 1912,
+      "t": 1283,
+      "deaths": 2,
+      "hp": 0.76,
+      "stars": 2,
+      "waves": 12
+     },
+     {
+      "real": 98.5,
+      "args": [
+       "--bunker=10",
+       "--week=15",
+       "--tower=4",
+       "--herolv=23",
+       "--wall=3",
+       "--plevel=20"
+      ],
+      "win": true,
+      "kills": 1898,
+      "t": 708,
+      "deaths": 1,
+      "hp": 0.81,
+      "stars": 2,
+      "waves": 12
+     }
+    ]
+   },
+   "16": {
+    "plan": {
+     "bunker": 10,
+     "tower": 4,
+     "hero": 23,
+     "wall": 3,
+     "level": 20,
+     "total": 1580
+    },
+    "runs": [
+     {
+      "real": 91.5,
+      "args": [
+       "--bunker=10",
+       "--week=16",
+       "--tower=4",
+       "--herolv=23",
+       "--wall=3",
+       "--plevel=20"
+      ],
+      "win": true,
+      "kills": 2096,
+      "t": 657,
+      "deaths": 6,
+      "hp": 0.47,
+      "stars": 1,
+      "waves": 12
+     },
+     {
+      "real": 93.2,
+      "args": [
+       "--bunker=10",
+       "--week=16",
+       "--tower=4",
+       "--herolv=23",
+       "--wall=3",
+       "--plevel=20"
+      ],
+      "win": true,
+      "kills": 2033,
+      "t": 665,
+      "deaths": 6,
+      "hp": 0.66,
+      "stars": 2,
+      "waves": 12
+     },
+     {
+      "real": 97.6,
+      "args": [
+       "--bunker=10",
+       "--week=16",
+       "--tower=4",
+       "--herolv=23",
+       "--wall=3",
+       "--plevel=20"
+      ],
+      "win": true,
+      "kills": 2045,
+      "t": 673,
+      "deaths": 5,
+      "hp": 0.56,
+      "stars": 2,
+      "waves": 12
+     }
+    ]
+   }
+  }
+ },
+ "passiv": {
+  "title": "Vorsichtiger Spieler: Held bleibt am Bunker (gleicher Ausbau)",
+  "weeks": {
+   "1": {
+    "plan": {
+     "bunker": 5,
+     "tower": 2,
+     "hero": 6,
+     "wall": 2,
+     "level": 6,
+     "total": 130
+    },
+    "runs": [
+     {
+      "real": 26.6,
+      "args": [
+       "--bunker=5",
+       "--week=1",
+       "--tower=2",
+       "--herolv=6",
+       "--wall=2",
+       "--plevel=6",
+       "--passive=1"
+      ],
+      "win": true,
+      "kills": 130,
+      "t": 125,
+      "deaths": 0,
+      "hp": 1.0,
+      "stars": 3,
+      "waves": 4
+     },
+     {
+      "real": 22.6,
+      "args": [
+       "--bunker=5",
+       "--week=1",
+       "--tower=2",
+       "--herolv=6",
+       "--wall=2",
+       "--plevel=6",
+       "--passive=1"
+      ],
+      "win": true,
+      "kills": 130,
+      "t": 114,
+      "deaths": 0,
+      "hp": 1.0,
+      "stars": 3,
+      "waves": 4
+     }
+    ]
+   },
+   "2": {
+    "plan": {
+     "bunker": 6,
+     "tower": 2,
+     "hero": 8,
+     "wall": 2,
+     "level": 8,
+     "total": 160
+    },
+    "runs": [
+     {
+      "real": 30.3,
+      "args": [
+       "--bunker=6",
+       "--week=2",
+       "--tower=2",
+       "--herolv=8",
+       "--wall=2",
+       "--plevel=8",
+       "--passive=1"
+      ],
+      "win": true,
+      "kills": 161,
+      "t": 178,
+      "deaths": 0,
+      "hp": 1.0,
+      "stars": 3,
+      "waves": 6
+     },
+     {
+      "real": 32.5,
+      "args": [
+       "--bunker=6",
+       "--week=2",
+       "--tower=2",
+       "--herolv=8",
+       "--wall=2",
+       "--plevel=8",
+       "--passive=1"
+      ],
+      "win": true,
+      "kills": 161,
+      "t": 160,
+      "deaths": 0,
+      "hp": 1.0,
+      "stars": 3,
+      "waves": 6
+     }
+    ]
+   },
+   "3": {
+    "plan": {
+     "bunker": 7,
+     "tower": 2,
+     "hero": 10,
+     "wall": 3,
+     "level": 10,
+     "total": 190
+    },
+    "runs": [
+     {
+      "real": 33.8,
+      "args": [
+       "--bunker=7",
+       "--week=3",
+       "--tower=2",
+       "--herolv=10",
+       "--wall=3",
+       "--plevel=10",
+       "--passive=1"
+      ],
+      "win": true,
+      "kills": 215,
+      "t": 205,
+      "deaths": 2,
+      "hp": 0.97,
+      "stars": 2,
+      "waves": 6
+     },
+     {
+      "real": 35.4,
+      "args": [
+       "--bunker=7",
+       "--week=3",
+       "--tower=2",
+       "--herolv=10",
+       "--wall=3",
+       "--plevel=10",
+       "--passive=1"
+      ],
+      "win": true,
+      "kills": 210,
+      "t": 214,
+      "deaths": 0,
+      "hp": 0.99,
+      "stars": 2,
+      "waves": 6
+     }
+    ]
+   },
+   "4": {
+    "plan": {
+     "bunker": 7,
+     "tower": 2,
+     "hero": 12,
+     "wall": 3,
+     "level": 11,
+     "total": 240
+    },
+    "runs": [
+     {
+      "real": 44.5,
+      "args": [
+       "--bunker=7",
+       "--week=4",
+       "--tower=2",
+       "--herolv=12",
+       "--wall=3",
+       "--plevel=11",
+       "--passive=1"
+      ],
+      "win": true,
+      "kills": 261,
+      "t": 292,
+      "deaths": 0,
+      "hp": 0.88,
+      "stars": 2,
+      "waves": 7
+     },
+     {
+      "real": 36.6,
+      "args": [
+       "--bunker=7",
+       "--week=4",
+       "--tower=2",
+       "--herolv=12",
+       "--wall=3",
+       "--plevel=11",
+       "--passive=1"
+      ],
+      "win": true,
+      "kills": 261,
+      "t": 230,
+      "deaths": 2,
+      "hp": 0.98,
+      "stars": 2,
+      "waves": 7
+     }
+    ]
+   },
+   "5": {
+    "plan": {
+     "bunker": 8,
+     "tower": 2,
+     "hero": 13,
+     "wall": 3,
+     "level": 12,
+     "total": 290
+    },
+    "runs": [
+     {
+      "real": 42.9,
+      "args": [
+       "--bunker=8",
+       "--week=5",
+       "--tower=2",
+       "--herolv=13",
+       "--wall=3",
+       "--plevel=12",
+       "--passive=1"
+      ],
+      "win": true,
+      "kills": 351,
+      "t": 273,
+      "deaths": 2,
+      "hp": 0.99,
+      "stars": 2,
+      "waves": 7
+     },
+     {
+      "real": 69.1,
+      "args": [
+       "--bunker=8",
+       "--week=5",
+       "--tower=2",
+       "--herolv=13",
+       "--wall=3",
+       "--plevel=12",
+       "--passive=1"
+      ],
+      "win": true,
+      "kills": 363,
+      "t": 458,
+      "deaths": 1,
+      "hp": 1.0,
+      "stars": 3,
+      "waves": 7
+     }
+    ]
+   },
+   "6": {
+    "plan": {
+     "bunker": 8,
+     "tower": 2,
+     "hero": 14,
+     "wall": 3,
+     "level": 13,
+     "total": 350
+    },
+    "runs": [
+     {
+      "real": 103.6,
+      "args": [
+       "--bunker=8",
+       "--week=6",
+       "--tower=2",
+       "--herolv=14",
+       "--wall=3",
+       "--plevel=13",
+       "--passive=1"
+      ],
+      "win": true,
+      "kills": 489,
+      "t": 747,
+      "deaths": 1,
+      "hp": 0.89,
+      "stars": 2,
+      "waves": 8
+     },
+     {
+      "real": 119.0,
+      "args": [
+       "--bunker=8",
+       "--week=6",
+       "--tower=2",
+       "--herolv=14",
+       "--wall=3",
+       "--plevel=13",
+       "--passive=1"
+      ],
+      "win": true,
+      "kills": 465,
+      "t": 893,
+      "deaths": 0,
+      "hp": 0.93,
+      "stars": 2,
+      "waves": 8
+     }
+    ]
+   },
+   "7": {
+    "plan": {
+     "bunker": 8,
+     "tower": 2,
+     "hero": 15,
+     "wall": 3,
+     "level": 14,
+     "total": 430
+    },
+    "runs": [
+     {
+      "real": 61.8,
+      "args": [
+       "--bunker=8",
+       "--week=7",
+       "--tower=2",
+       "--herolv=15",
+       "--wall=3",
+       "--plevel=14",
+       "--passive=1"
+      ],
+      "win": true,
+      "kills": 529,
+      "t": 419,
+      "deaths": 2,
+      "hp": 0.84,
+      "stars": 2,
+      "waves": 8
+     },
+     {
+      "real": 69.9,
+      "args": [
+       "--bunker=8",
+       "--week=7",
+       "--tower=2",
+       "--herolv=15",
+       "--wall=3",
+       "--plevel=14",
+       "--passive=1"
+      ],
+      "win": true,
+      "kills": 532,
+      "t": 495,
+      "deaths": 0,
+      "hp": 0.83,
+      "stars": 2,
+      "waves": 8
+     }
+    ]
+   },
+   "8": {
+    "plan": {
+     "bunker": 8,
+     "tower": 2,
+     "hero": 16,
+     "wall": 3,
+     "level": 14,
+     "total": 520
+    },
+    "runs": [
+     {
+      "real": 61.0,
+      "args": [
+       "--bunker=8",
+       "--week=8",
+       "--tower=2",
+       "--herolv=16",
+       "--wall=3",
+       "--plevel=14",
+       "--passive=1"
+      ],
+      "win": true,
+      "kills": 647,
+      "t": 422,
+      "deaths": 3,
+      "hp": 0.91,
+      "stars": 2,
+      "waves": 9
+     },
+     {
+      "real": 67.5,
+      "args": [
+       "--bunker=8",
+       "--week=8",
+       "--tower=2",
+       "--herolv=16",
+       "--wall=3",
+       "--plevel=14",
+       "--passive=1"
+      ],
+      "win": true,
+      "kills": 650,
+      "t": 465,
+      "deaths": 4,
+      "hp": 0.96,
+      "stars": 2,
+      "waves": 9
+     }
+    ]
+   },
+   "9": {
+    "plan": {
+     "bunker": 9,
+     "tower": 2,
+     "hero": 17,
+     "wall": 3,
+     "level": 15,
+     "total": 640
+    },
+    "runs": [
+     {
+      "real": 91.2,
+      "args": [
+       "--bunker=9",
+       "--week=9",
+       "--tower=2",
+       "--herolv=17",
+       "--wall=3",
+       "--plevel=15",
+       "--passive=1"
+      ],
+      "win": true,
+      "kills": 867,
+      "t": 641,
+      "deaths": 3,
+      "hp": 0.94,
+      "stars": 2,
+      "waves": 9
+     },
+     {
+      "real": 68.7,
+      "args": [
+       "--bunker=9",
+       "--week=9",
+       "--tower=2",
+       "--herolv=17",
+       "--wall=3",
+       "--plevel=15",
+       "--passive=1"
+      ],
+      "win": true,
+      "kills": 870,
+      "t": 478,
+      "deaths": 9,
+      "hp": 0.93,
+      "stars": 2,
+      "waves": 9
+     }
+    ]
+   },
+   "10": {
+    "plan": {
+     "bunker": 9,
+     "tower": 2,
+     "hero": 18,
+     "wall": 3,
+     "level": 16,
+     "total": 780
+    },
+    "runs": [
+     {
+      "real": 70.8,
+      "args": [
+       "--bunker=9",
+       "--week=10",
+       "--tower=2",
+       "--herolv=18",
+       "--wall=3",
+       "--plevel=16",
+       "--passive=1"
+      ],
+      "win": true,
+      "kills": 976,
+      "t": 498,
+      "deaths": 8,
+      "hp": 0.75,
+      "stars": 2,
+      "waves": 10
+     },
+     {
+      "real": 69.5,
+      "args": [
+       "--bunker=9",
+       "--week=10",
+       "--tower=2",
+       "--herolv=18",
+       "--wall=3",
+       "--plevel=16",
+       "--passive=1"
+      ],
+      "win": true,
+      "kills": 976,
+      "t": 484,
+      "deaths": 5,
+      "hp": 0.76,
+      "stars": 2,
+      "waves": 10
+     }
+    ]
+   },
+   "11": {
+    "plan": {
+     "bunker": 9,
+     "tower": 2,
+     "hero": 19,
+     "wall": 3,
+     "level": 17,
+     "total": 950
+    },
+    "runs": [
+     {
+      "real": 73.6,
+      "args": [
+       "--bunker=9",
+       "--week=11",
+       "--tower=2",
+       "--herolv=19",
+       "--wall=3",
+       "--plevel=17",
+       "--passive=1"
+      ],
+      "win": true,
+      "kills": 1210,
+      "t": 515,
+      "deaths": 7,
+      "hp": 0.88,
+      "stars": 2,
+      "waves": 10
+     },
+     {
+      "real": 80.1,
+      "args": [
+       "--bunker=9",
+       "--week=11",
+       "--tower=2",
+       "--herolv=19",
+       "--wall=3",
+       "--plevel=17",
+       "--passive=1"
+      ],
+      "win": true,
+      "kills": 1225,
+      "t": 559,
+      "deaths": 7,
+      "hp": 0.86,
+      "stars": 2,
+      "waves": 10
+     }
+    ]
+   },
+   "12": {
+    "plan": {
+     "bunker": 9,
+     "tower": 2,
+     "hero": 20,
+     "wall": 3,
+     "level": 17,
+     "total": 1160
+    },
+    "runs": [
+     {
+      "real": 103.5,
+      "args": [
+       "--bunker=9",
+       "--week=12",
+       "--tower=2",
+       "--herolv=20",
+       "--wall=3",
+       "--plevel=17",
+       "--passive=1"
+      ],
+      "win": true,
+      "kills": 1528,
+      "t": 734,
+      "deaths": 8,
+      "hp": 0.6,
+      "stars": 2,
+      "waves": 11
+     },
+     {
+      "real": 86.9,
+      "args": [
+       "--bunker=9",
+       "--week=12",
+       "--tower=2",
+       "--herolv=20",
+       "--wall=3",
+       "--plevel=17",
+       "--passive=1"
+      ],
+      "win": true,
+      "kills": 1555,
+      "t": 625,
+      "deaths": 10,
+      "hp": 0.55,
+      "stars": 2,
+      "waves": 11
+     }
+    ]
+   },
+   "13": {
+    "plan": {
+     "bunker": 9,
+     "tower": 2,
+     "hero": 21,
+     "wall": 3,
+     "level": 18,
+     "total": 1250
+    },
+    "runs": [
+     {
+      "real": 107.2,
+      "args": [
+       "--bunker=9",
+       "--week=13",
+       "--tower=2",
+       "--herolv=21",
+       "--wall=3",
+       "--plevel=18",
+       "--passive=1"
+      ],
+      "win": true,
+      "kills": 1649,
+      "t": 787,
+      "deaths": 12,
+      "hp": 0.31,
+      "stars": 1,
+      "waves": 11
+     },
+     {
+      "real": 85.5,
+      "args": [
+       "--bunker=9",
+       "--week=13",
+       "--tower=2",
+       "--herolv=21",
+       "--wall=3",
+       "--plevel=18",
+       "--passive=1"
+      ],
+      "win": true,
+      "kills": 1619,
+      "t": 600,
+      "deaths": 11,
+      "hp": 0.64,
+      "stars": 2,
+      "waves": 11
+     }
+    ]
+   },
+   "14": {
+    "plan": {
+     "bunker": 10,
+     "tower": 3,
+     "hero": 22,
+     "wall": 3,
+     "level": 19,
+     "total": 1350
+    },
+    "runs": [
+     {
+      "real": 138.9,
+      "args": [
+       "--bunker=10",
+       "--week=14",
+       "--tower=3",
+       "--herolv=22",
+       "--wall=3",
+       "--plevel=19",
+       "--passive=1"
+      ],
+      "win": true,
+      "kills": 1791,
+      "t": 1034,
+      "deaths": 9,
+      "hp": 0.5,
+      "stars": 1,
+      "waves": 12
+     },
+     {
+      "real": 127.8,
+      "args": [
+       "--bunker=10",
+       "--week=14",
+       "--tower=3",
+       "--herolv=22",
+       "--wall=3",
+       "--plevel=19",
+       "--passive=1"
+      ],
+      "win": true,
+      "kills": 1753,
+      "t": 977,
+      "deaths": 9,
+      "hp": 0.77,
+      "stars": 2,
+      "waves": 12
+     }
+    ]
+   },
+   "15": {
+    "plan": {
+     "bunker": 10,
+     "tower": 4,
+     "hero": 23,
+     "wall": 3,
+     "level": 20,
+     "total": 1460
+    },
+    "runs": [
+     {
+      "real": 100.2,
+      "args": [
+       "--bunker=10",
+       "--week=15",
+       "--tower=4",
+       "--herolv=23",
+       "--wall=3",
+       "--plevel=20",
+       "--passive=1"
+      ],
+      "win": true,
+      "kills": 1907,
+      "t": 759,
+      "deaths": 13,
+      "hp": 0.86,
+      "stars": 2,
+      "waves": 12
+     },
+     {
+      "real": 91.3,
+      "args": [
+       "--bunker=10",
+       "--week=15",
+       "--tower=4",
+       "--herolv=23",
+       "--wall=3",
+       "--plevel=20",
+       "--passive=1"
+      ],
+      "win": true,
+      "kills": 1935,
+      "t": 687,
+      "deaths": 13,
+      "hp": 0.71,
+      "stars": 2,
+      "waves": 12
+     }
+    ]
+   },
+   "16": {
+    "plan": {
+     "bunker": 10,
+     "tower": 4,
+     "hero": 23,
+     "wall": 3,
+     "level": 20,
+     "total": 1580
+    },
+    "runs": [
+     {
+      "real": 112.7,
+      "args": [
+       "--bunker=10",
+       "--week=16",
+       "--tower=4",
+       "--herolv=23",
+       "--wall=3",
+       "--plevel=20",
+       "--passive=1"
+      ],
+      "win": true,
+      "kills": 2057,
+      "t": 861,
+      "deaths": 13,
+      "hp": 0.49,
+      "stars": 1,
+      "waves": 12
+     },
+     {
+      "real": 107.1,
+      "args": [
+       "--bunker=10",
+       "--week=16",
+       "--tower=4",
+       "--herolv=23",
+       "--wall=3",
+       "--plevel=20",
+       "--passive=1"
+      ],
+      "win": true,
+      "kills": 2030,
+      "t": 814,
+      "deaths": 13,
+      "hp": 0.62,
+      "stars": 2,
+      "waves": 12
+     }
+    ]
+   }
+  }
+ },
+ "gelegenheit": {
+  "title": "Gelegenheitsspieler (Simulation 15 min/Tag), Held bleibt am Bunker",
+  "weeks": {
+   "1": {
+    "plan": {
+     "bunker": 4,
+     "tower": 1,
+     "hero": 3,
+     "wall": 2,
+     "level": 4,
+     "total": 130
+    },
+    "runs": [
+     {
+      "real": 21.5,
+      "args": [
+       "--bunker=4",
+       "--week=1",
+       "--tower=1",
+       "--herolv=3",
+       "--wall=2",
+       "--plevel=4",
+       "--passive=1"
+      ],
+      "win": true,
+      "kills": 130,
+      "t": 124,
+      "deaths": 0,
+      "hp": 1.0,
+      "stars": 3,
+      "waves": 4
+     },
+     {
+      "real": 21.4,
+      "args": [
+       "--bunker=4",
+       "--week=1",
+       "--tower=1",
+       "--herolv=3",
+       "--wall=2",
+       "--plevel=4",
+       "--passive=1"
+      ],
+      "win": true,
+      "kills": 130,
+      "t": 125,
+      "deaths": 0,
+      "hp": 1.0,
+      "stars": 3,
+      "waves": 4
+     }
+    ]
+   },
+   "2": {
+    "plan": {
+     "bunker": 5,
+     "tower": 2,
+     "hero": 5,
+     "wall": 2,
+     "level": 6,
+     "total": 160
+    },
+    "runs": [
+     {
+      "real": 26.8,
+      "args": [
+       "--bunker=5",
+       "--week=2",
+       "--tower=2",
+       "--herolv=5",
+       "--wall=2",
+       "--plevel=6",
+       "--passive=1"
+      ],
+      "win": true,
+      "kills": 161,
+      "t": 171,
+      "deaths": 0,
+      "hp": 1.0,
+      "stars": 3,
+      "waves": 6
+     },
+     {
+      "real": 23.7,
+      "args": [
+       "--bunker=5",
+       "--week=2",
+       "--tower=2",
+       "--herolv=5",
+       "--wall=2",
+       "--plevel=6",
+       "--passive=1"
+      ],
+      "win": true,
+      "kills": 161,
+      "t": 144,
+      "deaths": 0,
+      "hp": 1.0,
+      "stars": 3,
+      "waves": 6
+     }
+    ]
+   },
+   "3": {
+    "plan": {
+     "bunker": 6,
+     "tower": 2,
+     "hero": 6,
+     "wall": 2,
+     "level": 7,
+     "total": 190
+    },
+    "runs": [
+     {
+      "real": 29.2,
+      "args": [
+       "--bunker=6",
+       "--week=3",
+       "--tower=2",
+       "--herolv=6",
+       "--wall=2",
+       "--plevel=7",
+       "--passive=1"
+      ],
+      "win": true,
+      "kills": 215,
+      "t": 185,
+      "deaths": 0,
+      "hp": 0.94,
+      "stars": 2,
+      "waves": 6
+     },
+     {
+      "real": 31.1,
+      "args": [
+       "--bunker=6",
+       "--week=3",
+       "--tower=2",
+       "--herolv=6",
+       "--wall=2",
+       "--plevel=7",
+       "--passive=1"
+      ],
+      "win": true,
+      "kills": 225,
+      "t": 204,
+      "deaths": 0,
+      "hp": 0.87,
+      "stars": 2,
+      "waves": 6
+     }
+    ]
+   },
+   "4": {
+    "plan": {
+     "bunker": 6,
+     "tower": 2,
+     "hero": 7,
+     "wall": 2,
+     "level": 7,
+     "total": 240
+    },
+    "runs": [
+     {
+      "real": 81.4,
+      "args": [
+       "--bunker=6",
+       "--week=4",
+       "--tower=2",
+       "--herolv=7",
+       "--wall=2",
+       "--plevel=7",
+       "--passive=1"
+      ],
+      "win": true,
+      "kills": 261,
+      "t": 603,
+      "deaths": 1,
+      "hp": 0.77,
+      "stars": 2,
+      "waves": 7
+     },
+     {
+      "real": 59.6,
+      "args": [
+       "--bunker=6",
+       "--week=4",
+       "--tower=2",
+       "--herolv=7",
+       "--wall=2",
+       "--plevel=7",
+       "--passive=1"
+      ],
+      "win": true,
+      "kills": 261,
+      "t": 429,
+      "deaths": 2,
+      "hp": 0.83,
+      "stars": 2,
+      "waves": 7
+     }
+    ]
+   },
+   "5": {
+    "plan": {
+     "bunker": 7,
+     "tower": 2,
+     "hero": 7,
+     "wall": 3,
+     "level": 8,
+     "total": 290
+    },
+    "runs": [
+     {
+      "real": 49.8,
+      "args": [
+       "--bunker=7",
+       "--week=5",
+       "--tower=2",
+       "--herolv=7",
+       "--wall=3",
+       "--plevel=8",
+       "--passive=1"
+      ],
+      "win": true,
+      "kills": 363,
+      "t": 352,
+      "deaths": 5,
+      "hp": 0.98,
+      "stars": 2,
+      "waves": 7
+     },
+     {
+      "real": 46.5,
+      "args": [
+       "--bunker=7",
+       "--week=5",
+       "--tower=2",
+       "--herolv=7",
+       "--wall=3",
+       "--plevel=8",
+       "--passive=1"
+      ],
+      "win": true,
+      "kills": 360,
+      "t": 326,
+      "deaths": 1,
+      "hp": 0.96,
+      "stars": 2,
+      "waves": 7
+     }
+    ]
+   },
+   "6": {
+    "plan": {
+     "bunker": 7,
+     "tower": 2,
+     "hero": 8,
+     "wall": 3,
+     "level": 9,
+     "total": 350
+    },
+    "runs": [
+     {
+      "real": 58.6,
+      "args": [
+       "--bunker=7",
+       "--week=6",
+       "--tower=2",
+       "--herolv=8",
+       "--wall=3",
+       "--plevel=9",
+       "--passive=1"
+      ],
+      "win": true,
+      "kills": 460,
+      "t": 420,
+      "deaths": 5,
+      "hp": 0.83,
+      "stars": 2,
+      "waves": 8
+     },
+     {
+      "real": 50.9,
+      "args": [
+       "--bunker=7",
+       "--week=6",
+       "--tower=2",
+       "--herolv=8",
+       "--wall=3",
+       "--plevel=9",
+       "--passive=1"
+      ],
+      "win": true,
+      "kills": 490,
+      "t": 362,
+      "deaths": 1,
+      "hp": 0.92,
+      "stars": 2,
+      "waves": 8
+     }
+    ]
+   },
+   "7": {
+    "plan": {
+     "bunker": 7,
+     "tower": 2,
+     "hero": 9,
+     "wall": 3,
+     "level": 9,
+     "total": 430
+    },
+    "runs": [
+     {
+      "real": 74.6,
+      "args": [
+       "--bunker=7",
+       "--week=7",
+       "--tower=2",
+       "--herolv=9",
+       "--wall=3",
+       "--plevel=9",
+       "--passive=1"
+      ],
+      "win": true,
+      "kills": 540,
+      "t": 542,
+      "deaths": 4,
+      "hp": 0.73,
+      "stars": 2,
+      "waves": 8
+     },
+     {
+      "real": 55.5,
+      "args": [
+       "--bunker=7",
+       "--week=7",
+       "--tower=2",
+       "--herolv=9",
+       "--wall=3",
+       "--plevel=9",
+       "--passive=1"
+      ],
+      "win": true,
+      "kills": 535,
+      "t": 395,
+      "deaths": 0,
+      "hp": 0.73,
+      "stars": 2,
+      "waves": 8
+     }
+    ]
+   },
+   "8": {
+    "plan": {
+     "bunker": 8,
+     "tower": 2,
+     "hero": 9,
+     "wall": 3,
+     "level": 10,
+     "total": 520
+    },
+    "runs": [
+     {
+      "real": 90.9,
+      "args": [
+       "--bunker=8",
+       "--week=8",
+       "--tower=2",
+       "--herolv=9",
+       "--wall=3",
+       "--plevel=10",
+       "--passive=1"
+      ],
+      "win": true,
+      "kills": 653,
+      "t": 681,
+      "deaths": 4,
+      "hp": 0.92,
+      "stars": 2,
+      "waves": 9
+     },
+     {
+      "real": 74.7,
+      "args": [
+       "--bunker=8",
+       "--week=8",
+       "--tower=2",
+       "--herolv=9",
+       "--wall=3",
+       "--plevel=10",
+       "--passive=1"
+      ],
+      "win": true,
+      "kills": 652,
+      "t": 551,
+      "deaths": 2,
+      "hp": 0.86,
+      "stars": 2,
+      "waves": 9
+     }
+    ]
+   },
+   "9": {
+    "plan": {
+     "bunker": 8,
+     "tower": 2,
+     "hero": 10,
+     "wall": 3,
+     "level": 10,
+     "total": 640
+    },
+    "runs": [
+     {
+      "real": 58.0,
+      "args": [
+       "--bunker=8",
+       "--week=9",
+       "--tower=2",
+       "--herolv=10",
+       "--wall=3",
+       "--plevel=10",
+       "--passive=1"
+      ],
+      "win": true,
+      "kills": 862,
+      "t": 417,
+      "deaths": 4,
+      "hp": 0.83,
+      "stars": 2,
+      "waves": 9
+     },
+     {
+      "real": 62.3,
+      "args": [
+       "--bunker=8",
+       "--week=9",
+       "--tower=2",
+       "--herolv=10",
+       "--wall=3",
+       "--plevel=10",
+       "--passive=1"
+      ],
+      "win": true,
+      "kills": 875,
+      "t": 454,
+      "deaths": 8,
+      "hp": 0.76,
+      "stars": 2,
+      "waves": 9
+     }
+    ]
+   },
+   "10": {
+    "plan": {
+     "bunker": 8,
+     "tower": 2,
+     "hero": 10,
+     "wall": 3,
+     "level": 11,
+     "total": 780
+    },
+    "runs": [
+     {
+      "real": 80.6,
+      "args": [
+       "--bunker=8",
+       "--week=10",
+       "--tower=2",
+       "--herolv=10",
+       "--wall=3",
+       "--plevel=11",
+       "--passive=1"
+      ],
+      "win": true,
+      "kills": 994,
+      "t": 602,
+      "deaths": 7,
+      "hp": 0.68,
+      "stars": 2,
+      "waves": 10
+     },
+     {
+      "real": 78.8,
+      "args": [
+       "--bunker=8",
+       "--week=10",
+       "--tower=2",
+       "--herolv=10",
+       "--wall=3",
+       "--plevel=11",
+       "--passive=1"
+      ],
+      "win": true,
+      "kills": 1018,
+      "t": 585,
+      "deaths": 6,
+      "hp": 0.68,
+      "stars": 2,
+      "waves": 10
+     }
+    ]
+   },
+   "11": {
+    "plan": {
+     "bunker": 8,
+     "tower": 2,
+     "hero": 11,
+     "wall": 3,
+     "level": 11,
+     "total": 950
+    },
+    "runs": [
+     {
+      "real": 89.6,
+      "args": [
+       "--bunker=8",
+       "--week=11",
+       "--tower=2",
+       "--herolv=11",
+       "--wall=3",
+       "--plevel=11",
+       "--passive=1"
+      ],
+      "win": true,
+      "kills": 1198,
+      "t": 674,
+      "deaths": 9,
+      "hp": 0.88,
+      "stars": 2,
+      "waves": 10
+     },
+     {
+      "real": 78.5,
+      "args": [
+       "--bunker=8",
+       "--week=11",
+       "--tower=2",
+       "--herolv=11",
+       "--wall=3",
+       "--plevel=11",
+       "--passive=1"
+      ],
+      "win": true,
+      "kills": 1207,
+      "t": 581,
+      "deaths": 7,
+      "hp": 0.9,
+      "stars": 2,
+      "waves": 10
+     }
+    ]
+   },
+   "12": {
+    "plan": {
+     "bunker": 8,
+     "tower": 2,
+     "hero": 11,
+     "wall": 3,
+     "level": 12,
+     "total": 1160
+    },
+    "runs": [
+     {
+      "real": 81.8,
+      "args": [
+       "--bunker=8",
+       "--week=12",
+       "--tower=2",
+       "--herolv=11",
+       "--wall=3",
+       "--plevel=12",
+       "--passive=1"
+      ],
+      "win": true,
+      "kills": 1558,
+      "t": 611,
+      "deaths": 13,
+      "hp": 0.69,
+      "stars": 2,
+      "waves": 11
+     },
+     {
+      "real": 101.1,
+      "args": [
+       "--bunker=8",
+       "--week=12",
+       "--tower=2",
+       "--herolv=11",
+       "--wall=3",
+       "--plevel=12",
+       "--passive=1"
+      ],
+      "win": true,
+      "kills": 1603,
+      "t": 764,
+      "deaths": 13,
+      "hp": 0.14,
+      "stars": 1,
+      "waves": 11
+     }
+    ]
+   },
+   "13": {
+    "plan": {
+     "bunker": 8,
+     "tower": 2,
+     "hero": 12,
+     "wall": 3,
+     "level": 12,
+     "total": 1250
+    },
+    "runs": [
+     {
+      "real": 99.1,
+      "args": [
+       "--bunker=8",
+       "--week=13",
+       "--tower=2",
+       "--herolv=12",
+       "--wall=3",
+       "--plevel=12",
+       "--passive=1"
+      ],
+      "win": true,
+      "kills": 1649,
+      "t": 747,
+      "deaths": 13,
+      "hp": 0.08,
+      "stars": 1,
+      "waves": 11
+     },
+     {
+      "real": 99.8,
+      "args": [
+       "--bunker=8",
+       "--week=13",
+       "--tower=2",
+       "--herolv=12",
+       "--wall=3",
+       "--plevel=12",
+       "--passive=1"
+      ],
+      "win": false,
+      "kills": 1620,
+      "t": 752,
+      "deaths": 13,
+      "hp": 0.0,
+      "stars": 0,
+      "waves": 10
+     }
+    ]
+   },
+   "14": {
+    "plan": {
+     "bunker": 9,
+     "tower": 2,
+     "hero": 12,
+     "wall": 3,
+     "level": 13,
+     "total": 1350
+    },
+    "runs": [
+     {
+      "real": 93.8,
+      "args": [
+       "--bunker=9",
+       "--week=14",
+       "--tower=2",
+       "--herolv=12",
+       "--wall=3",
+       "--plevel=13",
+       "--passive=1"
+      ],
+      "win": true,
+      "kills": 1741,
+      "t": 703,
+      "deaths": 17,
+      "hp": 0.64,
+      "stars": 2,
+      "waves": 12
+     },
+     {
+      "real": 100.9,
+      "args": [
+       "--bunker=9",
+       "--week=14",
+       "--tower=2",
+       "--herolv=12",
+       "--wall=3",
+       "--plevel=13",
+       "--passive=1"
+      ],
+      "win": true,
+      "kills": 1744,
+      "t": 754,
+      "deaths": 13,
+      "hp": 0.52,
+      "stars": 2,
+      "waves": 12
+     }
+    ]
+   },
+   "15": {
+    "plan": {
+     "bunker": 9,
+     "tower": 2,
+     "hero": 13,
+     "wall": 3,
+     "level": 13,
+     "total": 1460
+    },
+    "runs": [
+     {
+      "real": 99.5,
+      "args": [
+       "--bunker=9",
+       "--week=15",
+       "--tower=2",
+       "--herolv=13",
+       "--wall=3",
+       "--plevel=13",
+       "--passive=1"
+      ],
+      "win": true,
+      "kills": 1909,
+      "t": 751,
+      "deaths": 16,
+      "hp": 0.13,
+      "stars": 1,
+      "waves": 12
+     },
+     {
+      "real": 97.5,
+      "args": [
+       "--bunker=9",
+       "--week=15",
+       "--tower=2",
+       "--herolv=13",
+       "--wall=3",
+       "--plevel=13",
+       "--passive=1"
+      ],
+      "win": false,
+      "kills": 1967,
+      "t": 736,
+      "deaths": 9,
+      "hp": 0.0,
+      "stars": 0,
+      "waves": 11
+     }
+    ]
+   },
+   "16": {
+    "plan": {
+     "bunker": 9,
+     "tower": 2,
+     "hero": 13,
+     "wall": 3,
+     "level": 13,
+     "total": 1580
+    },
+    "runs": [
+     {
+      "real": 99.5,
+      "args": [
+       "--bunker=9",
+       "--week=16",
+       "--tower=2",
+       "--herolv=13",
+       "--wall=3",
+       "--plevel=13",
+       "--passive=1"
+      ],
+      "win": false,
+      "kills": 1783,
+      "t": 753,
+      "deaths": 11,
+      "hp": 0.0,
+      "stars": 0,
+      "waves": 10
+     },
+     {
+      "real": 96.5,
+      "args": [
+       "--bunker=9",
+       "--week=16",
+       "--tower=2",
+       "--herolv=13",
+       "--wall=3",
+       "--plevel=13",
+       "--passive=1"
+      ],
+      "win": false,
+      "kills": 2094,
+      "t": 733,
+      "deaths": 18,
+      "hp": 0.0,
+      "stars": 0,
+      "waves": 11
+     }
+    ]
+   }
+  }
+ },
+ "schwer": {
+  "title": "Normaler Ausbau, Schwierigkeit „Schwer“ (mehr und zähere Gegner), Held bleibt am Bunker",
+  "weeks": {
+   "2": {
+    "plan": {
+     "bunker": 6,
+     "tower": 2,
+     "hero": 8,
+     "wall": 2,
+     "level": 8,
+     "total": 160
+    },
+    "runs": [
+     {
+      "real": 25.7,
+      "args": [
+       "--bunker=6",
+       "--week=2",
+       "--tower=2",
+       "--herolv=8",
+       "--wall=2",
+       "--plevel=8",
+       "--passive=1",
+       "--fdiff=1"
+      ],
+      "win": true,
+      "kills": 208,
+      "t": 167,
+      "deaths": 0,
+      "hp": 1.0,
+      "stars": 3,
+      "waves": 6
+     },
+     {
+      "real": 28.2,
+      "args": [
+       "--bunker=6",
+       "--week=2",
+       "--tower=2",
+       "--herolv=8",
+       "--wall=2",
+       "--plevel=8",
+       "--passive=1",
+       "--fdiff=1"
+      ],
+      "win": true,
+      "kills": 208,
+      "t": 181,
+      "deaths": 0,
+      "hp": 1.0,
+      "stars": 3,
+      "waves": 6
+     }
+    ]
+   },
+   "4": {
+    "plan": {
+     "bunker": 7,
+     "tower": 2,
+     "hero": 12,
+     "wall": 3,
+     "level": 11,
+     "total": 240
+    },
+    "runs": [
+     {
+      "real": 47.6,
+      "args": [
+       "--bunker=7",
+       "--week=4",
+       "--tower=2",
+       "--herolv=12",
+       "--wall=3",
+       "--plevel=11",
+       "--passive=1",
+       "--fdiff=1"
+      ],
+      "win": true,
+      "kills": 336,
+      "t": 338,
+      "deaths": 3,
+      "hp": 0.93,
+      "stars": 2,
+      "waves": 7
+     },
+     {
+      "real": 43.8,
+      "args": [
+       "--bunker=7",
+       "--week=4",
+       "--tower=2",
+       "--herolv=12",
+       "--wall=3",
+       "--plevel=11",
+       "--passive=1",
+       "--fdiff=1"
+      ],
+      "win": true,
+      "kills": 336,
+      "t": 309,
+      "deaths": 5,
+      "hp": 0.97,
+      "stars": 2,
+      "waves": 7
+     }
+    ]
+   },
+   "6": {
+    "plan": {
+     "bunker": 8,
+     "tower": 2,
+     "hero": 14,
+     "wall": 3,
+     "level": 13,
+     "total": 350
+    },
+    "runs": [
+     {
+      "real": 54.9,
+      "args": [
+       "--bunker=8",
+       "--week=6",
+       "--tower=2",
+       "--herolv=14",
+       "--wall=3",
+       "--plevel=13",
+       "--passive=1",
+       "--fdiff=1"
+      ],
+      "win": true,
+      "kills": 612,
+      "t": 397,
+      "deaths": 5,
+      "hp": 0.85,
+      "stars": 2,
+      "waves": 8
+     },
+     {
+      "real": 58.9,
+      "args": [
+       "--bunker=8",
+       "--week=6",
+       "--tower=2",
+       "--herolv=14",
+       "--wall=3",
+       "--plevel=13",
+       "--passive=1",
+       "--fdiff=1"
+      ],
+      "win": true,
+      "kills": 598,
+      "t": 431,
+      "deaths": 2,
+      "hp": 0.94,
+      "stars": 2,
+      "waves": 8
+     }
+    ]
+   },
+   "8": {
+    "plan": {
+     "bunker": 8,
+     "tower": 2,
+     "hero": 16,
+     "wall": 3,
+     "level": 14,
+     "total": 520
+    },
+    "runs": [
+     {
+      "real": 86.8,
+      "args": [
+       "--bunker=8",
+       "--week=8",
+       "--tower=2",
+       "--herolv=16",
+       "--wall=3",
+       "--plevel=14",
+       "--passive=1",
+       "--fdiff=1"
+      ],
+      "win": true,
+      "kills": 892,
+      "t": 648,
+      "deaths": 3,
+      "hp": 0.78,
+      "stars": 2,
+      "waves": 9
+     },
+     {
+      "real": 116.9,
+      "args": [
+       "--bunker=8",
+       "--week=8",
+       "--tower=2",
+       "--herolv=16",
+       "--wall=3",
+       "--plevel=14",
+       "--passive=1",
+       "--fdiff=1"
+      ],
+      "win": true,
+      "kills": 865,
+      "t": 892,
+      "deaths": 3,
+      "hp": 0.76,
+      "stars": 2,
+      "waves": 9
+     }
+    ]
+   },
+   "10": {
+    "plan": {
+     "bunker": 9,
+     "tower": 2,
+     "hero": 18,
+     "wall": 3,
+     "level": 16,
+     "total": 780
+    },
+    "runs": [
+     {
+      "real": 88.9,
+      "args": [
+       "--bunker=9",
+       "--week=10",
+       "--tower=2",
+       "--herolv=18",
+       "--wall=3",
+       "--plevel=16",
+       "--passive=1",
+       "--fdiff=1"
+      ],
+      "win": true,
+      "kills": 1286,
+      "t": 662,
+      "deaths": 5,
+      "hp": 0.64,
+      "stars": 2,
+      "waves": 10
+     },
+     {
+      "real": 79.1,
+      "args": [
+       "--bunker=9",
+       "--week=10",
+       "--tower=2",
+       "--herolv=18",
+       "--wall=3",
+       "--plevel=16",
+       "--passive=1",
+       "--fdiff=1"
+      ],
+      "win": true,
+      "kills": 1310,
+      "t": 588,
+      "deaths": 6,
+      "hp": 0.6,
+      "stars": 2,
+      "waves": 10
+     }
+    ]
+   },
+   "12": {
+    "plan": {
+     "bunker": 9,
+     "tower": 2,
+     "hero": 20,
+     "wall": 3,
+     "level": 17,
+     "total": 1160
+    },
+    "runs": [
+     {
+      "real": 85.9,
+      "args": [
+       "--bunker=9",
+       "--week=12",
+       "--tower=2",
+       "--herolv=20",
+       "--wall=3",
+       "--plevel=17",
+       "--passive=1",
+       "--fdiff=1"
+      ],
+      "win": false,
+      "kills": 2060,
+      "t": 642,
+      "deaths": 12,
+      "hp": 0.0,
+      "stars": 0,
+      "waves": 10
+     },
+     {
+      "real": 98.4,
+      "args": [
+       "--bunker=9",
+       "--week=12",
+       "--tower=2",
+       "--herolv=20",
+       "--wall=3",
+       "--plevel=17",
+       "--passive=1",
+       "--fdiff=1"
+      ],
+      "win": true,
+      "kills": 2030,
+      "t": 743,
+      "deaths": 13,
+      "hp": 0.47,
+      "stars": 1,
+      "waves": 11
+     }
+    ]
+   },
+   "14": {
+    "plan": {
+     "bunker": 10,
+     "tower": 3,
+     "hero": 22,
+     "wall": 3,
+     "level": 19,
+     "total": 1350
+    },
+    "runs": [
+     {
+      "real": 111.8,
+      "args": [
+       "--bunker=10",
+       "--week=14",
+       "--tower=3",
+       "--herolv=22",
+       "--wall=3",
+       "--plevel=19",
+       "--passive=1",
+       "--fdiff=1"
+      ],
+      "win": true,
+      "kills": 2289,
+      "t": 847,
+      "deaths": 12,
+      "hp": 0.41,
+      "stars": 1,
+      "waves": 12
+     },
+     {
+      "real": 133.0,
+      "args": [
+       "--bunker=10",
+       "--week=14",
+       "--tower=3",
+       "--herolv=22",
+       "--wall=3",
+       "--plevel=19",
+       "--passive=1",
+       "--fdiff=1"
+      ],
+      "win": true,
+      "kills": 2300,
+      "t": 1013,
+      "deaths": 12,
+      "hp": 0.47,
+      "stars": 1,
+      "waves": 12
+     }
+    ]
+   },
+   "16": {
+    "plan": {
+     "bunker": 10,
+     "tower": 4,
+     "hero": 23,
+     "wall": 3,
+     "level": 20,
+     "total": 1580
+    },
+    "runs": [
+     {
+      "real": 113.6,
+      "args": [
+       "--bunker=10",
+       "--week=16",
+       "--tower=4",
+       "--herolv=23",
+       "--wall=3",
+       "--plevel=20",
+       "--passive=1",
+       "--fdiff=1"
+      ],
+      "win": true,
+      "kills": 2664,
+      "t": 865,
+      "deaths": 16,
+      "hp": 0.04,
+      "stars": 1,
+      "waves": 12
+     },
+     {
+      "real": 100.7,
+      "args": [
+       "--bunker=10",
+       "--week=16",
+       "--tower=4",
+       "--herolv=23",
+       "--wall=3",
+       "--plevel=20",
+       "--passive=1",
+       "--fdiff=1"
+      ],
+      "win": true,
+      "kills": 2675,
+      "t": 761,
+      "deaths": 19,
+      "hp": 0.07,
+      "stars": 1,
+      "waves": 12
+     }
+    ]
+   }
+  }
+ }
+}

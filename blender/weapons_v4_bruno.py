@@ -65,17 +65,21 @@ def b_drill():
 
 
 def b_brick():
+    """Paket H: deutlicher – große Astgabel mit rotem Gummi und ein dicker roter Ziegel mit drei Löchern im Leder."""
     p = Part()
-    Y(p, 0.045, 0.24, -0.1, 0, WOOD, sides=10)                                     # Griff
-    sweep(p, [(0, -0.1, 0), (-0.06, -0.2, 0.02), (-0.13, -0.32, 0.06)], 0.035, WOOD, sides=8)   # Gabel
-    sweep(p, [(0, -0.1, 0), (0.06, -0.2, 0.02), (0.13, -0.32, 0.06)], 0.035, WOOD, sides=8)
-    for sx in (-1, 1):
-        p.ball(0.04, (sx * 0.13, -0.32, 0.06), ORG, subdiv=1)
-    sweep(p, [(-0.13, -0.32, 0.06), (-0.08, -0.42, 0.06), (0.08, -0.42, 0.06), (0.13, -0.32, 0.06)], 0.014, "C93F3F", sides=5)   # Gummi
-    p.box((0.2, 0.1, 0.09), (0, -0.46, 0.08), "C2502E", bevel=0.015, segs=1)      # Ziegel
-    for x in (-0.05, 0.05):
-        p.box((0.06, 0.102, 0.03), (x, -0.46, 0.13), "E07A52", bevel=0.005, segs=1)
-    done("b_brick", p, (0, -0.5, 0.08), tilt=24, pitch=30)
+    Y(p, 0.05, 0.26, -0.08, 0, WOOD, sides=10)                                     # Griff
+    for y in (0.18, 0.08):
+        ring(p, 0.054, 0.014, y, 0, ORG, seg=10, tseg=4)
+    for sx in (-1, 1):                                                              # breite Gabel
+        sweep(p, [(0, -0.08, 0), (sx * 0.08, -0.16, 0.04), (sx * 0.16, -0.24, 0.12)], 0.04, WOOD, sides=8)
+        p.ball(0.045, (sx * 0.16, -0.24, 0.12), ORG, subdiv=1)
+        sweep(p, [(sx * 0.16, -0.24, 0.12), (sx * 0.12, -0.36, 0.13), (sx * 0.1, -0.42, 0.13)], 0.016, "D93A3A", sides=5)   # Gummi
+    p.box((0.24, 0.05, 0.16), (0, -0.44, 0.13), "6B4A2E", bevel=0.02, segs=1)      # Lederschale
+    p.box((0.4, 0.2, 0.17), (0, -0.52, 0.22), "C2402A", bevel=0.014, segs=1)      # Ziegel (groß, flach liegend)
+    p.box((0.404, 0.204, 0.02), (0, -0.52, 0.2), "E8C8A0", segs=1)                 # Mörtelfuge
+    for x in (-0.12, 0.0, 0.12):                                                    # drei Löcher oben
+        p.cyl(0.035, 0.02, (x, -0.52, 0.306), "5A1A12", sides=10)
+    done("b_brick", p, (0, -0.62, 0.22), tilt=8, pitch=48, yaw=-35)
 
 
 def b_wrecker():

@@ -13,9 +13,12 @@ extends RefCounted
 ## knockback, double_freeze, strafe, shockwave, laugh.
 ## Paket Z (Vulkaninsel): lava_bath (heilt nahe fließender Lava), harden (Kruste verhärtet nach Treffern), Miniboss-Fähigkeit
 ## „lava“ und Boss-Sonderangriff „eruption“ (Lavabomben mit roten Bodenmarkern).
+## Paket Z2 (Stadtruinen, Maschinen): signal (Ampelwächter), scoop (Bagger-Golem), Miniboss-Fähigkeit „abriss“ und Boss-Sonderangriff
+## „spannung“ – Regeln in src/maschinen_ai.gd.
 
 const D = preload("res://src/data.gd")
 const MK = preload("res://src/mk.gd")
+const MaschAI = preload("res://src/maschinen_ai.gd")
 
 const F_CHARGE := 1 << 0
 const F_POUNCE := 1 << 1
@@ -67,6 +70,9 @@ const F_MINI := 1 << 45
 # Paket Z: Magma-Wesen
 const F_LAVABATH := 1 << 46
 const F_HARDEN := 1 << 47
+# Paket Z2: Maschinen
+const F_SIGNAL := 1 << 48
+const F_SCOOP := 1 << 49
 
 const NAMES := {"charge": F_CHARGE, "pounce": F_POUNCE, "pack": F_PACK, "burrow": F_BURROW, "ranged_arc": F_ARC, "ranged_line": F_LINE,
 	"front_armor": F_FRONT, "revive": F_REVIVE, "split": F_SPLIT, "steal": F_STEAL, "pull": F_PULL, "freeze_tower": F_FREEZE_T,
@@ -76,11 +82,11 @@ const NAMES := {"charge": F_CHARGE, "pounce": F_POUNCE, "pack": F_PACK, "burrow"
 	"chill": F_CHILL, "howl": F_HOWL, "ice_slide": F_ICESLIDE, "knockback": F_KNOCKBACK, "double_freeze": F_DFREEZE, "strafe": F_STRAFE,
 	"shockwave": F_SHOCKWAVE, "laugh": F_LAUGH,
 	"healer": F_HEALER, "shield_front": F_SHIELD, "tunnel": F_TUNNEL, "jammer": F_JAMMER, "thief": F_THIEF, "brood": F_BROOD, "miniboss": F_MINI,
-	"lava_bath": F_LAVABATH, "harden": F_HARDEN}
+	"lava_bath": F_LAVABATH, "harden": F_HARDEN, "signal": F_SIGNAL, "scoop": F_SCOOP}
 
 const PRE_MASK := F_CHARGE | F_POUNCE | F_PACK | F_BURROW | F_STEAL | F_PULL | F_FREEZE_T | F_STUN_T | F_AURA | F_PORTAL | F_DIVE | F_ROLL \
 	| F_TRAIL | F_FLEE | F_REGEN | F_BLINK | F_SHELL | F_TOWERHUNT | F_LEAP | F_LATCH | F_HOWL | F_ICESLIDE | F_STRAFE \
-	| F_HEALER | F_TUNNEL | F_JAMMER | F_THIEF | F_BROOD | F_MINI | F_LAVABATH | F_HARDEN
+	| F_HEALER | F_TUNNEL | F_JAMMER | F_THIEF | F_BROOD | F_MINI | F_LAVABATH | F_HARDEN | F_SIGNAL | F_SCOOP
 const START_MASK := F_ROLL | F_REGEN | F_CHARGE | F_POUNCE | F_BURROW | F_PULL | F_DIVE | F_SHELL | F_HOWL | F_BLINK
 const TICK_MASK := F_AURA | F_PORTAL | F_TRAIL | F_LEAP | F_ICESLIDE
 const GOAL_MASK := F_FLEE | F_PACK | F_TOWERHUNT | F_STEAL | F_FREEZE_T | F_STUN_T
@@ -90,7 +96,7 @@ const HIT_MASK := F_SHELL | F_LATCH | F_HARDEN
 const DEATH_MASK := F_SPLIT | F_STEAL | F_CLOUD | F_LATCH | F_THIEF
 const G2_MASK := F_HEALER | F_JAMMER | F_THIEF | F_BROOD | F_MINI
 ## Bausteine, die nur Laufziele und Zeitgeber pflegen: die Horde ruft pre() für sie nur jedes vierte Bild (solange kein Zustand läuft)
-const LIGHT_MASK := F_TOWERHUNT | F_HEALER | F_JAMMER | F_THIEF | F_BROOD | F_MINI | F_LAVABATH
+const LIGHT_MASK := F_TOWERHUNT | F_HEALER | F_JAMMER | F_THIEF | F_BROOD | F_MINI | F_LAVABATH | F_SIGNAL | F_SCOOP
 
 # Zustände (E.ai_s)
 const S_NONE := 0
@@ -117,6 +123,8 @@ const S_JAM := 20               # Turmstörer zielt auf einen Turm
 const S_LOOT := 21              # Dieb flieht mit der Beute
 const S_SKILL := 22             # Miniboss holt zu seiner Fähigkeit aus
 const S_HARD := 23              # Paket Z: Obsidian-Kruste verhärtet
+const S_SCOOP := 30             # Paket Z2: Bagger-Golem schaufelt (maschinen_ai.gd)
+const S_SIGNAL := 31            # Paket Z2: Ampelwächter schaltet um
 
 const HAZ_COL := {"spore": Color(0.75, 0.6, 0.9, 0.38), "poison": Color(0.5, 0.95, 0.2, 0.4), "fire": Color(1.0, 0.4, 0.1, 0.42),
 	"acid": Color(0.75, 1.0, 0.2, 0.42), "ice": Color(0.7, 0.9, 1.0, 0.45)}
@@ -314,6 +322,8 @@ func pre(e, def: Dictionary, fl: int, dt: float, pp: Vector2, p_ok: bool, d2p: f
 			if e.ai_t <= 0.0:
 				e.ai_s = S_NONE
 			return true
+		S_SCOOP, S_SIGNAL:
+			return MaschAI.run(self, e, def, dt, pp, p_ok)      # Paket Z2: schaufelt / schaltet um
 		S_HARD:
 			# verhärtet: steht still und glüht, bis die Zeit um ist
 			e.v = Vector2.ZERO
@@ -410,6 +420,10 @@ func pre(e, def: Dictionary, fl: int, dt: float, pp: Vector2, p_ok: bool, d2p: f
 	# ---- Magma-Wesen (Paket Z): nahe der Lava heilen und schneller werden
 	if fl & F_LAVABATH != 0:
 		_lava_bath(e, def, dt)
+	# ---- Maschinen (Paket Z2): Ampelwächter schaltet um, Bagger-Golem schaufelt
+	if fl & (F_SIGNAL | F_SCOOP) != 0:
+		if MaschAI.start(self, e, def, fl, dt, pp, p_ok, d2p):
+			return true
 	# ---- neue Rollen (Paket G2)
 	if fl & G2_MASK != 0:
 		if _g2_pre(e, def, fl, dt, pp, p_ok, d2p):
@@ -1092,6 +1106,7 @@ func _proj_col(def: Dictionary) -> Color:
 		"mutanten": return Color(0.7, 1.0, 0.2)
 		"eis": return Color(0.8, 0.95, 1.0)
 		"daemonen": return Color(1.0, 0.45, 0.1)
+		"maschinen": return Color(1.0, 0.3, 0.25)       # Paket Z2: rote Lichtstrahlen
 	return Color(0.7, 0.9, 0.2)
 
 
@@ -1426,6 +1441,8 @@ func boss_special(e, def: Dictionary, kind: String, pp: Vector2, p_ok: bool) -> 
 					if G.player.alive and G.player.pos2().distance_to(q6) < 2.4:
 						G.player.hurt(dmg6, null))
 			h.bossctl.expose_now(e)
+		"spannung":
+			MaschAI.boss_spannung(self, e, def, tg)          # Paket Z2 (Bürgermeister Bolzen): Stromstöße in Linien
 		"rain":
 			# Schleim-Leviathan: Schleimregen – viele kleine Einschläge rund um den Helden, Giftpfützen
 			e.sp_t = 6.5
@@ -1888,6 +1905,8 @@ func _mini_effect(kind: String, at: Vector2, r: float, dmg: float, dp: float, dm
 			Sfx.play_at("fire_whoosh", c3, -4.0)
 			if in_r:
 				pl.hurt(dmg * dp * 0.8, self_e)
+		"abriss":
+			MaschAI.mini_abriss(at, r, dmg, dp, dm, self_e)      # Paket Z2 (Abrisskran): Abrissbirne
 		"lava":
 			# Paket Z (Glutbrecher): Stampfer – an der roten Zone quillt Lava aus dem Boden (brennt 5 s)
 			G.cam.shake(0.3)

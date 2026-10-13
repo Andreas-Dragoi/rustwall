@@ -290,7 +290,8 @@ func _boards(c: VBoxContainer) -> void:
 	# die eigene Zeile soll gleich zu sehen sein
 	if me_card:
 		sc.ready.connect(func():
-			await sc.get_tree().process_frame
-			await sc.get_tree().process_frame
+			var tree := sc.get_tree()
+			await tree.process_frame
+			await tree.process_frame
 			if is_instance_valid(sc) and is_instance_valid(me_card):
 				sc.ensure_control_visible(me_card))

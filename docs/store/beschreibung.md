@@ -23,7 +23,7 @@ Sägewerk, Steinbruch, Schrottpresse, Raffinerie: Sammle Rohstoffe, verbessere G
 Einmal pro Woche rollt die große Flut heran: Flieger, Brecher, Bosse. Zehn Turmarten – vom Maschinengewehr bis zum Tesla-Turm – und dein Held mit Fähigkeiten entscheiden über Sieg oder Niederlage.
 
 **Erkunde die Welt**
-Acht Gebiete vom Grüntal bis zur Vulkaninsel: Fahre mit deinem Fahrzeug hinaus, sammle Beute, befreie Außenbasen und besiege mächtige Bosse.
+Neun Gebiete vom Grüntal bis zu den Stadtruinen: Fahre mit deinem Fahrzeug hinaus, sammle Beute, befreie Außenbasen und besiege mächtige Bosse.
 
 **Helden, Waffen und Begleiter**
 Sechs Helden mit je 15 Waffen, Talenten und Ausrüstung. Zwölf Begleiter tragen Beute, kämpfen mit oder finden Schätze.

@@ -1,0 +1,81 @@
+{
+ "key": "maschinen_baggergolem",
+ "kind": "vat",
+ "role": "tank",
+ "verts": 980,
+ "tris": 936,
+ "width": 980,
+ "rows": 70,
+ "rpf": 1,
+ "fps": 10,
+ "bounds_min": [
+  -2.369660479130607,
+  -2.8660000207424137,
+  -1.6175224803325998
+ ],
+ "bounds_size": [
+  4.556564953023885,
+  7.376344498459144,
+  4.039642470021837
+ ],
+ "height": 3.25,
+ "radius": 2.137906512277481,
+ "clips": {
+  "idle": {
+   "row": 0,
+   "n": 14,
+   "dur": 1.4,
+   "loop": true,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "walk": {
+   "row": 14,
+   "n": 10,
+   "dur": 1.0,
+   "loop": true,
+   "stride": 1.2,
+   "hit": -1.0
+  },
+  "attack": {
+   "row": 24,
+   "n": 9,
+   "dur": 0.8,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.4
+  },
+  "hit": {
+   "row": 33,
+   "n": 4,
+   "dur": 0.3,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "death": {
+   "row": 37,
+   "n": 12,
+   "dur": 1.1,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "spawn": {
+   "row": 49,
+   "n": 9,
+   "dur": 0.8,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "scoop": {
+   "row": 58,
+   "n": 12,
+   "dur": 1.1,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.7
+  }
+ }
+}

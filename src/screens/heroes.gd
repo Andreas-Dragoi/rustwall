@@ -14,7 +14,9 @@ const STAT_NAME := {"dmg": "Schaden", "hp": "Leben", "speed": "Tempo", "cdr": "F
 const STAT_ICON := {"dmg": "ui_sword", "hp": "ui_heart", "speed": "ui_boot", "cdr": "ui_clock", "reload": "ui_recycle", "range": "ui_target", "pickup": "ui_pack",
 	"tower": "ui_build", "heal": "ui_heart", "ult": "ui_bolt", "crit": "ui_star", "carry": "ui_crate", "burn": "ui_fire"}
 const GEAR_HINT := {"helmet": "gibt mehr Leben", "vest": "erhöht die Tragemenge", "charm": "Fähigkeiten laden schneller"}
-const SCENES := {"jona": "meadow", "mika": "sand", "bruno": "forest", "ada": "night", "yuki": "snow", "greta": "crater"}
+const SCENES := {"jona": "meadow", "mika": "sand", "bruno": "forest", "ada": "night", "yuki": "snow", "greta": "crater", "nele": "water"}
+const HS = preload("res://src/helden.gd")                  # Paket H: Sets und Module
+const DH = preload("res://src/data_helden.gd")
 const SKILL_KEYS := ["Q", "E", "R"]
 const SKILL_LEVELS := [1, 5, 10]
 
@@ -89,6 +91,9 @@ func _hero_list(sel: String) -> Control:
 		elif P.auto_ready(hk):
 			sub = "Zurück! Beute abholen"
 			sub_col = UI.GREEN
+		elif preload("res://src/story.gd").injured(hk):          # V6 Paket E
+			sub = "Verletzt – erholt sich"
+			sub_col = UI.RED
 		elif P.hero_busy(hk):
 			sub = "Unterwegs"
 			sub_col = UI.ORANGE
@@ -138,6 +143,8 @@ func _preview_col(key: String, unlocked: bool) -> Control:
 		UI.disable(btn)
 	elif P.auto_ready(key):
 		btn = UI.button("Beute abholen", S.set_st("tab", 6), "gold", 26, "ui_chest")
+	elif preload("res://src/story.gd").injured(key):            # V6 Paket E: verletzt – heilen im Reiter Auto-Expedition
+		btn = UI.button("Verletzt", S.set_st("tab", 6), "dark", 26, "ui_heart")
 	elif P.hero_busy(key):
 		btn = UI.button("Unterwegs", Callable(), "dark", 26, "ui_clock")
 		UI.disable(btn)
@@ -313,6 +320,15 @@ func _weapons(c: VBoxContainer, key: String) -> void:
 						UI.sfx("ui_equip", "", -6.0)), "green", 22)
 					right.custom_minimum_size = Vector2(170, 64)
 				box.add_child(_item_row(it, right))
+				if String(w.mode) != "turret":                    # Paket H: Module in den Sockeln
+					var mt := HS.modules_text(it)
+					var iid := int(it.id)
+					var ml := UI.label("Module %d/%d: %s" % [HS.modules_of(it).size(), HS.sockets(it).size(), mt if mt != "" else "keine"], 18, Color("BFE3FF"), false)
+					ml.clip_text = true
+					ml.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+					var sb := UI.button("Sockel", func(): S.open("workshop", iid), "dark", 18, "mod_scope")
+					sb.custom_minimum_size = Vector2(0, 48)
+					box.add_child(UI.hbox(8, [UI.spacer(false, Vector2(20, 0)), ml, sb]))
 			if all_it.size() > show.size():
 				box.add_child(UI.label("   + %d weitere Stücke (Werkstatt: verbessern, verschmelzen)" % (all_it.size() - show.size()), 18, UI.GREY, false))
 		else:
@@ -337,6 +353,7 @@ func _weapons(c: VBoxContainer, key: String) -> void:
 # ----------------------------------------------------------------- Ausrüstung
 func _gear(c: VBoxContainer, key: String) -> void:
 	var h: Dictionary = P.hero(key)
+	_sets_card(c, key)
 	for slot in ["helmet", "vest", "charm"]:
 		var g: Dictionary = D.GEAR[slot]
 		var box := UI.vbox(8)
@@ -489,14 +506,39 @@ func _auto(c: VBoxContainer, key: String) -> void:
 	var first := key.capitalize()
 	c.add_child(S.head("Auto-Expedition", 30))
 	c.add_child(UI.text("%s zieht allein los und bringt Rohstoffe mit. Das bringt weniger als eine selbst gespielte Expedition, läuft aber auch, wenn du nicht spielst. Solange ist %s nicht spielbar." % [first, first], 22))
+	var AutoRep = preload("res://src/auto_report.gd")          # V6 Paket E: Bericht mit Bild, Ereignissen, Verletzung
+	var ob := UI.button("Alle Auto-Expeditionen", func(): S.open("auto"), "dark", 20, "ui_report")
+	ob.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	c.add_child(ob)
 	var loot = S.st.get("auto_loot", null)
 	if loot is Dictionary and String(S.st.get("auto_hero", "")) == key:
-		var lb := UI.vbox(8, [UI.label("%s ist zurück und hat mitgebracht:" % first, 25, UI.GREEN)])
-		if loot.is_empty():
-			lb.add_child(S.hint("Nichts – die Lager waren voll."))
+		var rep: Dictionary = AutoRep.latest(key)
+		if not rep.is_empty():
+			c.add_child(AutoRep.card(rep, false))
 		else:
-			lb.add_child(UI.cost_row(loot, 26, false))
-		c.add_child(UI.card(lb, Color("1F4A2A"), 14, UI.GREEN))
+			var lb := UI.vbox(8, [UI.label("%s ist zurück und hat mitgebracht:" % first, 25, UI.GREEN)])
+			if loot.is_empty():
+				lb.add_child(S.hint("Nichts – die Lager waren voll."))
+			else:
+				lb.add_child(UI.cost_row(loot, 26, false))
+			c.add_child(UI.card(lb, Color("1F4A2A"), 14, UI.GREEN))
+	var Story = preload("res://src/story.gd")
+	if Story.injured(key) and not P.auto_ready(key):
+		var hc: int = Story.heal_cost(key)
+		var tl0 := UI.label("", 26, UI.RED)
+		S.live(tl0, func() -> String: return "Verletzt – erholt sich noch %s" % UI.time_text(Story.injury_left(key)))
+		S.every_second(tl0, func():
+			if not Story.injured(key):
+				S.refresh())
+		var hb0 := UI.button("Heilen" if hc <= 0 else "Heilen  %d" % hc, S.act(func():
+			if hc > 0 and not P.spend_gems(hc, "Held geheilt"):
+				UI.sfx("ui_error", "error", -6.0)
+				return
+			Story.heal(key)
+			UI.sfx("ui_buy", "upgrade", -4.0)), "gold" if hc > 0 else "green", 22, "res_gems" if hc > 0 else "ui_heart")
+		hb0.custom_minimum_size = Vector2(0, 66)
+		c.add_child(UI.card(UI.hbox(12, [UI.pic("ui_heart", 44.0, "", UI.RED), tl0, UI.spacer(true), hb0]), Color("4A1C24"), 14, UI.RED))
+		return
 	if P.auto_ready(key):
 		var area_n := String(D.AREAS[clampi(int(h.auto_area), 0, D.AREAS.size() - 1)].name)
 		var b := UI.button("Abholen", S.act(func():
@@ -559,6 +601,7 @@ func _auto(c: VBoxContainer, key: String) -> void:
 	res_row.add_child(UI.label("Kostet:", 22, UI.TEXT, false))
 	res_row.add_child(UI.cost_row({"fuel": P.fuel_cost(area)}, 24))
 	c.add_child(res_row)
+	c.add_child(AutoRep.danger_chip(key, area, hours))
 	var go := UI.button("Losschicken", S.act(func():
 		S.st.erase("auto_loot")
 		if P.start_auto(key, area, hours):
@@ -575,3 +618,46 @@ func _auto(c: VBoxContainer, key: String) -> void:
 	c.add_child(go)
 	if others == 0:
 		c.add_child(S.hint("Mindestens ein Held muss bei dir bleiben. Rette weitere Helden, um jemanden loszuschicken.", 20, UI.GOLD))
+
+
+# ----------------------------------------------------------------- Paket H: Ausrüstungs-Sets
+## Aktive Set-Boni des Helden und eine Übersicht aller Sets (Teile im Besitz, Boni ab 2 und 3 Teilen).
+func _sets_card(c: VBoxContainer, key: String) -> void:
+	var cnt := HS.set_counts(key)
+	var box := UI.vbox(8, [UI.hbox(10, [UI.pic("ui_star", 36.0, "", UI.GOLD), UI.label("Sets", 28, UI.GOLD), UI.spacer(true),
+		UI.label("2 Teile: Bonus · 3 Teile: großer Bonus", 18, UI.TEXT, false)])])
+	var lines := HS.set_lines(key)
+	if lines.is_empty():
+		box.add_child(S.hint("Noch kein Set-Bonus aktiv. Lege zwei oder drei Teile desselben Sets an.", 20))
+	for ln in lines:
+		var l := UI.label(String(ln), 20, UI.GREEN, false)
+		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		box.add_child(l)
+	var g := UI.grid(2, 8)
+	g.add_theme_constant_override("h_separation", 14)
+	for sk in DH.SET_ORDER:
+		var sd: Dictionary = DH.SETS[sk]
+		var own := 0
+		for slot in ["helmet", "vest", "charm"]:
+			for it in P.d.items:
+				if String(it.slot) == slot and String(it.get("key", "")) == sk:
+					own += 1
+					break
+		var on := int(cnt.get(sk, 0))
+		var pics := UI.hbox(2)
+		for slot in ["helmet", "vest", "charm"]:
+			var pc := UI.pic("gear_%s_%s" % [sk, slot], 40.0, "ui_helmet")
+			pics.add_child(pc)
+		var nm := UI.label("%s (%d/3)" % [String(sd.name), on], 21, sd.color.lightened(0.35) if on > 0 else UI.WHITE)
+		nm.clip_text = true
+		var t := UI.label("2: %s · 3: %s" % [String(sd.t2), String(sd.t3)], 16, UI.TEXT, false)
+		t.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		var hint := UI.label("passt zu %s · %d von 3 Teilen im Besitz" % [String(sd.hero).capitalize(), own], 15, UI.GREY, false)
+		var tv := UI.vbox(0, [nm, t, hint])
+		tv.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		var cc := UI.card(UI.hbox(8, [pics, tv]), Color("1F5A34") if on >= 2 else UI.NAVY_D, 8)
+		cc.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		g.add_child(cc)
+	box.add_child(g)
+	c.add_child(UI.card(box, UI.NAVY_L, 12, Color(UI.GOLD, 0.4)))
+

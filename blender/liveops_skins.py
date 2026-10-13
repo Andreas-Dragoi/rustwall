@@ -39,6 +39,11 @@ SKINS = {
                                         boots="C93F8E", belt="42C95E", goggles="FFD23E")),
     "greta_sternennacht": ("greta", dict(cloth=["2C3F80", "263670", "34498E"], cloth2=["FFD23E", "F2C230"], helm=["8C5DF2", "7A4FE0"],
                                          boots="1E2028", gloves="FFD23E", belt="FFD23E", goggles="FFD23E", hair="C9CED8")),
+    # Nele (Paket H)
+    "nele_korallenriff": ("nele", dict(cloth=["FF7A6A", "F06A5A", "FF8C7C"], cloth2=["2E86A0", "267890"], helm=["F4F6FA", "E2E6EE"], hair="F2C230",
+                                       boots="2E86A0", gloves="FF7A6A", belt="F4F6FA", goggles="FFB0E8")),
+    "nele_eismeer": ("nele", dict(cloth=["DCEAF6", "CFE2F2", "E8F2FC"], cloth2=["3C6CB8", "345EA4"], helm=["7FD4FF", "66C4F2"], hair="E6E6EA",
+                                  boots="3C6CB8", gloves="DCEAF6", belt="7FD4FF", goggles="CFF6FF")),
 }
 
 

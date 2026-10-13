@@ -28,6 +28,12 @@ extends Node3D
 ## signal footstep(left)       aus den Lauf-Clips (Ereignisse foot_l / foot_r)
 ## muzzle : Node3D             Mündung der Waffe                           extra : Node3D  Begleiter (Drohne, Falke)
 ## WEAPON_POSE / POSES         welche Waffe welche Halte-, Schuss- und Nachlade-Animation nutzt
+## Paket H (V6):
+## victory(sekunden)           Siegerpose des Helden (<held>_victory), danach zurück
+## set_face(name, sekunden)    Gesicht: normal | blink | joy | pain | strain (Helden; blinzeln von selbst)
+## set_gear(slot, modell, k)   Ausrüstung am Skelett (helmet -> head, vest -> chest, charm -> hips); "" nimmt sie ab
+## set_modules([[schlüssel, ort], ...])   Waffenmodule am Waffenmodell (muzzle, top, under, side, core, head)
+## Die Mündung sitzt am Leerobjekt "muzzle" des Waffenmodells; Laufstil je Held additiv (gait_<held>).
 ## ------------------------------------------------------------------
 
 const MK = preload("res://src/mk.gd")
@@ -35,6 +41,7 @@ const D = preload("res://src/data.gd")
 const Models = preload("res://src/models.gd")
 const AD = preload("res://src/anim_human_data.gd")
 const AimMod = preload("res://src/humanoid_aim.gd")
+const DH = preload("res://src/data_helden.gd")
 
 signal footstep(left: bool)
 
@@ -99,6 +106,9 @@ const P_FIREMIX_GO := &"parameters/up2/request"
 const P_FIREADD := &"parameters/fireadd/transition_request"
 const P_FIREADD_GO := &"parameters/body2/request"
 const P_SPRAY := &"parameters/spray/add_amount"
+const P_GAIT := &"parameters/gait/transition_request"
+const P_GAIT_SEEK := &"parameters/gait_seek/seek_request"
+const P_GAIT_W := &"parameters/gait_add/add_amount"
 const P_ACT: Array[StringName] = [&"parameters/act0/transition_request", &"parameters/act1/transition_request", &"parameters/act2/transition_request"]
 const P_ACT_TS: Array[StringName] = [&"parameters/act0_ts/scale", &"parameters/act1_ts/scale", &"parameters/act2_ts/scale"]
 const P_ACT_W: Array[StringName] = [&"parameters/full0/blend_amount", &"parameters/full1/blend_amount", &"parameters/full2/blend_amount"]
@@ -176,6 +186,18 @@ var _prev_speed := 0.0
 var _tilt := Vector2.ZERO
 var _k := 1.0                        # Größe der Figur gegenüber dem Spielmaßstab (D.CHAR_SCALE)
 var _rng := RandomNumberGenerator.new()
+# Paket H: Gesichter, Ausrüstung, Module, Laufstil
+var face := "normal"
+var _faces := {}                     # name -> MeshInstance3D (nur Helden)
+var _face_t := 0.0                   # Restzeit eines gesetzten Gesichts
+var _face_set := ""
+var _blink_t := 3.0
+var _hat: MeshInstance3D
+var _gear := {}                      # slot -> Node3D (BoneAttachment3D mit Modell)
+var _mods: Array = []
+var _weapon_node: Node3D
+var _has_gait := false
+var _gait_w := 0.0
 
 
 ## look: {"kind": Heldenschlüssel oder "settler"}; weitere Felder (helm, suit, tier) werden nicht mehr gebraucht.
@@ -198,6 +220,13 @@ func build(look: Dictionary) -> void:
 		if c is MeshInstance3D:
 			c.material_override = MK.mat_lin()
 			c.extra_cull_margin = 0.6
+			var cn := String(c.name)
+			if cn.begins_with("face_"):              # Paket H: austauschbare Gesichter, sichtbar ist immer genau eines
+				_faces[cn.substr(5)] = c
+				c.visible = cn == "face_normal"
+				c.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+			elif cn == "hat":
+				_hat = c
 	var ex := Models._find_mesh(_model, "extra")
 	if ex != null:
 		extra = Node3D.new()
@@ -225,7 +254,12 @@ func build(look: Dictionary) -> void:
 	add_child(tree)
 	tree.root_node = NodePath("../P/M")
 	tree.active = true
+	_has_gait = AD.CLIPS.has("gait_" + kind)
+	if _has_gait:
+		tree.set(P_GAIT, "gait_" + kind)
+	tree.set(P_GAIT_W, 0.0)
 	_rng.randomize()
+	_blink_t = _rng.randf_range(DH.BLINK_EVERY[0], DH.BLINK_EVERY[1])
 	_idle_wait = _rng.randf_range(6.0, 14.0)
 	_half = kind == "settler"
 	_odd = _rng.randf() < 0.5
@@ -273,14 +307,20 @@ func _build_modifiers() -> void:
 	skel.add_child(sp)
 	sp.setting_count = springs.size()
 	for i in springs.size():
+		# Paket H: Haare, Tücher, Kittel hängen nach unten und schwingen weicher (DH.SPRINGS)
+		var cfg: Array = DH.SPRINGS["spring_"]
+		for pre in DH.SPRINGS:
+			if String(springs[i]).begins_with(pre) and pre != "spring_":
+				cfg = DH.SPRINGS[pre]
+				break
 		sp.set_root_bone_name(i, springs[i])
 		sp.set_end_bone_name(i, springs[i])
 		sp.set_extend_end_bone(i, true)
-		sp.set_end_bone_length(i, 0.3)
-		sp.set_end_bone_direction(i, SkeletonModifier3D.BONE_DIRECTION_PLUS_Y)
-		sp.set_stiffness(i, 3.2)
-		sp.set_drag(i, 0.35)
-		sp.set_gravity(i, 0.0)
+		sp.set_end_bone_length(i, float(cfg[3]))
+		sp.set_end_bone_direction(i, SkeletonModifier3D.BONE_DIRECTION_PLUS_Y if int(cfg[4]) > 0 else SkeletonModifier3D.BONE_DIRECTION_MINUS_Y)
+		sp.set_stiffness(i, float(cfg[0]))
+		sp.set_drag(i, float(cfg[1]))
+		sp.set_gravity(i, float(cfg[2]))
 
 
 # ---------------------------------------------------------------- Animationen und Baum (einmal für alle Figuren)
@@ -430,12 +470,25 @@ static func _tree_root() -> AnimationNodeBlendTree:
 	bt.add_node("spray", AnimationNodeAdd2.new())
 	bt.connect_node("spray", 0, "body2")
 	bt.connect_node("spray", 1, "spray_clip")
+	# --- Paket H: Laufstil je Held (additiv, nur Rumpf und Kopf, im Takt der Schritte)
+	var gaits: Array = []
+	for nm in lib.get_animation_list():
+		if String(nm).begins_with("gait_"):
+			gaits.append(String(nm))
+	var prev := "spray"
+	if not gaits.is_empty():
+		_add_transition(bt, "gait", gaits, 0.0)
+		bt.add_node("gait_seek", AnimationNodeTimeSeek.new())
+		bt.connect_node("gait_seek", 0, "gait")
+		bt.add_node("gait_add", AnimationNodeAdd2.new())
+		bt.connect_node("gait_add", 0, "spray")
+		bt.connect_node("gait_add", 1, "gait_seek")
+		prev = "gait_add"
 	# --- Ganzkörper-Aktionen (zwei Kanäle)
 	var acts: Array = []
 	for nm in lib.get_animation_list():
-		if not LOCO.has(String(nm)):
+		if not LOCO.has(String(nm)) and not String(nm).begins_with("gait_"):
 			acts.append(String(nm))
-	var prev := "spray"
 	for i in [2, 0, 1]:
 		_add_transition(bt, "act%d" % i, acts, 0.0)
 		_timescale(bt, "act%d_ts" % i, "act%d" % i)
@@ -452,17 +505,35 @@ static func _tree_root() -> AnimationNodeBlendTree:
 
 
 # ---------------------------------------------------------------- Waffe
-func set_weapon(mesh_node: Node3D, length: float) -> void:
+func set_weapon(mesh_node: Node3D, length: float, hand_scale := 1.0) -> void:
 	for c in _prop.get_children():
 		if c != muzzle:
 			c.queue_free()
+	_mods.clear()
 	_has_weapon = mesh_node != null
+	_weapon_node = mesh_node
+	muzzle.position = Vector3(0, 0.08, length)
 	if mesh_node:
 		_prop.add_child(mesh_node)
+		mesh_node.scale = Vector3.ONE * hand_scale          # Paket H: Wurfwaffen sind in der Hand größer
 		var f := mesh_node.scene_file_path.get_file().get_basename()        # "w_j_rifle"
 		if f.begins_with("w_"):
 			set_pose(f.substr(2))
-	muzzle.position = Vector3(0, 0.08, length)
+		# Paket H: Mündung am Leerobjekt "muzzle" des Modells – Schüsse kommen aus dem Lauf
+		var mz := Models.find(mesh_node, "muzzle")
+		if mz != null and mz != mesh_node:
+			muzzle.position = mesh_node.transform * _rel_xf(mz, mesh_node).origin
+
+
+## Lage von n relativ zu root (ohne dass die Knoten im Baum sein müssen).
+static func _rel_xf(n: Node3D, root: Node3D) -> Transform3D:
+	var xf := Transform3D.IDENTITY
+	var c: Node = n
+	while c != null and c != root:
+		if c is Node3D:
+			xf = (c as Node3D).transform * xf
+		c = c.get_parent()
+	return xf
 
 
 ## Haltung nach Waffenschlüssel (D.WEAPONS) oder direkt nach Art ("rifle", "heavy", "bow", "thrower", "melee", "spray").
@@ -502,6 +573,8 @@ func _fire() -> void:
 	if tree == null or dead or _fire_frame == Engine.get_process_frames():
 		return
 	_fire_frame = Engine.get_process_frames()
+	if DH.STRAIN_POSES.has(_pose):
+		set_face("strain", 0.35)
 	var ps: Dictionary = POSES[_pose]
 	if _pose == "spray":
 		return                       # Sprühen läuft als Schleife, solange gezielt wird
@@ -530,6 +603,116 @@ func cheer(t := 1.5) -> void:
 		return
 	if play("cheer", true):
 		_cheer_left = t
+
+
+## Paket H: Siegerpose des Helden (Clip <held>_victory, sonst victory), t Sekunden lang.
+func victory(t := 3.0) -> void:
+	if dead:
+		return
+	if play("victory", true):
+		_cheer_left = t
+
+
+## Paket H: Gesicht für t Sekunden setzen (normal, blink, joy, pain, strain). t <= 0: bis zum nächsten Aufruf.
+func set_face(nm: String, t := 0.6) -> void:
+	if _faces.is_empty() or not _faces.has(nm):
+		return
+	_face_set = nm
+	_face_t = t if t > 0.0 else 9999.0
+	_show_face(nm)
+
+
+func _show_face(nm: String) -> void:
+	if nm == face or not _faces.has(nm):
+		return
+	if _faces.has(face):
+		_faces[face].visible = false
+	_faces[nm].visible = true
+	face = nm
+
+
+func has_faces() -> bool:
+	return not _faces.is_empty()
+
+
+## Paket H: Ausrüstung am Skelett. slot: helmet (Kopf), vest (Brust), charm (Hüfte). model "" nimmt das Teil ab.
+## Ein Helm ersetzt die eigene Kopfbedeckung des Helden (Mesh "hat").
+func set_gear(slot: String, model: String, k := 1.0) -> void:
+	if skel == null:
+		return
+	var old: Node3D = _gear.get(slot)
+	if old != null and is_instance_valid(old):
+		if String(old.get_meta("model", "")) == model:
+			return
+		old.queue_free()
+	_gear.erase(slot)
+	if slot == "helmet" and _hat != null:
+		_hat.visible = model == "" or not DH.HIDE_HAT
+	if model == "" or not Models.has_glb(model):
+		if slot == "helmet" and _hat != null:
+			_hat.visible = true
+		return
+	var ba := BoneAttachment3D.new()
+	ba.name = "Gear_" + slot
+	ba.bone_name = {"helmet": "head", "vest": "chest", "charm": "hips"}.get(slot, "chest")
+	ba.set_meta("model", model)
+	skel.add_child(ba)
+	var g := Models.glb(model)
+	g.scale = Vector3(k, 1.0, 1.0 if slot != "vest" else maxf(1.0, k * 0.9))
+	ba.add_child(g)
+	for mi in g.find_children("*", "MeshInstance3D", true, false):
+		(mi as MeshInstance3D).extra_cull_margin = 0.6
+		if slot == "charm":
+			(mi as MeshInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	_gear[slot] = ba
+
+
+func gear_model(slot: String) -> String:
+	var n: Node3D = _gear.get(slot)
+	return String(n.get_meta("model", "")) if n != null and is_instance_valid(n) else ""
+
+
+## Paket H: Waffenmodule am Waffenmodell. list = [[schlüssel, ort], ...]; Lage aus Mündung und Größe des Modells.
+func set_modules(list: Array) -> void:
+	for m in _mods:
+		if is_instance_valid(m):
+			m.queue_free()
+	_mods.clear()
+	if _weapon_node == null or not is_instance_valid(_weapon_node):
+		return
+	var mz := muzzle.position
+	var hk: float = _weapon_node.scale.x
+	# Lage aus der Mündung: der Lauf liegt auf Höhe mz.y, die Waffe reicht von z = 0 (Griff) bis mz.z
+	for e in list:
+		var key := String(e[0])
+		var where := String(e[1])
+		var mn := "mod_" + key
+		if not Models.has_glb(mn):
+			continue
+		var n := Models.glb(mn)
+		n.name = "Mod_" + key
+		var len_z: float = maxf(mz.z, 0.2)
+		match where:
+			"muzzle":
+				n.position = mz
+			"top":
+				n.position = Vector3(0, mz.y + 0.06 * hk, len_z * 0.4)
+			"under":
+				n.position = Vector3(0, mz.y - 0.05 * hk, len_z * 0.42)
+			"side":
+				n.position = Vector3(0.06 * hk, mz.y - 0.02, len_z * 0.2)
+			"core":
+				n.position = Vector3(-0.06 * hk, mz.y, len_z * 0.3)
+			"head":
+				n.position = Vector3(0, mz.y, len_z * 0.92)
+		_prop.add_child(n)
+		_mods.append(n)
+
+
+func module_nodes() -> Array:
+	return _mods.filter(func(x): return is_instance_valid(x))
+
+
 
 
 ## Ausweichrolle (dauer = Länge der Rolle), danach kurzes Abfedern.
@@ -711,6 +894,12 @@ func _update(dt: float) -> void:
 	tree.set(P_MOVE_SEEK, _tau)
 	_carry_w = move_toward(_carry_w, 1.0 if carrying else 0.0, k_fade)
 	_sp(P_CARRY, _carry_w)
+	if _has_gait:                    # Paket H: Laufstil – im Takt der Schritte, nur beim Gehen/Rennen
+		var gw := clampf(vn / V_WALK, 0.0, 1.0) * (0.0 if riding or dead else 1.0) * (1.0 - 0.5 * _aim_w)
+		_gait_w = move_toward(_gait_w, gw, dt * 4.0)
+		_sp(P_GAIT_W, snappedf(_gait_w, 0.02))
+		if _gait_w > 0.0:
+			tree.set(P_GAIT_SEEK, fposmod(_tau, AD.LOCO_T))
 	if _carry_w > 0.0:
 		tree.set(P_CARRY_SEEK, _tau)
 	# ---- Fahrzeug
@@ -823,6 +1012,36 @@ func _update(dt: float) -> void:
 		tilt = Vector2(0, deg_to_rad(4.0) * lean)
 	_tilt = _tilt.lerp(tilt, minf(1.0, dt * 8.0))
 	_pivot.rotation = Vector3(_tilt.y, 0.0, -_tilt.x)
+	if not _faces.is_empty():
+		_update_face(dt)
+
+
+## Paket H: welches Gesicht? Clip (Jubel, Treffer, Arbeit) > gesetztes Gesicht > Blinzeln > normal.
+func _update_face(dt: float) -> void:
+	var want := "normal"
+	_face_t = maxf(0.0, _face_t - dt)
+	if _face_t <= 0.0:
+		_face_set = ""
+	_blink_t -= dt
+	if _blink_t <= -DH.BLINK_TIME:
+		_blink_t = _rng.randf_range(DH.BLINK_EVERY[0], DH.BLINK_EVERY[1])
+	if _blink_t <= 0.0:
+		want = "blink"
+	if _face_set != "":
+		want = _face_set
+	for i in [2, 0, 1]:
+		var ch: Dictionary = _ch[i]
+		if ch.on and ch.w > 0.3:
+			var cl := String(ch.clip)
+			if cl.begins_with(kind + "_"):
+				cl = cl.substr(kind.length() + 1)
+			if DH.FACE_OF_CLIP.has(cl):
+				want = String(DH.FACE_OF_CLIP[cl])
+				if cl.ends_with("victory") or cl == "cheer":
+					want = "joy" if _blink_t > 0.0 else "blink"
+	if dead:
+		want = "pain"
+	_show_face(want)
 
 
 # ---------------------------------------------------------------- Rechnen: Schrittlänge im BlendSpace

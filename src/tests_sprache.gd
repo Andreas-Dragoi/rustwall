@@ -18,6 +18,7 @@ func _init(tests: Node) -> void:
 func run() -> void:
 	var was := I18N.lang()
 	_po()
+	_no_adjacent()
 	await _switch()
 	_legal()
 	await _screens()
@@ -166,3 +167,13 @@ func _screens() -> void:
 	inst.log_misses = old_log
 	if not old_log:
 		inst.misses.clear()
+
+
+## Vorlagen mit zwei Platzhaltern direkt hintereinander („%s%s“) lassen die englische Vorlagen-Erkennung falsch zerlegen.
+func _no_adjacent() -> void:
+	var txt := FileAccess.get_file_as_string("res://locale/en.po")
+	var bad := []
+	for line in txt.split("\n"):
+		if line.begins_with("msgid ") and "%s%s" in line:       # %d grenzt sich selbst ab (nur Ziffern), %s%s nicht
+			bad.append(line)
+	T._check(bad.is_empty(), "keine Vorlagen mit zwei Platzhaltern direkt hintereinander %s" % str(bad))

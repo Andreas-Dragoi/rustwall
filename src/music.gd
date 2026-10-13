@@ -19,7 +19,7 @@ const DIR := "res://audio/music/"
 const FADE := 5.0                # Dauer der Überblendung in Sekunden (Wiedergabeliste)
 const SWITCH := 2.5              # Überblendung beim Ortswechsel
 const TAIL := 0.8                # so viel vor Dateiende gilt ein Stück als "musikalisch zu Ende"
-const AREAS := ["gruental", "forst", "staub", "kueste", "sumpf", "frost", "krater", "vulkan"]
+const AREAS := ["gruental", "forst", "staub", "kueste", "sumpf", "frost", "krater", "vulkan", "stadt"]
 const LAYER_OFF := -40.0         # Gefahr-Lage ganz leise (dB)
 const DUCK_DB := -14.0           # so viel leiser während eines Stingers
 
@@ -40,6 +40,7 @@ const TRACKS := [
 	{"key": "area_frost", "file": "area_frost.ogg", "layer": "area_frost_fight.ogg", "loop": true},
 	{"key": "area_krater", "file": "area_krater.ogg", "layer": "area_krater_fight.ogg", "loop": true},
 	{"key": "area_vulkan", "file": "area_vulkan.ogg", "layer": "area_vulkan_fight.ogg", "loop": true},
+	{"key": "area_stadt", "file": "area_stadt.ogg", "layer": "area_stadt_fight.ogg", "loop": true},
 ]
 const STINGERS := {"win": "win.ogg", "lose": "lose.ogg"}
 const MOOD_DB := {"peace": -1.5, "battle": 0.0, "boss": 1.0}

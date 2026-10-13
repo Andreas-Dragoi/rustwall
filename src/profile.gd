@@ -12,6 +12,9 @@ const MK = preload("res://src/mk.gd")
 const Arsenal = preload("res://src/arsenal_rules.gd")
 const Guide = preload("res://src/guide.gd")              # Paket F: Spielerführung und Komfort
 const LO = preload("res://src/liveops.gd")               # Paket L: Live-Betrieb (Ereignisse, Saison, Kosmetik, Endspiel)
+const Research = preload("res://src/research.gd")         # V6 Paket B: Forschung im Labor
+const BState = preload("res://src/basis_state.gd")        # V6 Paket B: Funde, Verletzte, Rückblick, Mitteilungen
+const HS = preload("res://src/helden.gd")                # Paket H: Ausrüstungs-Sets, Waffenmodule, neue Heldin
 
 const SAVE_PATH := "user://rustwall_v2.json"
 const VERSION := 3
@@ -245,6 +248,7 @@ func _process(dt: float) -> void:
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_WM_CLOSE_REQUEST or what == NOTIFICATION_APPLICATION_PAUSED:
 		save()
+	preload("res://src/notify.gd").on_app(what)              # V6 Paket B: Mitteilungen planen (Handy)
 
 
 ## Wird jede Sekunde und nach Zeitsprüngen aufgerufen.
@@ -268,6 +272,7 @@ func _time_passed() -> void:
 		social.tick(t)
 	Guide.tick(t)
 	LO.tick(t)                                                # Paket L: Wochenwechsel, Saison-Ende, Feiertage
+	Research.tick(t)                                          # V6 Paket B: Forschung fertig?
 
 
 ## Ein Bau, eine Verbesserung oder das Wegräumen eines Hindernisses ist fertig.
@@ -282,6 +287,7 @@ func _complete(b: Dictionary, t: float) -> void:
 		var n := _rng.randi_range(int(g[0]), int(g[1]))
 		add_gems(n, "Hindernis")
 		count_up("obstacles", 1)
+		BState.obstacle_cleared(b)                            # V6 Paket B: seltener Fund (Truhe, Juwelen, Bauplan-Splitter)
 		toast.emit("%s weggeräumt: +%d Juwelen" % [def.name, n])
 		Sfx.play("build_remove", -6.0, 1.0, 0.1)
 		building_done.emit(int(b.id))
@@ -320,7 +326,7 @@ func cap(r: String) -> int:
 	for b in d.buildings:
 		if b.key == "lager" and not is_building(b):
 			lag += int(b.level)
-	return int(D.CAP_BASE[r] * (1.0 + 0.6 * lag + 0.5 * (bl - 1)))
+	return int(D.CAP_BASE[r] * (1.0 + 0.6 * lag + 0.5 * (bl - 1)) * (1.0 + Research.bonus("cap")))
 
 
 func can_pay(cost: Dictionary) -> bool:
@@ -409,14 +415,15 @@ func cmd_rank(key: String) -> int:
 
 
 func cmd_bonus(key: String) -> float:
+	var rb := Research.bonus(key)                             # V6 Paket B: Forschung mit gleichem Schlüssel zählt dazu
 	var r := cmd_rank(key)
 	if r <= 0:
-		return 0.0
+		return rb
 	for br in D.COMMANDER:
 		for s in br.skills:
 			if s.key == key:
-				return float(s.val) * r
-	return 0.0
+				return float(s.val) * r + rb
+	return rb
 
 
 func cmd_raise(key: String) -> bool:
@@ -482,6 +489,8 @@ func has_built(key: String) -> bool:
 func max_count(key: String) -> int:
 	if D.BUILDINGS[key].has("trophy"):
 		return 1 if boss_beaten(String(D.BUILDINGS[key].trophy)) else 0
+	if D.BUILDINGS[key].has("story") and not preload("res://src/story.gd").building_allowed(key):
+		return 0                                              # V6 Paket E: erst nach der Rettung
 	return int(D.BUILDINGS[key].max[clampi(bunker_level(), 1, 10) - 1])
 
 
@@ -1031,7 +1040,7 @@ func _grow_obstacles(force := false) -> void:
 		if not cells_free(x, y, 1, 1):
 			continue
 		var r := _rng.randf()
-		_add_building("hind_busch" if r < 0.5 else ("hind_stumpf" if r < 0.8 else "hind_stein"), x, y, _rng.randi() % 4, 1)
+		BState.roll_find(_add_building("hind_busch" if r < 0.5 else ("hind_stumpf" if r < 0.8 else "hind_stein"), x, y, _rng.randi() % 4, 1))
 		added += 1
 	if added > 0:
 		buildings_changed.emit()
@@ -1094,7 +1103,7 @@ func prod_rate(b: Dictionary) -> float:
 	var def: Dictionary = D.BUILDINGS[b.key]
 	if not def.has("prod"):
 		return 0.0
-	return float(def.rate) * pow(1.3, int(b.level) - 1) * (1.0 + outpost_bonus("prod_" + String(def.prod))) * (1.0 + deco_bonus())
+	return float(def.rate) * pow(1.3, int(b.level) - 1) * (1.0 + outpost_bonus("prod_" + String(def.prod))) * (1.0 + deco_bonus()) * (1.0 + Research.prod_bonus(String(def.prod)))
 
 
 ## Paket G2: Deko-Punkte aller fertigen Schmuck-Gebäude (Bewohner-Zufriedenheit).
@@ -1169,7 +1178,7 @@ func unlock_hero(key: String) -> void:
 
 
 func select_hero(key: String) -> void:
-	if hero_unlocked(key) and not hero_busy(key):
+	if hero_unlocked(key) and not hero_busy(key) and not preload("res://src/story.gd").injured(key):      # V6 Paket E: verletzt
 		d.hero_sel = key
 		mark()
 
@@ -1336,6 +1345,7 @@ func hero_stats(key: String) -> Dictionary:
 		var it := item(int(h.gear[slot]))
 		if not it.is_empty():
 			m[D.GEAR[slot].stat] += gear_value(it)
+	HS.apply_sets(key, m)                                     # Paket H: Set-Boni (2 und 3 Teile)
 	m.dmg += D.HERO_DMG_PER_LEVEL * (lv - 1) + cmd_bonus("hero_dmg")
 	m.hp += D.HERO_HP_PER_LEVEL * (lv - 1) + cmd_bonus("hero_hp")
 	m.reload += cmd_bonus("reload")
@@ -1382,6 +1392,9 @@ func item_name(it: Dictionary) -> String:
 				if md.key == it.mods[0].key:
 					n += " „%s“" % md.name
 		return n
+	var pn := HS.piece_name(it)                               # Paket H: Teil eines Sets
+	if pn != "":
+		return pn
 	return D.GEAR_NAMES[it.slot][int(it.rarity)]
 
 
@@ -1395,6 +1408,8 @@ func item_lines(it: Dictionary) -> Array:
 					out.append(md.text % int(round(float(m.val) * 100.0)))
 	else:
 		out.append(D.GEAR[it.slot].text % int(round(gear_value(it) * 100.0)))
+		if HS.set_of(it) != "":
+			out.append("Set „%s“" % HS.set_name(HS.set_of(it)))      # Paket H
 	return out
 
 
@@ -1505,6 +1520,7 @@ func dismantle(id: int) -> int:
 			toast.emit("Die letzte Waffe dieser Art kann nicht zerlegt werden")
 			return 0
 	var p := D.dismantle_parts(it)
+	HS.release_modules(it)                                    # Paket H: Module zurück ins Lager
 	d.items.erase(it)
 	add("parts", p)
 	mark()
@@ -1530,7 +1546,9 @@ func merge(id: int) -> Dictionary:
 		return {}
 	var it := item(id)
 	var lvl := int(it.level)
+	HS.release_modules(it)                                    # Paket H: Module zurück ins Lager
 	for i in 2:
+		HS.release_modules(item(c[i]))
 		d.items.erase(item(c[i]))
 	var owner := equipped_by(id)
 	d.items.erase(it)
@@ -1594,7 +1612,10 @@ func open_chest(type: String) -> Array:
 	var got_legend := false
 	var ap := Arsenal.chest_loot(type, _roll_rarity(def.table, 0))      # V4: Waffe oder Bauplan ersetzt ein Stück
 	var egg: Dictionary = preload("res://src/welt_state.gd").chest_egg(type, null)   # Paket Welt: Begleiter-Ei ersetzt ein Stück (eigener Zufall)
-	for i in int(def.count) - (0 if ap.is_empty() else 1) - (0 if egg.is_empty() else 1):
+	var md: Dictionary = {}                                   # Paket H: Waffenmodul ersetzt ein Stück (eines bleibt immer)
+	if int(def.count) - (0 if ap.is_empty() else 1) - (0 if egg.is_empty() else 1) >= 2:
+		md = HS.chest_module(type, _rng)
+	for i in int(def.count) - (0 if ap.is_empty() else 1) - (0 if egg.is_empty() else 1) - (0 if md.is_empty() else 1):
 		var min_r := 0
 		if i == 0 and def.has("min_rarity"):
 			min_r = int(def.min_rarity)
@@ -1612,6 +1633,8 @@ func open_chest(type: String) -> Array:
 		out.append(ap)
 	if not egg.is_empty():
 		out.append(egg)
+	if not md.is_empty():
+		out.append(md)
 	d.pity_epic = 0 if got_epic else int(d.pity_epic) + 1
 	d.pity_legend = 0 if got_legend else int(d.pity_legend) + 1
 	d.stats.chests = int(d.stats.chests) + 1
@@ -1631,6 +1654,7 @@ func _grant_piece(r: int, item_chance: float) -> Dictionary:
 		var key := ""
 		if _rng.randf() < 0.3:
 			slot = ["helmet", "vest", "charm"][_rng.randi() % 3]
+			key = HS.roll_set(_rng)                               # Paket H: jedes neue Teil gehört zu einem Set
 		else:
 			var pool: Array = []
 			var sel: String = d.hero_sel
@@ -1749,7 +1773,8 @@ func _auto_flood() -> void:
 	var need := float(fd.total) * float(fd.hp) * 0.55
 	var ratio := defense_score() * 0.8 / maxf(need, 1.0)
 	var win := ratio >= 1.0
-	flood_result(win, clampf(ratio - 0.6, 0.1, 0.8) if win else 0.0, true, 0)
+	var out := flood_result(win, clampf(ratio - 0.6, 0.1, 0.8) if win else 0.0, true, 0)
+	BState.auto_flood(out, fd, ratio)                         # V6 Paket B: berechneter Rückblick, Verletzte
 	toast.emit("Die Basis hat die Flut allein %s." % ("abgewehrt" if win else "nicht gehalten"))
 
 
@@ -1930,6 +1955,7 @@ func expedition_finish(area: int, mission: String, diff: int, hero_key: String, 
 				if int(D.HEROES[hk].unlock_area) == area and not hero_unlocked(hk):
 					unlock_hero(hk)
 					out.unlocked = hk
+					break                                         # Paket H: je Rettung ein Held
 		if int(d.quests.daily_day) != day_index():
 			d.quests.daily_day = day_index()
 			add_chest("daily")
@@ -2001,6 +2027,7 @@ func expedition_end(area: int, diff: int, hero_key: String, success: bool, home_
 				if int(D.HEROES[hk].unlock_area) == area and not hero_unlocked(hk):
 					unlock_hero(hk)
 					out.unlocked = hk
+					break                                         # Paket H: je Rettung ein Held (Schrottküste: erst Yuki, dann Nele)
 		if int(d.quests.daily_day) != day_index():
 			d.quests.daily_day = day_index()
 			add_chest("daily")
@@ -2031,7 +2058,7 @@ func expedition_end(area: int, diff: int, hero_key: String, success: bool, home_
 
 
 func start_auto(hero_key: String, area: int, hours: int) -> bool:
-	if hero_busy(hero_key) or not hero_unlocked(hero_key) or not area_unlocked(area):
+	if hero_busy(hero_key) or not hero_unlocked(hero_key) or not area_unlocked(area) or preload("res://src/story.gd").injured(hero_key):
 		return false
 	var other := ""
 	for hk in D.HERO_ORDER:
@@ -2080,8 +2107,10 @@ func collect_auto(hero_key: String) -> Dictionary:
 		var base := 260.0 * (1.0 + 0.1 * int(D.AREAS[area].level)) / float(D.RES_WEIGHT.get(r, 1.0))
 		loot[r] = add(r, base * float(res_w[r]) / tot * D.AUTO_SHARE * runs * (1.0 + outpost_auto_bonus(area)))
 	add_hero_xp(hero_key, 60.0 * hours)
+	var t_end := float(h.auto_until)
 	h.auto_until = 0.0
 	h.auto_area = -1
+	preload("res://src/auto_report.gd").finish(hero_key, area, hours, loot, t_end)     # V6 Paket E: Bericht, Ereignisse, Verletzung
 	mark()
 	return loot
 
@@ -2739,6 +2768,7 @@ func _ensure_fields() -> void:
 		d["intro_seen"] = true          # alte Stände: Intro nicht erzwingen
 	if not d.has("blueprints"):
 		d["blueprints"] = {}            # V4 Waffen-Arsenal: gefundene Baupläne
+	HS.ensure(d)                        # Paket H: Waffenmodule, Sets für alte Ausrüstung, neue Heldin
 	if not d.has("flood_guest"):
 		d["flood_guest"] = {"week": -1, "areas": []}
 	for k in [["rev", 0], ["server_time", 0.0], ["net_pending", []], ["net_spent", 0], ["chest_seeds", {}]]:     # Paket O: Cloud-Speicher, Serverbestätigung
@@ -2755,6 +2785,9 @@ func _ensure_fields() -> void:
 		while d.areas.boss.size() < D.AREAS.size():
 			d.areas.boss.append([false, false, false])
 	LO.ensure(d)                                              # Paket L: Live-Betrieb
+	BState.ensure(d)                                          # V6 Paket B: Forschung, Rückblick, Verletzte, Mitteilungen
+	preload("res://src/story.gd").ensure(d)                   # V6 Paket E: Geschichte, Gerettete, Berichte
+	preload("res://src/modi.gd").ensure(d)                   # V6 Paket M: Turm, Überleben, Clan-Raid, Höhlen
 
 
 ## Einmalige Umstellung eines Stands der Version 2 (eine Kopie liegt in rustwall_v2_backup.json).

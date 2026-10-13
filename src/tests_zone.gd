@@ -44,11 +44,11 @@ func run() -> void:
 
 # ---------------------------------------------------------------- Daten
 func _data() -> void:
-	T._check(D.AREAS.size() == 8 and String(D.AREAS[AREA].key) == "vulkan" and int(D.AREAS[AREA].level) == 55, "Gebiet 8: Vulkaninsel ab Stufe 55")
+	T._check(D.AREAS.size() >= 8 and String(D.AREAS[AREA].key) == "vulkan" and int(D.AREAS[AREA].level) == 55, "Gebiet 8: Vulkaninsel ab Stufe 55")
 	T._check(D.EXP_AREAS.size() == D.AREAS.size() and D.EXP_AREAS[AREA].nodes.has("obsidian"), "Expedition: Obsidian als Quelle")
 	T._check(D.EXP_NODES.obsidian.res == "stone" and D.EXP_NODES.obsidian.rare == "shards" and D.EXP_NODES.sulfur.res == "fuel", "Obsidian gibt Stein (selten Splitter), Schwefel Treibstoff")
 	T._check(D.OUTPOSTS.has("vulkan") and D.OUTPOST_DELIVER.has("deliver_cells"), "Außenbasis: Obsidianschmiede mit Lieferung")
-	T._check(D.AREA_FAMILY[AREA] == "magma" and D.AREA_BOSS[AREA] == "boss_magma" and D.BOSSES.size() == 8, "Familie und Boss je Gebiet")
+	T._check(D.AREA_FAMILY[AREA] == "magma" and D.AREA_BOSS[AREA] == "boss_magma" and D.BOSSES.size() == D.AREAS.size(), "Familie und Boss je Gebiet")
 	T._check(D.BOSS_PHASES.has("boss_magma") and D.BUILDINGS.has(String(D.BOSS_PHASES.boss_magma.trophy)), "Boss: Phasen und Trophäe")
 	for dd in [DW.EVENTS, DW.LANDMARKS, DW.QUESTS, DW.JOURNAL]:
 		T._check(dd.has("vulkan"), "Welt: Vulkaninsel eingetragen")
@@ -80,7 +80,7 @@ func _data() -> void:
 			T._check(AI.NAMES.has(String(a)), "%s: Baustein %s" % [key, a])
 		T._check(d.has("counter") and d.has("look") and d.has("text") and String(d.sound) == "e_magma", "%s: Tipp, Aussehen, Laute" % key)
 		T._check(not D.enemy_places(key).is_empty() and "Vulkaninsel" in str(D.enemy_places(key)), "%s: Fundort im Monsterbuch" % key)
-	T._check(last == D.ENEMIES.size() - 1, "Magma-Wesen stehen am Ende von ENEMIES")
+	T._check(last == D.ENEMIES.size() - 1 or String(D.ENEMIES[last + 1].family) != "magma", "Magma-Wesen stehen hinter allen älteren Arten")      # Paket Z2: danach folgen die Maschinen
 	T._check(D.weak_factor("magma", "wasser") > 1.4 and D.weak_factor("magma", "feuer") == 0.0, "Schwäche: Wasser, Feuer wirkungslos")
 
 
@@ -112,7 +112,7 @@ func _old_save() -> void:
 	P._ensure_fields()
 	T._check(P.d.areas.boss.size() == D.AREAS.size(), "alter Stand: achtes Gebiet ergänzt")
 	P.new_game()
-	T._check(P.d.areas.boss.size() == D.AREAS.size(), "neuer Stand: acht Gebiete")
+	T._check(P.d.areas.boss.size() == D.AREAS.size(), "neuer Stand: alle Gebiete")
 	P.outpost_set_level("vulkan", 1)
 	T._check(absf(P.outpost_bonus("heat_resist") - 0.15) < 0.001, "Obsidianschmiede: 15 % weniger Hitzeanstieg")
 	P.d.outposts = {}

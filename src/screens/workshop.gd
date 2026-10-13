@@ -9,6 +9,7 @@ extends RefCounted
 const D = preload("res://src/data.gd")
 const UI = preload("res://src/ui.gd")
 const Arsenal = preload("res://src/arsenal_rules.gd")
+const WM = preload("res://src/screens/workshop_mods.gd")      # Paket H: Waffenmodule
 
 const SLOTS := ["weapon", "helmet", "vest", "charm"]
 const SLOT_NAMES := {"weapon": "Waffen", "helmet": "Helm", "vest": "Weste", "charm": "Glücksbringer"}
@@ -115,7 +116,9 @@ func build() -> Control:
 	var list := UI.vbox(8)
 	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	var shown: Array = []
-	if String(S.st.slot) == "craft":
+	if String(S.st.slot) == "modules":                       # Paket H: Module herstellen
+		WM.module_list(S, list)
+	elif String(S.st.slot) == "craft":
 		for hk in D.HERO_ORDER:
 			if (hero == "all" or hero == "free" or hero == hk) and P.hero_unlocked(hk):
 				_craft_section(list, hk, hero == "all" or hero == "free")
@@ -128,7 +131,7 @@ func build() -> Control:
 		_free_section(list, shown, false)
 	else:
 		_hero_sections(list, hero, shown, false)
-	if (sel.is_empty() or not shown.has(sel)) and String(S.st.get("craft", "")) == "":
+	if (sel.is_empty() or not shown.has(sel)) and String(S.st.get("craft", "")) == "" and String(S.st.slot) != "modules":
 		sel = shown[0] if shown.size() > 0 else {}
 		S.st["item"] = int(sel.get("id", 0))
 		# die Zeile der neuen Auswahl soll gleich golden sein
@@ -144,6 +147,8 @@ func build() -> Control:
 	row.add_child(mid)
 	var ck := String(S.st.get("craft", ""))
 	var det: Control = _craft_detail(ck) if ck != "" and D.WEAPONS.has(ck) else _detail(sel)
+	if String(S.st.slot) == "modules":
+		det = WM.module_detail(S)
 	det.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	det.size_flags_stretch_ratio = 1.0
 	row.add_child(det)
@@ -210,6 +215,9 @@ func _filters() -> Control:
 		f.add_child(_chip(String(SLOT_NAMES[s]) if s != "helmet" else "Helme", String(SLOT_ICONS[s]), cur == s, func(): S.st["slot"] = sk))
 	f.add_child(_chip("Herstellen", "ui_hammer", cur == "craft", func():
 		S.st["slot"] = "craft"
+		S.st.erase("craft")))
+	f.add_child(_chip("Module", "mod_scope", cur == "modules", func():      # Paket H
+		S.st["slot"] = "modules"
 		S.st.erase("craft")))
 	f.add_child(_chip("nur verbesserbar", "ui_up", S.st.get("only_up", false), func(): S.st["only_up"] = not S.st.get("only_up", false)))
 	f.add_child(_chip("nur doppelte", "ui_merge", S.st.get("only_dup", false), func(): S.st["only_dup"] = not S.st.get("only_dup", false)))
@@ -692,6 +700,8 @@ func _detail(it: Dictionary) -> Control:
 		info.add_child(_cmp("ui_star", String(D.GEAR[it.slot].text).replace("%d %%", "").replace("+", "").strip_edges().capitalize(), gv, P.gear_value(other) * 100.0 if not other.is_empty() else -1.0, " %"))
 	var top := UI.hbox(14, [visual, info])
 	v.add_child(top)
+	if it.slot == "weapon" and String(D.WEAPONS[it.key].mode) != "turret":       # Paket H: Waffenmodule
+		v.add_child(WM.sockets_box(S, it))
 	v.add_child(UI.sep())
 	# ---- Ausrüsten
 	var target := owner if it.slot == "weapon" else (tab_hero if tab_hero != "all" and tab_hero != "free" else String(P.d.hero_sel))

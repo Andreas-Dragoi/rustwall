@@ -1076,6 +1076,81 @@ def rpc_boss_hit(uid, p):
     return {"ok": True, "boss_dmg": lo_boss_dmg(w), "boss_hp": int(LIVE.get("boss_hp", 1))}
 
 
+# ================================================================= Spielmodi (V6 Paket M): Wochen-Ranglisten, Clan-Raid
+MODI = RULES.get("modi", {})
+
+
+def rpc_modi_score(uid, p):
+    """Wochenwert eines Modus (tower: Summe der besten Läufe je Stockwerk, surv: bester Lauf). Der Server hält das Beste der Woche."""
+    c = city_of(uid, p)
+    kind = str(p.get("board", ""))
+    if kind not in ("tower", "surv"):
+        return {"ok": False, "why": "Unbekannte Rangliste"}
+    score = max(0, min(int(p.get("score", 0)), int(MODI.get("score_max", {}).get(kind, 0))))
+    b = S["boards"].setdefault("modi_%s:%d" % (kind, week_index()), {})
+    b[c["key"]] = max(int(b.get(c["key"], 0)), score)
+    return {"ok": True, "best": b[c["key"]]}
+
+
+def rpc_modi_board(uid, p):
+    c = city_of(uid, p)
+    kind = str(p.get("board", ""))
+    w = week_index()
+    b = S["boards"].get("modi_%s:%d" % (kind, w), {})
+    out = []
+    for k, sc in b.items():
+        o = S["cities"].get(k)
+        if o:
+            out.append({"name": o["name"], "score": int(sc), "me": k == c["key"]})
+    if not any(e["me"] for e in out):
+        out.append({"name": c["name"], "score": 0, "me": True})
+    out.sort(key=lambda e: (-int(e["score"]), not e["me"]))
+    rank = next((i + 1 for i, e in enumerate(out) if e["me"]), len(out))
+    return {"entries": out[:int(MODI.get("board_size", 50))], "rank": rank, "week": w}
+
+
+def _raid_view(cl, c):
+    w = week_index()
+    rec = cl.setdefault("raid", {})
+    if rec.get("week") != w:
+        rec.clear()
+        rec.update({"week": w, "dmg": {}})
+    members = []
+    for k in cl["members"]:
+        o = S["cities"].get(k)
+        if o:
+            members.append({"name": o["name"], "level": o["level"], "dmg": int(rec["dmg"].get(k, 0)), "me": k == c["key"]})
+    members.sort(key=lambda m: -m["dmg"])
+    hp = max(1, len(cl["members"])) * int(MODI.get("raid_hp_per_member", 1))
+    return {"week": w, "hp": hp, "dmg": sum(m["dmg"] for m in members), "members": members}
+
+
+def rpc_raid_hit(uid, p):
+    """Clan-Raid: Schaden eines Angriffs eintragen (höchstens raid_hits_per_day je Tag und Stadt, gedeckelt)."""
+    c = city_of(uid, p)
+    cl = clan_of(c)
+    if not cl:
+        return {"ok": False, "why": "Du bist in keinem Clan."}
+    view = _raid_view(cl, c)
+    dmg = max(0, min(int(p.get("dmg", 0)), int(MODI.get("raid_hit_max", 0))))
+    if dmg > 0 and limit(c, "raid_hits", "d", int(MODI.get("raid_hits_per_day", 3))):
+        rec = cl["raid"]["dmg"]
+        rec[c["key"]] = int(rec.get(c["key"], 0)) + dmg
+        view = _raid_view(cl, c)
+    view["ok"] = True
+    return view
+
+
+def rpc_raid_get(uid, p):
+    c = city_of(uid, p)
+    cl = clan_of(c)
+    if not cl:
+        return {"ok": False, "why": "Du bist in keinem Clan."}
+    view = _raid_view(cl, c)
+    view["ok"] = True
+    return view
+
+
 RPC = {name[4:]: fn for name, fn in globals().items() if name.startswith("rpc_")}
 
 

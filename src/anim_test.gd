@@ -81,13 +81,28 @@ func _board() -> void:
 	add_child(mi)
 
 
-func _figure(k: String, w: String) -> Node3D:
+func _figure(k: String, w: String, gear := "") -> Node3D:
 	var h: Node3D = Humanoid.new()
 	add_child(h)
 	h.build({"kind": k})
 	h.scale = Vector3.ONE * D.CHAR_SCALE
 	if w != "" and D.WEAPONS.has(w):
-		h.set_weapon(Models.weapon(w), float(D.WEAPONS[w].len))
+		h.set_weapon(Models.weapon(w), float(D.WEAPONS[w].len), preload("res://src/helden.gd").hand_scale(w))
+	# Paket H: --gear=<set> (Helm, Weste, Glücksbringer), --mods=scope,core_feuer (Module), --face=joy
+	if gear == "":
+		gear = G.arg("gear")
+	if gear != "" and gear != "-":
+		for slot in ["helmet", "vest", "charm"]:
+			h.set_gear(slot, "gear_%s_%s" % [gear, slot], 1.25 if k == "bruno" else 1.0)
+	if G.arg("mods") != "":
+		var DH = preload("res://src/data_helden.gd")
+		var list: Array = []
+		for mk in G.arg("mods").split(","):
+			if DH.MODULES.has(mk):
+				list.append([mk, String(DH.MODULES[mk].vis)])
+		h.set_modules(list)
+	if G.arg("face") != "":
+		h.set_face(G.arg("face"), 0.0)
 	return h
 
 
@@ -124,8 +139,12 @@ func _sheet() -> void:
 		var total := float(G.arg("t", "0"))
 		if total <= 0.0:
 			total = Humanoid.clip_len(clip) if Humanoid.AD.CLIPS.has(clip) else (1.0 / maxf(Humanoid.cycle_rate(mv.length(), mv), 0.1) if mv != Vector2.ZERO else 2.0)
+		var kinds: Array = Array(G.arg("kinds").split(",")) if G.arg("kinds") != "" else []
+		var gears: Array = Array(G.arg("gears").split(",")) if G.arg("gears") != "" else []
 		for i in n:
-			var h := _figure(kind, weapon)
+			var hk: String = kind if kinds.is_empty() else String(kinds[i % kinds.size()])
+			var hw: String = weapon if kinds.is_empty() or G.arg("weapon") != "" else String(D.HEROES[hk].weapons[0])
+			var h := _figure(hk, hw, "" if gears.is_empty() else String(gears[i % gears.size()]))
 			var c := (i - (n - 1) * 0.5) * gap
 			var rz := (ri - (rows.size() - 1) * 0.5) * rgap
 			var base := Vector3(rz, 0, c) if side else Vector3(c, 0, rz)

@@ -164,7 +164,7 @@ func flash(pos: Vector3, dir: Vector3, size := 1.0, light := false) -> void:
 	f.t = 0.045
 	if light:
 		_light.global_position = pos + Vector3(0, 0.5, 0)
-		_light.light_energy = 2.2
+		_light.light_energy = 2.2 * preload("res://src/a11y.gd").flash_k     # Paket Q: Blitze abschwächen
 		_light_t = 0.07
 
 
@@ -203,7 +203,7 @@ func explosion(pos: Vector3, radius: float, col := Color(1.0, 0.55, 0.15)) -> vo
 	puff(pos + Vector3(0, 0.3, 0), Color(0.25, 0.22, 0.2), 22, 1.8)
 	puff(pos + Vector3(0, 0.5, 0), col, 14, 2.2)
 	_light.global_position = pos + Vector3(0, 1.5, 0)
-	_light.light_energy = 5.0
+	_light.light_energy = 5.0 * preload("res://src/a11y.gd").flash_k     # Paket Q: Blitze abschwächen
 	_light_t = 0.18
 	if G.cam:
 		G.cam.shake(clampf(radius * 0.05, 0.08, 0.3))

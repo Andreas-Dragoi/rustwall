@@ -217,6 +217,38 @@ func _cast(key: String) -> bool:
 				var q := center + Vector2(cos(a), sin(a)) * sqrt(_rng.randf()) * 11.0
 				var cols := [Color(1.0, 0.4, 0.7), Color(0.4, 0.8, 1.0), Color(1.0, 0.9, 0.3), Color(0.6, 1.0, 0.5)]
 				game.blast(Vector3(q.x, 0.2, q.y), 3.5, d2, {}, cols[_rng.randi() % 4]))
+		# ---------------- Nele (Paket H)
+		"strudel":
+			var c2: Vector2 = pp + f * 5.0
+			if h.arsenal != null:
+				h.arsenal.add_zone("vortex", c2, 4.0, 4.0, 14.0 * sc, "wasser")
+			for e in horde.in_radius(c2, 4.5):
+				e.slow = maxf(e.slow, 2.5)
+			fx.ring(Vector3(c2.x, 0.05, c2.y), 4.0, Color(0.3, 0.8, 1.0), 0.6)
+			fx.puff(Vector3(c2.x, 0.4, c2.y), Color(0.75, 0.92, 1.0), 18, 1.4)
+		"luftblase":
+			h.dr = 0.5
+			h.dr_t = 4.0
+			h.heal(h.max_hp * 0.2 * (1.0 + float(h.m.heal)))
+			for e in horde.in_radius(pp, 3.5):
+				horde.knock(e, (e.p - pp).normalized(), 2.2)
+			fx.ring(p3, 3.5, Color(0.6, 0.9, 1.0), 0.5)
+			fx.puff(p3 + Vector3(0, 1.2, 0), Color(0.85, 0.95, 1.0), 20, 1.2)
+			h.body.set_face("joy", 0.8)
+		"springflut":
+			var side4 := f.orthogonal()
+			for e in horde.list:
+				if e.st == 2:
+					continue
+				var rel4: Vector2 = e.p - pp
+				var along4 := rel4.dot(f)
+				if along4 > -1.0 and along4 < 18.0 and absf(rel4.dot(side4)) < 3.5:
+					horde.damage(e, 70.0 * _ult(), f, false, false, "wasser")
+					horde.knock(e, f, 7.0, true)
+					e.slow = maxf(e.slow, 2.0)
+			for i in 7:
+				fx.puff(p3 + Vector3(f.x, 0, f.y) * (2.0 + i * 2.6) + Vector3(0, 0.5, 0), Color(0.45, 0.8, 1.0), 14, 1.8)
+			G.cam.shake(0.25)
 		# ---------------- Kommandant
 		"airstrike":
 			var e3 = horde.densest(pp, 40.0, 0.0, 5.0)

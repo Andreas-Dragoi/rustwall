@@ -1,0 +1,89 @@
+{
+ "key": "maschinen_funkenspinne",
+ "kind": "vat",
+ "role": "fast",
+ "verts": 788,
+ "tris": 636,
+ "width": 788,
+ "rows": 62,
+ "rpf": 1,
+ "fps": 10,
+ "bounds_min": [
+  -0.8762641268979368,
+  -1.0419896996017164,
+  -1.4441496712182504
+ ],
+ "bounds_size": [
+  1.7105187529756511,
+  2.808541690274478,
+  2.933763753158195
+ ],
+ "height": 1.1880000872612015,
+ "radius": 0.7895862162641624,
+ "clips": {
+  "idle": {
+   "row": 0,
+   "n": 12,
+   "dur": 1.2,
+   "loop": true,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "walk": {
+   "row": 12,
+   "n": 4,
+   "dur": 0.4,
+   "loop": true,
+   "stride": 2.08,
+   "hit": -1.0
+  },
+  "attack": {
+   "row": 16,
+   "n": 8,
+   "dur": 0.7,
+   "loop": false,
+   "stride": 0.0,
+   "hit": 0.36666666666666664
+  },
+  "hit": {
+   "row": 24,
+   "n": 4,
+   "dur": 0.3,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "death": {
+   "row": 28,
+   "n": 11,
+   "dur": 1.0,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "spawn": {
+   "row": 39,
+   "n": 9,
+   "dur": 0.8,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "pounce": {
+   "row": 48,
+   "n": 6,
+   "dur": 0.5,
+   "loop": false,
+   "stride": 0.0,
+   "hit": -1.0
+  },
+  "climb": {
+   "row": 54,
+   "n": 8,
+   "dur": 0.8,
+   "loop": true,
+   "stride": 0.0,
+   "hit": -1.0
+  }
+ }
+}

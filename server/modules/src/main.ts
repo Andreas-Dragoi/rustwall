@@ -1117,6 +1117,99 @@ function rpcBossHit(ctx: nkruntime.Context, logger: nkruntime.Logger, nk: nkrunt
     return JSON.stringify({ ok: true, boss_dmg: loBossDmg(nk, w), boss_hp: live().boss_hp || 1 });
 }
 
+// ================================================================= Spielmodi (V6 Paket M): Wochen-Ranglisten, Clan-Raid
+// Gleiche Regeln wie im Testserver (mock_server.py, rpc_modi_score ...). Zahlen in regeln.json unter "modi".
+function modi(): any { return RULES.modi || {}; }
+
+function modiBoard(nk: nkruntime.Nakama, kind: string): string {
+    const id = "modi_" + kind;
+    try { nk.leaderboardCreate(id, true, nkruntime.SortOrder.DESCENDING, nkruntime.Operator.BEST, "0 0 * * 1", { modi: kind }, true); } catch (e) { /* gibt es schon */ }
+    return id;
+}
+
+function rpcModiScore(ctx: nkruntime.Context, logger: nkruntime.Logger, nk: nkruntime.Nakama, payload: string): string {
+    const p = parse(payload);
+    const uid = ctx.userId as string;
+    const c = loadCity(nk, uid, cityNo(p), true) as City;
+    const kind = String(p.board || "");
+    if (kind !== "tower" && kind !== "surv") return err("Unbekannte Rangliste");
+    const mx = Number((modi().score_max || {})[kind] || 0);
+    const score = Math.max(0, Math.min(parseInt(String(p.score || 0), 10) || 0, mx));
+    nk.leaderboardRecordWrite(modiBoard(nk, kind), cityUuid(nk, uid, c.city), c.name, score, 0, { uid: uid, city: c.city }, nkruntime.OverrideOperator.BEST);
+    return JSON.stringify({ ok: true, best: score });
+}
+
+function rpcModiBoard(ctx: nkruntime.Context, logger: nkruntime.Logger, nk: nkruntime.Nakama, payload: string): string {
+    const p = parse(payload);
+    const uid = ctx.userId as string;
+    const c = loadCity(nk, uid, cityNo(p), true) as City;
+    const kind = String(p.board || "");
+    if (kind !== "tower" && kind !== "surv") return err("Unbekannte Rangliste");
+    const me = cityUuid(nk, uid, c.city);
+    const r = nk.leaderboardRecordsList(modiBoard(nk, kind), [me], modi().board_size || 50, undefined, 0);
+    const out: any[] = [];
+    let rank = 0;
+    const recs = r.records || [];
+    for (let i = 0; i < recs.length; i++) {
+        const isMe = recs[i].ownerId === me;
+        if (isMe) rank = i + 1;
+        out.push({ name: recs[i].username || "?", score: recs[i].score, me: isMe });
+    }
+    if (rank === 0) {
+        if (r.ownerRecords && r.ownerRecords.length > 0) {
+            rank = Number(r.ownerRecords[0].rank);
+            out.push({ name: c.name, score: r.ownerRecords[0].score, me: true });
+        } else {
+            out.push({ name: c.name, score: 0, me: true });
+            rank = out.length;
+        }
+    }
+    return JSON.stringify({ entries: out, rank: rank, week: weekIndex(now(nk)) });
+}
+
+function raidView(nk: nkruntime.Nakama, cl: any, c: City): any {
+    const w = weekIndex(now(nk));
+    if (!cl.raid || cl.raid.week !== w) cl.raid = { week: w, dmg: {} };
+    const me = c.uid + ":" + c.city;
+    const members: any[] = [];
+    let total = 0;
+    for (const k in cl.members) {
+        const parts = k.split(":");
+        const o = loadCity(nk, parts[0], parseInt(parts[1], 10), false);
+        if (!o) continue;
+        const d = Number(cl.raid.dmg[k] || 0);
+        total += d;
+        members.push({ name: o.name, level: o.level, dmg: d, me: k === me });
+    }
+    members.sort(function (a, b) { return b.dmg - a.dmg; });
+    const hp = Math.max(1, Object.keys(cl.members).length) * Number(modi().raid_hp_per_member || 1);
+    return { ok: true, week: w, hp: hp, dmg: total, members: members };
+}
+
+function rpcRaidHit(ctx: nkruntime.Context, logger: nkruntime.Logger, nk: nkruntime.Nakama, payload: string): string {
+    const p = parse(payload);
+    const c = loadCity(nk, ctx.userId as string, cityNo(p), true) as City;
+    const cl = myClan(nk, c);
+    if (!cl) return err("Du bist in keinem Clan.");
+    raidView(nk, cl, c);
+    const dmg = Math.max(0, Math.min(parseInt(String(p.dmg || 0), 10) || 0, Number(modi().raid_hit_max || 0)));
+    if (dmg > 0 && limit(c, "raid_hits", "d", Number(modi().raid_hits_per_day || 3))) {
+        const me = c.uid + ":" + c.city;
+        cl.raid.dmg[me] = Number(cl.raid.dmg[me] || 0) + dmg;
+        saveClan(nk, cl);
+        saveCity(nk, c);
+    }
+    return JSON.stringify(raidView(nk, cl, c));
+}
+
+function rpcRaidGet(ctx: nkruntime.Context, logger: nkruntime.Logger, nk: nkruntime.Nakama, payload: string): string {
+    const p = parse(payload);
+    const c = loadCity(nk, ctx.userId as string, cityNo(p), true) as City;
+    const cl = myClan(nk, c);
+    if (!cl) return err("Du bist in keinem Clan.");
+    return JSON.stringify(raidView(nk, cl, c));
+}
+
 // ================================================================= Wochen-Reset der Ranglisten
 function onReset(ctx: nkruntime.Context, logger: nkruntime.Logger, nk: nkruntime.Nakama, lb: nkruntime.Leaderboard, reset: number): void {
     const parts = lb.id.split("_L");
@@ -1183,6 +1276,7 @@ function InitModule(ctx: nkruntime.Context, logger: nkruntime.Logger, nk: nkrunt
         rw_wallet_init: rpcWalletInit, rw_reward: rpcReward, rw_spend: rpcSpend, rw_purchase: rpcPurchase, rw_restore: rpcRestore,
         rw_telemetry: rpcTelemetry, rw_crash: rpcCrash, rw_account_delete: rpcAccountDelete,
         rw_liveops: rpcLiveops, rw_season_add: rpcSeasonAdd, rw_season_board: rpcSeasonBoard, rw_boss_hit: rpcBossHit,     // Paket L
+        rw_modi_score: rpcModiScore, rw_modi_board: rpcModiBoard, rw_raid_hit: rpcRaidHit, rw_raid_get: rpcRaidGet,     // V6 Paket M
     };
     for (const name in rpcs) initializer.registerRpc(name, rpcs[name]);
     initializer.registerLeaderboardReset(onReset);
